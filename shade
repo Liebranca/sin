@@ -1,0 +1,229 @@
+#!/usr/bin/perl
+# ---   *   ---   *   ---
+# SHADE
+# Makes SIN shader blocks
+#
+# LIBRE SOFTWARE
+# Licensed under GNU GPL3
+# be a bro and inherit
+#
+# CONTRIBUTORS
+# lyeb,
+# ---   *   ---   *   ---
+
+# deps
+  use strict;
+  use warnings;
+
+# ---   *   ---   *   ---
+# global state
+
+  my %CACHE=(
+    -INCLUDE  => [],
+
+    -VERT_SRC => [],
+    -FRAG_SRC => [],
+
+    -ATTRS    => [],
+    -UNIFORMS => [],
+    -UBOS     => [],
+    -SSBOS    => [],
+    -SAMPLERS => [],
+
+  );
+
+# ---   *   ---   *   ---
+# appends to search path
+
+sub stinc {
+
+  my $path=shift;
+  $path=~ s/\-I//;
+
+  my $ref=$CACHE{-INCLUDE};
+  push @$ref,glob($path);
+
+};
+
+# ---   *   ---   *   ---
+# find/read shader block
+
+sub parse_inc {
+  my $clause=shift;
+  $clause=~ s/\#include\s*\<//;
+  $clause=~ s/\>//;
+
+  my $name=$clause;
+  $name=~ s/\.[\w|\d]*//;
+
+  return "sh_blk_$name,\n";
+
+};
+
+# ---   *   ---   *   ---
+
+sub ffind {
+  my $fname=shift;
+  my $src=undef;
+  my $inc_ref=$CACHE{-INCLUDE};
+  my $path=undef;
+
+  for $path(@$inc_ref) {
+    if(-e "$path/$fname") {
+      $src="$path/$fname";
+      last;
+
+    };
+
+  };
+
+  if(!$src) {
+    print "Could not find $fname\n";
+    exit;
+
+  };
+
+  return ($src,$path);
+
+};
+
+# ---   *   ---   *   ---
+# looks for special decls
+
+sub is_decl {
+
+  my $line=shift;
+  my $ref=undef;
+
+  if(($line=~ m/in\s*/)) {
+    $line=~ s/in\s*//;
+
+    if(($line=~ m/sampler.*\s+/)) {
+      $line=~ s/sampler.*\s+//;
+      $line=~ s/\;//;
+
+      $ref=$CACHE{-SAMPLERS};
+
+    };
+
+  };if($ref) {
+    push @$ref,$line;
+
+  };
+
+  # TODO: handle out/flat out
+  # sync it with frag in/flat in
+
+};
+
+# ---   *   ---   *   ---
+# in glsl, out C
+
+sub compch {
+
+  my $fname=shift;
+  my ($src,$path)=ffind $fname;
+
+  my $name=$fname;
+  $name=~ s/\.[\w|\d]*//;
+
+  my $out="static const char* sh_blk_$name=\n";
+
+  open SRC,'<',$src or die $!;
+  while((my $line=readline SRC)) {
+    chomp $line;if($line) {
+      $out.="\"$line\\n\"\n";
+
+    };
+  };close SRC;
+
+  $out.=";\n";
+  open OUT,'>',"$path/$name.h";
+  print OUT $out;
+
+  close OUT;
+
+};
+
+# ---   *   ---   *   ---
+# in sin glsl, out sin shaderParams
+
+sub compsg {
+
+  my $fname=shift;
+  my ($src,$path)=ffind $fname;
+
+  my $name=$fname;
+  $name=~ s/\.[\w|\d]*//;
+
+  my $out='';
+
+# ---   *   ---   *   ---
+
+  open SRC,'<',$src or die $!;
+  while((my $line=readline SRC)) {
+
+    chomp $line;
+
+    if($line eq '$:VERT;>') {
+      $out.='const char* vert_src[]={'."\n";
+      $line='';
+
+    } elsif($line eq '$:FRAG;>') {
+      $out.="};\n";
+
+      $out.='const char* vert_src[]={'."\n";
+      $line='';
+
+    } elsif($line=~ m/\#include/) {
+      $line=parse_inc $line;
+
+    } else {
+
+      is_decl $line;
+
+      $line=($line ne '')
+        ? "\"$line\\n\"\n"
+        : ''
+        ;
+
+    };if($line) {$out.=$line;};
+
+  };close SRC;
+
+# ---   *   ---   *   ---
+
+  $out.="};\nconst SHDP pr_$name={\n";
+  for my $ref(
+    $CACHE{-ATTRS},
+    $CACHE{-UNIFORMS},
+    $CACHE{-UBOS},
+    $CACHE{-SSBOS},
+    $CACHE{-SAMPLERS}
+
+  ) {
+
+    $out.="{";
+    my $i=0;for my $item(@$ref) {
+      $out.="\"$item\"";$i++;
+
+      if($i<scalar(@$ref)) {
+        $out.=',';
+
+      };
+
+    };$out.='},'.scalar(@$ref).",\n";
+
+  };$out=substr $out,0,length($out)-2;
+  $out.="\n};\n";
+  print $out;
+
+};
+
+stinc('-I'.$ENV{'ARPATH'});
+stinc('-I'.glob('.'));
+
+compsg('test.sg');
+
+# ---   *   ---   *   ---
+1; # ret
