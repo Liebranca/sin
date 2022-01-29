@@ -15,20 +15,26 @@
   use strict;
   use warnings;
 
+  use lib $ENV{'ARPATH'}.'/lib/';
+  use avt;
+  use Cwd;
+
 # ---   *   ---   *   ---
 # global state
 
   my %CACHE=(
-    -INCLUDE  => [],
+    'INCLUDE'  => [],
 
-    -VERT_SRC => [],
-    -FRAG_SRC => [],
+    'VERT_SRC' => [],
+    'FRAG_SRC' => [],
 
-    -ATTRS    => [],
-    -UNIFORMS => [],
-    -UBOS     => [],
-    -SSBOS    => [],
-    -SAMPLERS => [],
+    'ATTRS'    => [],
+    'UNIFORMS' => [],
+    'UBOS'     => [],
+    'SSBOS'    => [],
+    'SAMPLERS' => [],
+
+    'FRAGINS'  => [],
 
   );
 
@@ -38,37 +44,28 @@
 sub stinc {
 
   my $path=shift;
+
   $path=~ s/\-I//;
+  $path=Cwd::abs_path($path);
 
-  my $ref=$CACHE{-INCLUDE};
-  push @$ref,glob($path);
-
-};
-
-# ---   *   ---   *   ---
-# find/read shader block
-
-sub parse_inc {
-  my $clause=shift;
-  $clause=~ s/\#include\s*\<//;
-  $clause=~ s/\>//;
-
-  my $name=$clause;
-  $name=~ s/\.[\w|\d]*//;
-
-  return "sh_blk_$name,\n";
+  my $ref=$CACHE{'INCLUDE'};
+  push @$ref,$path;
 
 };
+
 
 # ---   *   ---   *   ---
 
 sub ffind {
   my $fname=shift;
   my $src=undef;
-  my $inc_ref=$CACHE{-INCLUDE};
+  my $inc_ref=$CACHE{'INCLUDE'};
   my $path=undef;
 
   for $path(@$inc_ref) {
+
+    if(!$path) {next;};
+
     if(-e "$path/$fname") {
       $src="$path/$fname";
       last;
@@ -88,6 +85,63 @@ sub ffind {
 };
 
 # ---   *   ---   *   ---
+# find/read shader blocks
+
+sub rdmeta {
+
+  my $fwat=shift;
+  my ($src,$path)=ffind "shblk.m";
+
+  my @meta=split "\n",`cat $src`;
+  while(@meta) {
+
+    my $name=shift @meta;
+
+    # if block found, copy data
+    if($name eq $fwat) {
+      for(my $i=0;$i<6;$i++) {
+        my @data=split ' ',(shift @meta);
+        my $key=shift @data;
+
+        my $ref=$CACHE{$key};
+
+        while(@data) {
+          my $item=shift @data;
+          if($key eq 'FRAGINS') {
+            $item=~ s/\$/ /g;
+
+          };if(!($item eq "None")) {
+            push @$ref,$item;
+
+          };
+
+        };
+      };
+
+    # else skip
+    };for(my $i=0;$i<6;$i++) {
+      shift @meta;
+
+    };
+  };
+};
+
+# ---   *   ---   *   ---
+
+sub parse_inc {
+  my $clause=shift;
+  $clause=~ s/\#include\s*\<//;
+  $clause=~ s/\>//;
+
+  my $name=$clause;
+  $name=~ s/\.[\w|\d]*//;
+
+  rdmeta $name;
+  return "sh_blk_$name,\n";
+
+};
+
+# ---   *   ---   *   ---
 # looks for special decls
 
 sub is_decl {
@@ -95,24 +149,38 @@ sub is_decl {
   my $line=shift;
   my $ref=undef;
 
-  if(($line=~ m/in\s*/)) {
-    $line=~ s/in\s*//;
+  if(($line=~ m/in\s+/)) {
+    $line=~ s/in\s+//;
 
     if(($line=~ m/sampler.*\s+/)) {
       $line=~ s/sampler.*\s+//;
       $line=~ s/\;//;
 
-      $ref=$CACHE{-SAMPLERS};
+      $ref=$CACHE{'SAMPLERS'};
 
     };
+
+  } elsif(($line=~ m/out\s+/)
+    || ($line=~ m/flat\s+out\s+/)
+
+  ) {
+
+    $line=~ s/out\s+//;
+    my $in='in ';
+
+    if(($line=~ m/flat\s+/)) {
+      $line=~ s/flat\s+//;
+      $in='flat in ';
+
+    };$line=$in.$line;
+    $line=~ s/\s/\$/g;
+    $ref=$CACHE{'FRAGINS'};
 
   };if($ref) {
     push @$ref,$line;
 
   };
 
-  # TODO: handle out/flat out
-  # sync it with frag in/flat in
 
 };
 
@@ -121,25 +189,89 @@ sub is_decl {
 
 sub compch {
 
-  my $fname=shift;
-  my ($src,$path)=ffind $fname;
+  my $top=glob($_[0]);
+  my %h=%{ avt::walk($top) };
 
-  my $name=$fname;
-  $name=~ s/\.[\w|\d]*//;
+  my $outc='';
+  my $outh='';
+  my $outm='';
 
-  my $out="static const char* sh_blk_$name=\n";
+  # find glsl files and iter thru
+  for my $path(keys %h) {
+    my @files=grep m/\.glsl/,@{ $h{$path} };
+    for my $fname(@files) {
 
-  open SRC,'<',$src or die $!;
-  while((my $line=readline SRC)) {
-    chomp $line;if($line) {
-      $out.="\"$line\\n\"\n";
+      $path=($path eq '<main>')
+        ? $top
+        : $path
+        ;
+
+      my $src="$path/$fname";
+
+      my $name=$fname;
+      $name=~ s/\.[\w|\d]*//;
+
+      $outh.="extern const char* sh_blk_$name;\n";
+      $outc.="const char* sh_blk_$name=\n";
+
+# ---   *   ---   *   ---
+
+      # read each file and get meta
+      open SRC,'<',$src or die $!;
+      while((my $line=readline SRC)) {
+        chomp $line;if($line) {
+
+          is_decl $line;
+          $outc.="\"$line\\n\"\n";
+
+        };
+      };close SRC;
+      $outc.=";\n";
+
+# ---   *   ---   *   ---
+
+      $outm.="$name\n";
+
+      # save meta to var and cache wipe
+      for my $i(
+        'ATTRS',
+        'UNIFORMS',
+        'UBOS',
+        'SSBOS',
+        'SAMPLERS',
+        'FRAGINS'
+
+      ) {
+
+        my @data=@{ $CACHE{$i} };
+
+        $outm.=(@data)
+          ? "$i ".(join ' ',@data)."\n"
+          : "$i None\n"
+          ;
+
+        ;$CACHE{$i}=[];
+
+      };
 
     };
-  };close SRC;
+  };
 
-  $out.=";\n";
-  open OUT,'>',"$path/$name.h";
-  print OUT $out;
+# ---   *   ---   *   ---
+
+  # write out to disk
+  open OUT,'>',"$top/shblk.c";
+  print OUT $outc;
+
+  close OUT;
+
+  open OUT,'>',"$top/shblk.h";
+  print OUT $outh;
+
+  close OUT;
+
+  open OUT,'>',"$top/shblk.m";
+  print OUT $outm;
 
   close OUT;
 
@@ -172,7 +304,15 @@ sub compsg {
     } elsif($line eq '$:FRAG;>') {
       $out.="};\n";
 
-      $out.='const char* vert_src[]={'."\n";
+      my $ref=$CACHE{'FRAGINS'};
+
+      $out.='const char* frag_src[]={'."\n";
+      while(@$ref) {
+        my $item=shift @$ref;
+        $out.="\"$item\\n\"\n";
+
+      };
+
       $line='';
 
     } elsif($line=~ m/\#include/) {
@@ -195,11 +335,11 @@ sub compsg {
 
   $out.="};\nconst SHDP pr_$name={\n";
   for my $ref(
-    $CACHE{-ATTRS},
-    $CACHE{-UNIFORMS},
-    $CACHE{-UBOS},
-    $CACHE{-SSBOS},
-    $CACHE{-SAMPLERS}
+    $CACHE{'ATTRS'},
+    $CACHE{'UNIFORMS'},
+    $CACHE{'UBOS'},
+    $CACHE{'SSBOS'},
+    $CACHE{'SAMPLERS'}
 
   ) {
 
@@ -223,6 +363,7 @@ sub compsg {
 stinc('-I'.$ENV{'ARPATH'});
 stinc('-I'.glob('.'));
 
+compch('.');
 compsg('test.sg');
 
 # ---   *   ---   *   ---
