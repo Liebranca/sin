@@ -17,13 +17,24 @@
 
   use lib $ENV{'ARPATH'}.'/lib/';
   use avt;
-  use Cwd;
+  use cash;
+
+# ---   *   ---   *   ---
+# info
+
+  use constant {
+
+    VERSION => '0.1b',
+    AUTHOR  => 'IBN-3DILA',
+
+  };
 
 # ---   *   ---   *   ---
 # global state
 
   my %CACHE=(
-    'INCLUDE'  => [],
+
+    -OPTS      => undef,
 
     'VERT_SRC' => [],
     'FRAG_SRC' => [],
@@ -39,48 +50,33 @@
   );
 
 # ---   *   ---   *   ---
-# appends to search path
+# info meths
 
-sub stinc {
+sub help {
 
-  my $path=shift;
+  my @header=(
 
-  $path=~ s/\-I//;
-  $path=Cwd::abs_path($path);
+    'shade <options> <filepaths>',
 
-  my $ref=$CACHE{'INCLUDE'};
-  push @$ref,$path;
+    'Runs a simple preprocessor step on sin-styled '.
+    '(*.sg) GLSL shaders; additionally, shade '.
+    'generates shblk.* files that help reuse '.
+    'GLSL code and embed it in C executables'.
 
-};
+    '$:parg;>'.
 
+    'shade allows piecing shaders together via '.
+    '#include and facilitates syncing between vert '.       'shader output and frag shader input'
 
-# ---   *   ---   *   ---
+  );my @OPTS=@{ $CACHE{-OPTS} };
+  print avt::ex 'help',[@header,@OPTS],'';
+  exit;
 
-sub ffind {
-  my $fname=shift;
-  my $src=undef;
-  my $inc_ref=$CACHE{'INCLUDE'};
-  my $path=undef;
+};sub version {
+  print avt::version(
+    'shade',VERSION,AUTHOR
 
-  for $path(@$inc_ref) {
-
-    if(!$path) {next;};
-
-    if(-e "$path/$fname") {
-      $src="$path/$fname";
-      last;
-
-    };
-
-  };
-
-  if(!$src) {
-    print "Could not find $fname\n";
-    exit;
-
-  };
-
-  return ($src,$path);
+  );exit;
 
 };
 
@@ -90,7 +86,8 @@ sub ffind {
 sub rdmeta {
 
   my $fwat=shift;
-  my ($src,$path)=ffind "shblk.m";
+  my ($src,$path)=avt::ffind "shblk.m";
+  if(!$src) {exit;};
 
   my @meta=split "\n",`cat $src`;
   while(@meta) {
@@ -283,7 +280,9 @@ sub compch {
 sub compsg {
 
   my $fname=shift;
-  my ($src,$path)=ffind $fname;
+
+  my ($src,$path)=avt::ffind $fname;
+  if(!$src) {exit;};
 
   my $name=$fname;
   $name=~ s/\.[\w|\d]*//;
@@ -360,11 +359,42 @@ sub compsg {
 
 };
 
-stinc('-I'.$ENV{'ARPATH'});
-stinc('-I'.glob('.'));
+# ---   *   ---   *   ---
 
-compch('.');
-compsg('test.sg');
+my @OPTS=@{
+
+  cash::moptab(
+
+    '-h,--help',
+    'Show this message',
+    \&help,
+
+    '-v,--version',
+    'Print version info and exit',
+    \&version,
+
+    '-I <path>',
+    'Append <path> to file search path',
+    \&avt::stinc,
+
+    '-b <path>',
+    'Reads <path> for glsl files, then transpiles '.
+    'them to C shblk.* files',
+    \&compch,
+
+  )
+
+};$CACHE{-OPTS}=\@OPTS;
+cash::runtab(\@ARGV);
+
+# ---   *   ---   *   ---
+# remaining args are assumed to be .sg files
+
+while(@ARGV) {
+  my $nx=shift;
+  compsg($nx);
+
+};
 
 # ---   *   ---   *   ---
 1; # ret
