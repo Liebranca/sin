@@ -186,7 +186,7 @@ sub is_decl {
 
 sub compch {
 
-  my $top=glob($_[0]);
+  my $top=glob(shift @ARGV);
   my %h=%{ avt::walk($top) };
 
   my $outc='';
@@ -216,7 +216,13 @@ sub compch {
       # read each file and get meta
       open SRC,'<',$src or die $!;
       while((my $line=readline SRC)) {
-        chomp $line;if($line) {
+        chomp $line;
+
+        # strip // comments
+        # makes perfect sense to me!
+        $line=~ s/\/\/.*//;
+
+        if($line) {
 
           is_decl $line;
           $outc.="\"$line\\n\"\n";
@@ -255,22 +261,14 @@ sub compch {
   };
 
 # ---   *   ---   *   ---
+# dump results
 
-  # write out to disk
-  open OUT,'>',"$top/shblk.c";
-  print OUT $outc;
+  print
+    $outc.'$:parg;>'.
+    $outh.'$:parg;>'.
+    $outm
 
-  close OUT;
-
-  open OUT,'>',"$top/shblk.h";
-  print OUT $outh;
-
-  close OUT;
-
-  open OUT,'>',"$top/shblk.m";
-  print OUT $outm;
-
-  close OUT;
+  ;
 
 };
 

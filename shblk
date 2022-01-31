@@ -1,0 +1,72 @@
+#!/usr/bin/perl
+# ---   *   ---   *   ---
+# SHBLK
+# Generates C files and
+# metadata for building
+# sin-styled GLSL shaders
+#
+# LIBRE SOFTWARE
+# Licensed under GNU GPL3
+# be a bro and inherit
+#
+# CONTRIBUTORS
+# lyeb,
+# ---   *   ---   *   ---
+
+# deps
+  use strict;
+  use warnings;
+
+  use lib $ENV{'ARPATH'}.'/lib/';
+  use avt;
+
+# ---   *   ---   *   ---
+
+  use constant {
+    DIR   => $ENV{'ARPATH'}.'/sin/',
+    FNAME => 'shblk',
+
+  };
+
+# ---   *   ---   *   ---
+# make shader blocks files
+
+sub generator {
+
+  my $FH=shift;
+  my $data=avt::ex 'shade',[@_],'';
+
+  my ($cf,$hf,$mf)=split '\$:parg;>',$data;
+  print $FH $hf;
+
+  open OUT,'>',DIR.FNAME.'.c' or die $!;
+  print OUT $cf;
+
+  close OUT;
+
+  open OUT,'>',DIR.FNAME.'.m' or die $!;
+  print OUT $mf;
+
+  close OUT;
+
+};
+
+# ---   *   ---   *   ---
+
+my @args=(
+  '-b',$ENV{'ARPATH'}.'/sin/'
+
+);
+
+avt::root $ENV{'ARPATH'};
+avt::wrcboil_h(
+
+  '/sin/',FNAME,
+  'IBN-3DILA',
+  \&generator,
+  \@args
+
+);
+
+# ---   *   ---   *   ---
+1; # ret
