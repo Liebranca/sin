@@ -36,11 +36,12 @@ typedef struct {
   int loc;
 
   // shader data bind locations
-  int shaders[SIN.shdp.shader_cnt];
-  int uniforms[SIN.shdp.uniform_cnt];
-  int ubos[SIN.shdp.ubo_cnt];
-  int ssbos[SIN.shdp.ssbo_cnt];
-  int samplers[SIN.shdp.sampler_cnt];
+  int shaders[NUM_SHADERS];
+  int attrs[NUM_ATTRS];
+  int uniforms[NUM_UNIFORMS];
+  int ubos[NUM_UBOS];
+  int ssbos[NUM_SSBOS];
+  int samplers[NUM_SAMPLERS];
 
   // placeholder!
   long flags;
@@ -56,7 +57,7 @@ typedef struct {
   int instances;
 
   // memory pool
-  PRGM slots[SIN.shdp.program_cnt];
+  PRGM slots[NUM_PROGRAMS];
 
   // index stack
   stk* stack;
@@ -66,13 +67,7 @@ typedef struct {
   int program_idex;
   int passed_idex;
 
-} SHMNG;static SHMNG mang={
-
-  .program=NULL,
-  .program_idex=SIN.shdp.program_cnt,
-  .passed_idex=SIN.shdp.program_cnt
-
-};
+} SHMNG;static SHMNG mang={0};
 
 // ---   *   ---   *   ---
 // fwdecls
@@ -84,8 +79,8 @@ typedef struct {
 
 void shdmnt(void) {
 
-  mang.stack=stknt(SIN.shdp.program_cnt);
-  for(int x=SIN.shdp.program_cnt-1;x>-1;x--) {
+  mang.stack=stknt(NUM_PROGRAMS);
+  for(int x=NUM_PROGRAMS-1;x>-1;x--) {
     stkpush(mang.stack,x);
 
   };
@@ -93,11 +88,11 @@ void shdmnt(void) {
 };void shdmdl(void) {
 
   // free programs
-  for(int i=0;i<SIN.shdp.program_cnt) {
+  for(int i=0;i<NUM_PROGRAMS;i++) {
     if(mang.slots[i].loc) {shddl(i);};
 
   // free mang mem
-  };sfree(&(mang.stack));
+  };sfree((void**) &(mang.stack));
 
 };
 
@@ -226,7 +221,7 @@ int shdnt(const SHDP* params) {
     };
 
     size_t sizes[]={
-      params->souce_v_sz,
+      params->source_v_sz,
       params->source_f_sz
 
     };
@@ -353,7 +348,7 @@ int shdnt(const SHDP* params) {
 
     );glUniform1i(
       program.samplers[texslot],
-      sampler_loc
+      texslot
 
     );
   };
@@ -401,7 +396,7 @@ void shddl(int idex) {
   };glDeleteProgram(program.loc);
 
   // free slot
-  stackpush(mang.stack,idex);
+  stkpush(mang.stack,idex);
   memset(&program,0,sizeof(PRGM));
 
   mang.instances--;

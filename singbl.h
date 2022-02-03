@@ -8,30 +8,35 @@ extern "C" {
 #include <stddef.h>
 
 // ---   *   ---   *   ---
-// global constants
+// shader settings defaults
 
-// assorted shader-param bounds
-typedef struct {
+#ifndef NUM_ATTRS
+#define NUM_ATTRS 8
+#endif
 
-  const size_t attr_cnt;
-  const size_t uniform_cnt;
-  const size_t ubo_cnt;
-  const size_t ssbo_cnt;
-  const size_t sampler_cnt;
+#ifndef NUM_UNIFORMS
+#define NUM_UNIFORMS 16
+#endif
 
-  const size_t shader_cnt;
-  const size_t program_cnt;
+#ifndef NUM_UBOS
+#define NUM_UBOS 4
+#endif
 
-} SINGBL_SHADER;
+#ifndef NUM_SSBOS
+#define NUM_SSBOS 4
+#endif
 
-// ---   *   ---   *   ---
+#ifndef NUM_SAMPLERS
+#define NUM_SAMPLERS 4
+#endif
 
-// effectively, a namespace/container for constants
-typedef struct {
+#ifndef NUM_SHADERS
+#define NUM_SHADERS 2
+#endif
 
-  const SINGBL_SHADER shdp;
-
-} SINGBL;extern const SINGBL SIN;
+#ifndef NUM_PROGRAMS
+#define NUM_PROGRAMS 16
+#endif
 
 // ---   *   ---   *   ---
 
