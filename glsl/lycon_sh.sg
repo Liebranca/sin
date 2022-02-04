@@ -1,0 +1,100 @@
+// ---   *   ---   *   ---
+// LYCON_SH
+// Raster font rendering
+//
+// LIBRE SOFTWARE
+// Licensed under GNU GPL3
+// be a bro and inherit
+//
+// CONTRIBUTORS
+// lyeb,
+// ---   *   ---   *   ---
+
+$:VERT;>
+
+#include <version>
+
+in vec4 Position;
+uniform vec4 Transform;
+
+layout(std140) uniform Palette {
+  vec4 color[16];
+
+} PAL;
+
+layout (std430, binding=1) buffer CharData {
+  flat uint i[2048];
+
+} CHR;
+
+// ---   *   ---   *   ---
+
+out vec2  texCoords;
+flat out uint  ch;
+flat out uint  show_ctl;
+
+out vec4 fg_col;
+out vec4 bg_col;
+
+// ---   *   ---   *   ---
+
+void main() {
+
+  float px=float(uint(Position.x)&1);
+  float py=float(uint(Position.y)&1);
+
+  gl_Position = vec4(
+    (px*Transform[0])+Position.z,
+
+    (py*Transform[1])+(Position.w-Transform[1]),
+    0, 1.0
+  );
+
+// ---   *   ---   *   ---
+
+  texCoords=vec2(px>0,py>0);
+  uint c_id=uint(Position.x)>>1;
+
+  ch=CHR.i[c_id];
+  fg_col=PAL.color[(ch>>8)&0xF];
+  bg_col=PAL.color[((ch>>8)&0xF0)>>4];
+
+  show_ctl=(ch>>16)&0x1;
+  ch=ch&0xFF;
+
+};
+
+// ---   *   ---   *   ---
+
+$:FRAG;>
+
+#include <version>
+#include <lycon>
+
+// ---   *   ---   *   ---
+
+void main() {
+
+  // stretch UVs for reasons
+  uint x = uint(texCoords.x*8);
+  uint y = uint(texCoords.y*8);
+
+  // manual texture fetch
+  uint i = x+(y*8);
+  uint z = uint(i > 31);
+  uint chidex = ch&0xFF;
+
+  i-=z*32;
+
+  // solve pixel alpha
+  bool r = bool(lycon[chidex][z]&(1<<i));
+  r=r&&(chidex>=show_ctl);
+
+  // apply foreground and background colors
+  vec4 col = vec4(fg_col.rgb,bg_col.w*float(r));
+  col.rgb += bg_col.rgb*float(col.w<0.04);
+  gl_FragColor=col;
+
+};
+
+// ---   *   ---   *   ---

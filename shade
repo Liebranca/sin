@@ -155,10 +155,31 @@ sub is_decl {
 
       $ref=$CACHE{'SAMPLERS'};
 
+    } else {
+      $line=~ s/(vec|mat|.*int|float).*\s+//;
+      $line=~ s/\;//;
+
+      $ref=$CACHE{'ATTRS'};
+
     };
 
-  } elsif(($line=~ m/out\s+/)
-    || ($line=~ m/flat\s+out\s+/)
+# ---   *   ---   *   ---
+
+  } elsif($line=~
+      m/uniform\s+(vec|mat|.*int|float).*\s+/
+
+  ) {
+      $line=~ s/uniform\s+//;
+      $line=~ s/(vec|mat|.*int|float).*\s+//;
+
+      $line=~ s/\;//;
+
+      $ref=$CACHE{'UNIFORMS'};
+
+# ---   *   ---   *   ---
+
+  } elsif($line=~
+    m/^(?!(?:layout))out|flat\s+out\s+/
 
   ) {
 
@@ -220,7 +241,7 @@ sub compch {
 
         # strip // comments
         # makes perfect sense to me!
-        $line=~ s/\/\/.*//;
+        $line=~ s/\s*\/\/.*//;
 
         if($line) {
 
@@ -285,7 +306,10 @@ sub compsg {
   my $name=$fname;
   $name=~ s/\.[\w|\d]*//;
 
-  my $out='';
+  my $out_to=0;
+
+  my @srcs=('','');
+  my @includes=('','');
 
 # ---   *   ---   *   ---
 
@@ -295,27 +319,31 @@ sub compsg {
     chomp $line;
 
     if($line eq '$:VERT;>') {
-      $out.='const char* vert_src[]={'."\n";
       $line='';
 
     } elsif($line eq '$:FRAG;>') {
-      $out.="};\n";
+      $out_to=1;
 
       my $ref=$CACHE{'FRAGINS'};
 
-      $out.='const char* frag_src[]={'."\n";
       while(@$ref) {
         my $item=shift @$ref;
-        $out.="\"$item\\n\"\n";
+        $item=~ s/\$/ /g;
+
+        $srcs[1].="\"$item\\n\"\n";
 
       };
 
       $line='';
 
     } elsif($line=~ m/\#include/) {
-      $line=parse_inc $line;
+      $includes[$out_to].=parse_inc $line;
+      $line='';
 
     } else {
+
+      # strip comments
+      $line=~ s/\s*\/\/.*//;
 
       is_decl $line;
 
@@ -324,13 +352,33 @@ sub compsg {
         : ''
         ;
 
-    };if($line) {$out.=$line;};
+    };if($line) {$srcs[$out_to].=$line;};
 
   };close SRC;
 
 # ---   *   ---   *   ---
 
-  $out.="};\nconst SHDP pr_$name={\n";
+  $srcs[0]=''.
+    'const char* vert_src[]={'."\n".
+    $includes[1].
+    $srcs[0].
+
+    "};\n"
+    ;
+
+  $srcs[1]=''.
+    'const char* frag_src[]={'."\n".
+    $includes[1].
+    $srcs[1].
+
+    "};\n"
+    ;
+
+  my $out=''.
+    $srcs[0].$srcs[1].
+    "};\nconst SHDP pr_$name={\n"
+    ;
+
   for my $ref(
     $CACHE{'ATTRS'},
     $CACHE{'UNIFORMS'},
