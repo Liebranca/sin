@@ -86,7 +86,7 @@ sub help {
 sub rdmeta {
 
   my $fwat=shift;
-  my ($src,$path)=avt::ffind "shblk.m";
+  my $src=avt::ffind "shblk.m";
   if(!$src) {exit;};
 
   my @meta=split "\n",`cat $src`;
@@ -300,7 +300,7 @@ sub compsg {
 
   my $fname=shift;
 
-  my ($src,$path)=avt::ffind $fname;
+  my $src=avt::ffind $fname;
   if(!$src) {exit;};
 
   my $name=$fname;

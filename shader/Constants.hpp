@@ -1,11 +1,10 @@
-#ifndef __SINGBL_H__
-#define __SINGBL_H__
+#ifndef __SHADER_CONSTANTS_H__
+#define __SHADER_CONSTANTS_H__
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+// ---   *   ---   *   ---
+// deps
 
-#include <stddef.h>
+  #include <stddef.h>
 
 // ---   *   ---   *   ---
 // shader settings defaults
@@ -40,8 +39,4 @@ extern "C" {
 
 // ---   *   ---   *   ---
 
-#ifdef __cplusplus
-};
-#endif
-
-#endif // __SINGBL_H__
+#endif // __SHADER_CONSTANTS_H__

@@ -1,0 +1,12 @@
+>sin render v0.01.0a
+
+*>CLASSES
+~ Program/Shader
+~ Texture
+~ ^ *.joj import
+
+~ Mesh
+~ ^ Vertex
+~ ^ Line
+~ ^ Poly
+~ ^ *.crk import
