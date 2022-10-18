@@ -1,4 +1,14 @@
 #!/usr/bin/perl
+# ---   *   ---   *   ---
+# SIN GL
+# GLSL preprocessor
+#
+# LIBRE SOFTWARE
+# Licensed under GNU GPL3
+# be a bro and inherit
+#
+# CONTRIBUTORS
+# lyeb,
 
 # ---   *   ---   *   ---
 # deps
@@ -218,7 +228,6 @@ sub get_extern($shader) {
 
     ) unless $found;
 
-    $branch=$found;
     $branch=~ s[\..+$][];
     $branch=~ s[/][_]sxmg;
 
@@ -299,16 +308,9 @@ sub make_src($name,$src) {
 
   unlink("./tmp_code.fmat");
 
-  # i love perl
-  $out=(join "\n",(
-
-    map {$ARG="    $ARG"}
-    (split $NEWLINE_RE,$out)
-
-  ));
-
   # spit it out
-  push @Out_Lines,"$out\n\n  )glsl\"\n";
+  push @Out_Lines,"$out\n\n  )glsl\";\n";
+  push @Out_Lines,"\n// ---   *   ---   *   ---\n\n";
 
 };
 
@@ -363,15 +365,15 @@ sub get_author() {
 
 sub obj_list($name,$fn) {
 
-  my @ar=map {q[  "].
+  my @ar=map {q[      "].
     $ARG->{leaves}->[-1]->{value}.
 
   q["]} $fn->();
 
   push @Out_Lines,
 
-    "    .$name={\n    ",
-    (join ",\n    ",@ar),
+    "    .$name={\n",
+    (join ",\n      ",@ar),
 
     "\n\n    },\n"
 
@@ -401,7 +403,6 @@ sub asm($name) {
   make_src($v_name,$Vert);
   make_src($f_name,$Frag);
 
-  push @Out_Lines,"\n// ---   *   ---   *   ---\n";
   push @Out_Lines,"  const Params $name={\n";
 
   src_list($v_name,'v');
@@ -420,7 +421,7 @@ sub asm($name) {
 # ---   *   ---   *   ---
 
   push @Out_Lines,"\n\n  };\n\n};\n";
-  push @Out_Lines,"\n// ---   *   ---   *   ---\n";
+  push @Out_Lines,"\n// ---   *   ---   *   ---\n\n";
 
 };
 
@@ -510,7 +511,15 @@ for my $fname(@Files) {
 # ---   *   ---   *   ---
 # spit it
 
-  my $out=join $NULLSTR,@Out_Lines;
+  my $out=join "\n",@Out_Lines;
+
+  $out=~ s[
+
+    \#ifdef \s+ __cplusplus
+    [^\#]+
+    \#endif
+
+  ][]sxmg;
 
   if($M->{echo} eq $NULL) {
     owc("$Out_Dir/$name.hpp",$out);
