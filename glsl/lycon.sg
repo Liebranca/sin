@@ -1,3 +1,8 @@
+$:VERT;>
+;
+
+$:FRAG;>
+
 const uint LYCON[256]={
 
   0x827C0028,0x70087082,0xADBD81FF,0xFF81BDB5,

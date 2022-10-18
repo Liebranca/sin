@@ -80,7 +80,7 @@ void main() {
 $:FRAG;>
 
 #include <version>
-#include <lycon>
+#include <glsl/lycon>
 
 // ---   *   ---   *   ---
 

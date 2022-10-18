@@ -14,12 +14,35 @@
   use Style;
   use Arstd::IO;
 
+  use Cli;
+
   use lib $ENV{'ARPATH'}.'/lib/';
 
   use Emit::Std;
+  use Emit::C;
 
   use Peso::Rd;
   use Lang::SinGL;
+
+# ---   *   ---   *   ---
+# info
+
+  our $VERSION = v0.02.0;
+  our $AUTHOR  = 'IBN-3DILA';
+
+# ---   *   ---   *   ---
+# command line
+
+  my $M=Cli->nit(
+
+    @{$Cli::Fstruct::ATTRS},
+
+    {id=>'inc',short=>'-I',argc=>1},
+    {id=>'out',short=>'-o',argc=>1},
+
+    {id=>'echo',short=>'-e',argc=>0},
+
+  );
 
 # ---   *   ---   *   ---
 # ROM
@@ -33,15 +56,15 @@
   my $LAYOUT_RE  = qr{^layout$}x;
   my $BUFFER_RE  = qr{^buffer$}x;
 
+  my $SAMPLER_RE = qr{^sampler}x;
+
 # ---   *   ---   *   ---
+# GBL
 
-my $Rd=Peso::Rd::parse(
-  Lang->SinGL,'./glsl/lycon_sh.sg'
+  my ($Rd,$Vert,$Frag,$Tree);
 
-);
-
-my ($Vert,$Frag)=Lang->SinGL->hier_sort($Rd);
-my $Tree=$Rd->select_block(-ROOT)->{tree};
+  my @Out_Lines=();
+  my %Out_Include=();
 
 # ---   *   ---   *   ---
 # shader attrs
@@ -87,7 +110,9 @@ sub get_program_uniforms() {
   my @branches=$Tree->branches_in($UNIFORM_RE);
 
   return grep {
-    @{$ARG->{leaves}}>0
+
+     @{$ARG->{leaves}}>0
+  && !defined $ARG->branch_in($SAMPLER_RE)
 
   } @branches;
 
@@ -127,8 +152,14 @@ sub get_program_ssbos() {
 
 sub get_frag_samplers() {
 
-  state $re=qr{^sampler}x;
-  return $Frag->branches_in($re);
+  my @branches=$Frag->branches_in($UNIFORM_RE);
+
+  return grep {
+
+     @{$ARG->{leaves}}>0
+  && defined $ARG->branch_in($SAMPLER_RE)
+
+  } @branches;
 
 };
 
@@ -140,13 +171,70 @@ sub get_extern($shader) {
   my @branches=$shader->branches_in($EXTERN_RE);
 
   for my $branch(@branches) {
+
     $branch=$branch->{value};
     $branch=~ s[$EXTERN_RE][$1];
+
     chomp $branch;
+
+    if($branch eq 'version') {
+      next;
+
+    };
+
+# ---   *   ---   *   ---
+# get header for include in out file
+
+    my $header=$branch;
+    $header=~ s[/][_]sxmg;
+
+    my $found=Shb7::ffind("$header",'hpp');
+
+    errout(
+      q[Header file not found for <%s>],
+
+      args=>[$header],
+      lvl=>$AR_FATAL
+
+    ) unless $found;
+
+    if(!exists $Out_Include{$found}) {
+
+      $found="\"$found\"";
+      $Out_Include{$found}=1;
+
+    };
+
+# ---   *   ---   *   ---
+# get real name of shader
+
+    $found=Shb7::ffind("$branch",'sg');
+
+    errout(
+      q[Shader file not found for <%s>],
+
+      args=>[$branch],
+      lvl=>$AR_FATAL
+
+    ) unless $found;
+
+    $branch=$found;
+    $branch=~ s[\..+$][];
+    $branch=~ s[/][_]sxmg;
+
+# ---   *   ---   *   ---
 
   };
 
-  return map {'      shader::'."$ARG"} @branches;
+  my $ext=($shader==$Frag)
+    ? '_frag'
+    : '_vert'
+    ;
+
+  return map {
+    '      shader::'."$ARG".$ext
+
+  } @branches;
 
 };
 
@@ -157,7 +245,7 @@ sub make_src($name,$src) {
 
   state $vauth_re=qr{^(?:VERSION|AUTHOR)$};
 
-  say "  const char* $name=R\"glsl(";
+  push @Out_Lines,"  const char* $name=R\"glsl(";
 
   my $out     = $NULLSTR;
   my @pending = @{$src->{leaves}};
@@ -220,7 +308,7 @@ sub make_src($name,$src) {
   ));
 
   # spit it out
-  say "$out\n\n  )glsl\"\n";
+  push @Out_Lines,"$out\n\n  )glsl\"\n";
 
 };
 
@@ -234,7 +322,7 @@ sub src_list($name,$type) {
   my @sources=get_extern($tree);
   push @sources,"      $name";
 
-  say
+  push @Out_Lines,
 
     "    .source_$type={\n",
     (join ",\n",@sources),
@@ -243,7 +331,12 @@ sub src_list($name,$type) {
 
   ;
 
-  say "    .source_${type}_sz=".int(@sources).",\n";
+  push @Out_Lines,
+
+    "    .source_${type}_sz=".
+    int(@sources).",\n"
+
+  ;
 
 };
 
@@ -275,7 +368,7 @@ sub obj_list($name,$fn) {
 
   q["]} $fn->();
 
-  say
+  push @Out_Lines,
 
     "    .$name={\n    ",
     (join ",\n    ",@ar),
@@ -284,7 +377,12 @@ sub obj_list($name,$fn) {
 
   ;
 
-  say "    .num_$name=".int(@ar).",\n";
+  push @Out_Lines,
+
+    "    .num_$name=".
+    int(@ar).",\n"
+
+  ;
 
 };
 
@@ -298,37 +396,131 @@ sub asm($name) {
   my $v_name="${name}_vert";
   my $f_name="${name}_frag";
 
-  say Emit::Std::note(get_author(),'//');
-
-  say "namespace shader {\n";
+  push @Out_Lines,"namespace shader {\n";
 
   make_src($v_name,$Vert);
   make_src($f_name,$Frag);
 
-  say "\n// ---   *   ---   *   ---\n";
-  say "  const Params $name={\n";
+  push @Out_Lines,"\n// ---   *   ---   *   ---\n";
+  push @Out_Lines,"  const Params $name={\n";
 
   src_list($v_name,'v');
   src_list($f_name,'f');
 
 # ---   *   ---   *   ---
 
-  obj_list('attrs',   \&get_vert_inputs);
+  obj_list('attrs',\&get_vert_inputs);
 
   obj_list('uniforms',\&get_program_uniforms);
-  obj_list('ubos',    \&get_program_ubos);
-  obj_list('ssbos',   \&get_program_ssbos);
+  obj_list('ubos',\&get_program_ubos);
+  obj_list('ssbos',\&get_program_ssbos);
 
-  obj_list('ssbos',   \&get_frag_samplers);
+  obj_list('samplers',\&get_frag_samplers);
 
 # ---   *   ---   *   ---
 
-  say "\n\n  };\n\n};\n";
-  say "\n// ---   *   ---   *   ---\n";
+  push @Out_Lines,"\n\n  };\n\n};\n";
+  push @Out_Lines,"\n// ---   *   ---   *   ---\n";
 
 };
 
-asm("sh");
+# ---   *   ---   *   ---
+# get command line args
+
+my @Files=Cli::Fstruct::proto_search($M);
+
+# get path
+my @Includes=($M->{inc} ne $NULL)
+  ? split $COMMA_RE,$M->{inc}
+  : ()
+  ;
+
+# ^set
+Shb7::stinc(
+  $ENV{'ARPATH'}.'/sin/',
+  $ENV{'ARPATH'}.'/sin/glsl/',
+  $ENV{'ARPATH'}.'/sin/glsl/blocks/',
+
+  @Includes
+
+);
+
+# ---   *   ---   *   ---
+# get output dir
+
+my $Out_Dir=($M->{out} ne $NULL)
+  ? $M->{out}
+  : glob('./')
+  ;
+
+# ^catch
+errout(
+
+  q[Not a directory: %s],
+
+  args=>[$Out_Dir],
+  lvl=>$AR_FATAL
+
+) unless -d $Out_Dir;
+
+# ---   *   ---   *   ---
+# main loop
+
+for my $fname(@Files) {
+
+  $Rd=Peso::Rd::parse(
+    Lang->SinGL,$fname
+
+  );
+
+  ($Vert,$Frag)=Lang->SinGL->hier_sort($Rd);
+  $Tree=$Rd->select_block(-ROOT)->{tree};
+
+  my $name=$fname;
+  $name=~ s[\..+$][];
+  $name=~ s[/][_]sxmg;
+
+  asm($name);
+
+# ---   *   ---   *   ---
+# create hpp file
+
+  my %O=(
+
+    add_guards=>1,
+
+    include=>[
+      '"sin/shader/Params.hpp"',
+      keys %Out_Include
+
+    ],
+
+    define=>[],
+
+    author=>get_author(),
+
+  );
+
+  unshift @Out_Lines,
+    Emit::C->boiler_open($name,%O);
+
+  push @Out_Lines,
+    Emit::C->boiler_close($name,%O);
+
+# ---   *   ---   *   ---
+# spit it
+
+  my $out=join $NULLSTR,@Out_Lines;
+
+  if($M->{echo} eq $NULL) {
+    owc("$Out_Dir/$name.hpp",$out);
+
+  } else {
+    say $out;
+
+  };
+
+};
 
 # ---   *   ---   *   ---
 1; # ret

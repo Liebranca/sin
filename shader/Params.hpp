@@ -12,6 +12,8 @@
 
 namespace shader {
 
+  const char* version="#version 460\n";
+
   typedef struct {
 
     const char**    source_v;
