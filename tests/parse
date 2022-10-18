@@ -10,7 +10,9 @@
   use English qw(-no_match_vars);
 
   use lib $ENV{'ARPATH'}.'/lib/sys/';
+
   use Style;
+  use Arstd::IO;
 
   use lib $ENV{'ARPATH'}.'/lib/';
 
@@ -20,18 +22,26 @@
   use Lang::SinGL;
 
 # ---   *   ---   *   ---
+# ROM
 
-my $rd=Peso::Rd::parse(
+  my $EXTERN_RE=qr{^\s*\#include\s+
+    <([^>]+)>
+
+  $}x;
+
+  my $UNIFORM_RE = qr{^uniform$}x;
+  my $LAYOUT_RE  = qr{^layout$}x;
+  my $BUFFER_RE  = qr{^buffer$}x;
+
+# ---   *   ---   *   ---
+
+my $Rd=Peso::Rd::parse(
   Lang->SinGL,'./glsl/lycon_sh.sg'
 
 );
 
-my ($vert,$frag)=Lang->SinGL->hier_sort($rd);
-
-my $EXTERN_RE=qr{^\s*\#include\s+
-  <([^>]+)>
-
-$}x;
+my ($Vert,$Frag)=Lang->SinGL->hier_sort($Rd);
+my $Tree=$Rd->select_block(-ROOT)->{tree};
 
 # ---   *   ---   *   ---
 # shader attrs
@@ -39,7 +49,7 @@ $}x;
 sub get_vert_inputs() {
 
   state $re=qr{^in$}x;
-  return $vert->branches_in($re);
+  return $Vert->branches_in($re);
 
 };
 
@@ -48,8 +58,77 @@ sub get_vert_inputs() {
 
 sub get_vert_outputs() {
 
-  state $re=qr{^((flat \s out)|out)$}x;
-  return $vert->branches_in($re);
+  state $f_re=qr{^((flat \s out)|out)$}x;
+  state $o_re=qr{out}x;
+
+  my @branches=$Vert->branches_in($f_re);
+
+  for my $branch(reverse @branches) {
+
+    my $cpy=$branch->dup();
+
+    $cpy->deep_value_repl($o_re,'in');
+    $Frag->insert(0,'blank');
+    $cpy->insert(int(@{$cpy->{leaves}}),';');
+
+    $Frag->{leaves}->[0]->repl($cpy);
+
+  };
+
+  return @branches;
+
+};
+
+# ---   *   ---   *   ---
+# get uniforms cross-shader
+
+sub get_program_uniforms() {
+
+  my @branches=$Tree->branches_in($UNIFORM_RE);
+
+  return grep {
+    @{$ARG->{leaves}}>0
+
+  } @branches;
+
+};
+
+# ---   *   ---   *   ---
+# ^ubos
+
+sub get_program_ubos() {
+
+  my @branches=$Tree->branches_in($LAYOUT_RE);
+
+  return grep {
+    defined $ARG->branch_in($UNIFORM_RE)
+
+  } @branches;
+
+};
+
+# ---   *   ---   *   ---
+# ^ssbos
+
+sub get_program_ssbos() {
+
+  my @branches=$Tree->branches_in($LAYOUT_RE);
+
+  return grep {
+    defined $ARG->branch_in($BUFFER_RE)
+
+  } @branches;
+
+};
+
+# ---   *   ---   *   ---
+# get samplers from fragment shader
+# NOTE: untested!
+
+sub get_frag_samplers() {
+
+  state $re=qr{^sampler}x;
+  return $Frag->branches_in($re);
 
 };
 
@@ -76,10 +155,72 @@ sub get_extern($shader) {
 
 sub make_src($name,$src) {
 
-  say "  const char* $name=R\"glsl(";
-  say $src;
+  state $vauth_re=qr{^(?:VERSION|AUTHOR)$};
 
-  say "  )glsl\"\n";
+  say "  const char* $name=R\"glsl(";
+
+  my $out     = $NULLSTR;
+  my @pending = @{$src->{leaves}};
+
+  while(@pending) {
+
+    my $branch=shift @pending;
+
+# ---   *   ---   *   ---
+# strip #include directive
+
+    if($branch->{value}=~ $EXTERN_RE) {
+      next;
+
+# ---   *   ---   *   ---
+# strip version and author directives
+
+    } elsif($branch->{value}=~ $vauth_re) {
+
+      while(
+
+          @pending
+      &&  $pending[0]->{value} ne ';'
+
+      ) {shift @pending};
+
+      shift @pending;next;
+
+    };
+
+# ---   *   ---   *   ---
+# convert tree branch to text
+
+    my $code=$branch->to_string(
+      keep_root=>1
+
+    );
+
+    $out.='    '.$code;
+
+# ---   *   ---   *   ---
+# apply formatting
+# yes.
+
+  };
+
+  owc("./tmp_code.fmat",$out);
+
+  my $call = $ENV{'ARPATH'}.'/bitter/bin/fmat';
+  $out     = `$call "./tmp_code.fmat"`;
+
+  unlink("./tmp_code.fmat");
+
+  # i love perl
+  $out=(join "\n",(
+
+    map {$ARG="    $ARG"}
+    (split $NEWLINE_RE,$out)
+
+  ));
+
+  # spit it out
+  say "$out\n\n  )glsl\"\n";
 
 };
 
@@ -88,7 +229,7 @@ sub make_src($name,$src) {
 
 sub src_list($name,$type) {
 
-  my $tree=($type eq 'v') ? $vert : $frag;
+  my $tree=($type eq 'v') ? $Vert : $Frag;
 
   my @sources=get_extern($tree);
   push @sources,"      $name";
@@ -112,7 +253,7 @@ sub src_list($name,$type) {
 sub get_author() {
 
   my $out='ANON';
-  my $b=$vert->branch_in(qr{^AUTHOR$});
+  my $b=$Vert->branch_in(qr{^AUTHOR$});
 
   if($b) {
     $out=$b->{leaves}->[-1]->{value};
@@ -125,9 +266,34 @@ sub get_author() {
 };
 
 # ---   *   ---   *   ---
+# generic attr list
+
+sub obj_list($name,$fn) {
+
+  my @ar=map {q[  "].
+    $ARG->{leaves}->[-1]->{value}.
+
+  q["]} $fn->();
+
+  say
+
+    "    .$name={\n    ",
+    (join ",\n    ",@ar),
+
+    "\n\n    },\n"
+
+  ;
+
+  say "    .num_$name=".int(@ar).",\n";
+
+};
+
+# ---   *   ---   *   ---
 # assemble shader params
 
 sub asm($name) {
+
+  get_vert_outputs();
 
   my $v_name="${name}_vert";
   my $f_name="${name}_frag";
@@ -136,8 +302,8 @@ sub asm($name) {
 
   say "namespace shader {\n";
 
-  make_src($v_name,$NULLSTR);
-  make_src($f_name,$NULLSTR);
+  make_src($v_name,$Vert);
+  make_src($f_name,$Frag);
 
   say "\n// ---   *   ---   *   ---\n";
   say "  const Params $name={\n";
@@ -147,21 +313,13 @@ sub asm($name) {
 
 # ---   *   ---   *   ---
 
-  my @attr_names=map {q[  "].
-    $ARG->{leaves}->[-1]->{value}.
+  obj_list('attrs',   \&get_vert_inputs);
 
-  q["]} get_vert_inputs();
+  obj_list('uniforms',\&get_program_uniforms);
+  obj_list('ubos',    \&get_program_ubos);
+  obj_list('ssbos',   \&get_program_ssbos);
 
-  say
-
-    "    .attrs={\n    ",
-    (join ",\n    ",@attr_names),
-
-    "\n\n    },\n"
-
-  ;
-
-  say "    .num_attrs=".int(@attr_names).",";
+  obj_list('ssbos',   \&get_frag_samplers);
 
 # ---   *   ---   *   ---
 
