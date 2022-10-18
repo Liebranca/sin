@@ -1,0 +1,176 @@
+#!/usr/bin/perl
+
+# ---   *   ---   *   ---
+# deps
+
+  use v5.36.0;
+  use strict;
+  use warnings;
+
+  use English qw(-no_match_vars);
+
+  use lib $ENV{'ARPATH'}.'/lib/sys/';
+  use Style;
+
+  use lib $ENV{'ARPATH'}.'/lib/';
+
+  use Emit::Std;
+
+  use Peso::Rd;
+  use Lang::SinGL;
+
+# ---   *   ---   *   ---
+
+my $rd=Peso::Rd::parse(
+  Lang->SinGL,'./glsl/lycon_sh.sg'
+
+);
+
+my ($vert,$frag)=Lang->SinGL->hier_sort($rd);
+
+my $EXTERN_RE=qr{^\s*\#include\s+
+  <([^>]+)>
+
+$}x;
+
+# ---   *   ---   *   ---
+# shader attrs
+
+sub get_vert_inputs() {
+
+  state $re=qr{^in$}x;
+  return $vert->branches_in($re);
+
+};
+
+# ---   *   ---   *   ---
+# vert out to frag in
+
+sub get_vert_outputs() {
+
+  state $re=qr{^((flat \s out)|out)$}x;
+  return $vert->branches_in($re);
+
+};
+
+# ---   *   ---   *   ---
+# get list of external sources
+
+sub get_extern($shader) {
+
+  my @branches=$shader->branches_in($EXTERN_RE);
+
+  for my $branch(@branches) {
+    $branch=$branch->{value};
+    $branch=~ s[$EXTERN_RE][$1];
+    chomp $branch;
+
+  };
+
+  return map {'      shader::'."$ARG"} @branches;
+
+};
+
+# ---   *   ---   *   ---
+# writes out tree to C++ raw string
+
+sub make_src($name,$src) {
+
+  say "  const char* $name=R\"glsl(";
+  say $src;
+
+  say "  )glsl\"\n";
+
+};
+
+# ---   *   ---   *   ---
+# makes list of source strings
+
+sub src_list($name,$type) {
+
+  my $tree=($type eq 'v') ? $vert : $frag;
+
+  my @sources=get_extern($tree);
+  push @sources,"      $name";
+
+  say
+
+    "    .source_$type={\n",
+    (join ",\n",@sources),
+
+    "\n\n    },\n"
+
+  ;
+
+  say "    .source_${type}_sz=".int(@sources).",\n";
+
+};
+
+# ---   *   ---   *   ---
+# gets AUTHOR field of sin shader
+
+sub get_author() {
+
+  my $out='ANON';
+  my $b=$vert->branch_in(qr{^AUTHOR$});
+
+  if($b) {
+    $out=$b->{leaves}->[-1]->{value};
+    $out=~ s["][]sxgm;
+
+  };
+
+  return $out;
+
+};
+
+# ---   *   ---   *   ---
+# assemble shader params
+
+sub asm($name) {
+
+  my $v_name="${name}_vert";
+  my $f_name="${name}_frag";
+
+  say Emit::Std::note(get_author(),'//');
+
+  say "namespace shader {\n";
+
+  make_src($v_name,$NULLSTR);
+  make_src($f_name,$NULLSTR);
+
+  say "\n// ---   *   ---   *   ---\n";
+  say "  const Params $name={\n";
+
+  src_list($v_name,'v');
+  src_list($f_name,'f');
+
+# ---   *   ---   *   ---
+
+  my @attr_names=map {q[  "].
+    $ARG->{leaves}->[-1]->{value}.
+
+  q["]} get_vert_inputs();
+
+  say
+
+    "    .attrs={\n    ",
+    (join ",\n    ",@attr_names),
+
+    "\n\n    },\n"
+
+  ;
+
+  say "    .num_attrs=".int(@attr_names).",";
+
+# ---   *   ---   *   ---
+
+  say "\n\n  };\n\n};\n";
+  say "\n// ---   *   ---   *   ---\n";
+
+};
+
+asm("sh");
+
+# ---   *   ---   *   ---
+1; # ret

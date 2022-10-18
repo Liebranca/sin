@@ -12,7 +12,18 @@
 
 $:VERT;>
 
-#include <version>
+// ---   *   ---   *   ---
+// deps
+
+  #include <version>
+
+// ---   *   ---   *   ---
+// info
+
+  VERSION   v1.00.0;
+  AUTHOR    "IBN-3DILA";
+
+// ---   *   ---   *   ---
 
 in vec4 Position;
 uniform vec4 Transform;
