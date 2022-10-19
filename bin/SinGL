@@ -37,7 +37,7 @@
 # ---   *   ---   *   ---
 # info
 
-  our $VERSION = v0.02.0;
+  our $VERSION = v0.03.0;
   our $AUTHOR  = 'IBN-3DILA';
 
 # ---   *   ---   *   ---
@@ -306,12 +306,15 @@ sub make_src($name,$src) {
 
   };
 
-  owc("./tmp_code.fmat",$out);
+  if(length $out) {
+    owc("./tmp_code.fmat",$out);
 
-  my $call = $ENV{'ARPATH'}.'/bitter/bin/fmat';
-  $out     = `$call "./tmp_code.fmat"`;
+    my $call = $ENV{'ARPATH'}.'/bitter/bin/fmat';
+    $out     = `$call "./tmp_code.fmat"`;
 
-  unlink("./tmp_code.fmat");
+    unlink("./tmp_code.fmat");
+
+  };
 
   # spit it out
   push @Out_Lines,"$out\n\n  )glsl\";\n";
@@ -334,14 +337,14 @@ sub src_list($name,$type) {
     "    .source_$type={\n",
     (join ",\n",@sources),
 
-    "\n\n    },\n"
+    "    },"
 
   ;
 
   push @Out_Lines,
 
     "    .source_${type}_sz=".
-    int(@sources).",\n"
+    int(@sources).","
 
   ;
 
@@ -356,7 +359,18 @@ sub get_author() {
   my $b=$Vert->branch_in(qr{^AUTHOR$});
 
   if($b) {
-    $out=$b->{leaves}->[-1]->{value};
+
+    if(!@{$b->{leaves}}) {
+      $out=$b->{parent}->{leaves}->[
+        $b->{idex}+1
+
+      ]->{value};
+
+    } else {
+      $out=$b->{leaves}->[-1]->{value};
+
+    };
+
     $out=~ s["][]sxgm;
 
   };
@@ -380,14 +394,14 @@ sub obj_list($name,$fn) {
     "    .$name={\n",
     (join ",\n      ",@ar),
 
-    "\n\n    },\n"
+    "    },"
 
   ;
 
   push @Out_Lines,
 
     "    .num_$name=".
-    int(@ar).",\n"
+    int(@ar).","
 
   ;
 
@@ -404,12 +418,12 @@ sub asm($name,$path) {
   my $f_name="${name}_frag";
 
   push @Out_Lines,
-    'namespace shader::'.$path." {\n";
+    'namespace shader::'.$path." {";
 
   make_src($v_name,$Vert);
   make_src($f_name,$Frag);
 
-  push @Out_Lines,"  const Params $name={\n";
+  push @Out_Lines,"  const Params $name={";
 
   src_list($v_name,'v');
   src_list($f_name,'f');
@@ -426,8 +440,8 @@ sub asm($name,$path) {
 
 # ---   *   ---   *   ---
 
-  push @Out_Lines,"\n\n  };\n\n};\n";
-  push @Out_Lines,"\n// ---   *   ---   *   ---\n\n";
+  push @Out_Lines,"  };\n};\n";
+  push @Out_Lines,"\n// ---   *   ---   *   ---\n";
 
 };
 
@@ -477,6 +491,25 @@ for my $fname(@Files) {
 
   );
 
+  # set the siggy for later ;>
+  my $v=(sprintf 'v%vd',$VERSION);
+  my @v=split m[\.],$v;
+
+  $v[1]='0'.$v[1] if length $v[1]==1;
+  $v[2]='0'.$v[2] if length $v[2]==1;
+
+  $v=join q[.],@v;
+
+  my @sig=(
+    "// SinGL $v",
+    "// file assembled from $fname"
+
+  );
+
+# ---   *   ---   *   ---
+
+  $fname=~ s[src/][];
+
   ($Vert,$Frag)=Lang->SinGL->hier_sort($Rd);
   $Tree=$Rd->select_block(-ROOT)->{tree};
 
@@ -489,16 +522,17 @@ for my $fname(@Files) {
   $name=(split m[/],$name)[-1];
 
   asm($name,$path);
-  unshift @Out_Lines,
-    '// SinGL assembled from '.$fname;
 
 # ---   *   ---   *   ---
+# make structs from input blocks
 
   my @structs=(
     get_program_ubos(),
     get_program_ssbos()
 
   );
+
+  goto MAKE_HEADER if !@structs;
 
   push @Out_Lines,
     'namespace shader::'.$path."::st {";
@@ -527,6 +561,8 @@ for my $fname(@Files) {
 # ---   *   ---   *   ---
 # create hpp file
 
+MAKE_HEADER:
+
   my %O=(
 
     add_guards=>1,
@@ -549,6 +585,9 @@ for my $fname(@Files) {
   push @Out_Lines,
     Emit::C->boiler_close($name,%O);
 
+  # remind the user who's daddy
+  unshift @Out_Lines,@sig;
+
 # ---   *   ---   *   ---
 # spit it
 
@@ -569,6 +608,10 @@ for my $fname(@Files) {
     say $out;
 
   };
+
+  # flush
+  @Out_Lines=();
+  %Out_Include=();
 
 };
 

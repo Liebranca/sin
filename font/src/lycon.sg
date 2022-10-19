@@ -1,5 +1,15 @@
+// ---   *   ---   *   ---
+// one-bit per pixel 8x8 bmp
+
+// ---   *   ---   *   ---
+// info
+
 $:VERT;>
-;
+
+  AUTHOR    "IBN-3DILA";
+  VERSION   v1.00.0;
+
+// ---   *   ---   *   ---
 
 $:FRAG;>
 
@@ -71,3 +81,5 @@ const uint LYCON[256]={
   0x1E1F1F0E,0x38785818,0x7E766646,0x4666767E
 
 };
+
+// ---   *   ---   *   ---
