@@ -13,4 +13,4 @@
 
 *>SinGL
 x Fix dependency paths and name conversion
-~ Transcribing shader structs from glsl to C
+x Transcribing shader structs from glsl to C

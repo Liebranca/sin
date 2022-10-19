@@ -196,8 +196,6 @@ sub get_extern($shader) {
 # get header for include in out file
 
     my $header=$branch;
-    $header=~ s[/][_]sxmg;
-
     my $found=Shb7::ffind("$header",'hpp');
 
     errout(
@@ -210,7 +208,9 @@ sub get_extern($shader) {
 
     if(!exists $Out_Include{$found}) {
 
+      $found=Shb7::shpath($found);
       $found="\"$found\"";
+
       $Out_Include{$found}=1;
 
     };
@@ -218,7 +218,12 @@ sub get_extern($shader) {
 # ---   *   ---   *   ---
 # get real name of shader
 
-    $found=Shb7::ffind("$branch",'sg');
+    my @path=split m[/],$branch;
+    my $name=pop @path;
+
+    push @path,'src',$name;
+
+    $found=Shb7::ffind((join q[/],@path),'sg');
 
     errout(
       q[Shader file not found for <%s>],
@@ -229,7 +234,7 @@ sub get_extern($shader) {
     ) unless $found;
 
     $branch=~ s[\..+$][];
-    $branch=~ s[/][_]sxmg;
+    $branch=~ s[/][::]sxmg;
 
 # ---   *   ---   *   ---
 
@@ -391,14 +396,15 @@ sub obj_list($name,$fn) {
 # ---   *   ---   *   ---
 # assemble shader params
 
-sub asm($name) {
+sub asm($name,$path) {
 
   get_vert_outputs();
 
   my $v_name="${name}_vert";
   my $f_name="${name}_frag";
 
-  push @Out_Lines,"namespace shader {\n";
+  push @Out_Lines,
+    'namespace shader::'.$path." {\n";
 
   make_src($v_name,$Vert);
   make_src($f_name,$Frag);
@@ -439,9 +445,6 @@ my @Includes=($M->{inc} ne $NULL)
 # ^set
 Shb7::stinc(
   $ENV{'ARPATH'}.'/sin/',
-  $ENV{'ARPATH'}.'/sin/glsl/',
-  $ENV{'ARPATH'}.'/sin/glsl/blocks/',
-
   @Includes
 
 );
@@ -477,11 +480,49 @@ for my $fname(@Files) {
   ($Vert,$Frag)=Lang->SinGL->hier_sort($Rd);
   $Tree=$Rd->select_block(-ROOT)->{tree};
 
+  my $path=$fname;
+  $path=~ s[\..+$][];
+  $path=~ s[/][::]sxmg;
+
   my $name=$fname;
   $name=~ s[\..+$][];
-  $name=~ s[/][_]sxmg;
+  $name=(split m[/],$name)[-1];
 
-  asm($name);
+  asm($name,$path);
+  unshift @Out_Lines,
+    '// SinGL assembled from '.$fname;
+
+# ---   *   ---   *   ---
+
+  my @structs=(
+    get_program_ubos(),
+    get_program_ssbos()
+
+  );
+
+  push @Out_Lines,
+    'namespace shader::'.$path."::st {";
+
+  for my $s(@structs) {
+
+    $s->{value}='typedef struct';
+    for my $leaf(@{$s->{leaves}}) {
+      last if $leaf->{value} eq '{';
+
+      $s->pluck($leaf);
+
+    };
+
+    $s->deep_value_repl(qr{^flat$},$NULLSTR);
+    $s->deep_value_repl(qr{^uint$},'uint32_t');
+    $s->deep_value_repl(qr{^int$},'int32_t');
+
+    push @Out_Lines,
+      $s->to_string(keep_root=>1).';';
+
+  };
+
+  push @Out_Lines, "}";
 
 # ---   *   ---   *   ---
 # create hpp file
