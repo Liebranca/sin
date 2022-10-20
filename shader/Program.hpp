@@ -112,6 +112,11 @@ public:
 
   };
 
+  inline uint32_t get_uniform(uint32_t idex) {
+    return m_uniforms[idex];
+
+  };
+
 };
 
 // glUseProgram wrapper

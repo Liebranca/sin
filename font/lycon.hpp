@@ -31,17 +31,6 @@
 
 
 namespace shader::font {
-  const char* lycon_vert=R"glsl(
-;
-
-
-
-  )glsl";
-
-
-// ---   *   ---   *   ---
-
-
   const char* lycon_frag=R"glsl(
 const uint LYCON[256]=
   { 0x827C0028,0x70087082,0xADBD81FF,0xFF81BDB5,
@@ -96,17 +85,13 @@ const uint LYCON[256]=
 // ---   *   ---   *   ---
 
 
-  const char* _DULL_SYNTAX_v_lycon_vert[]={
-      lycon_vert
-  };
-
   const char* _DULL_SYNTAX_f_lycon_frag[]={
       lycon_frag
   };
 
   const Params lycon={
-    .source_v=_DULL_SYNTAX_v_lycon_vert,
-    .source_v_sz=1,
+    .source_v=NULL,
+    .source_v_sz=0,
     .source_f=_DULL_SYNTAX_f_lycon_frag,
     .source_f_sz=1,
     .attrs={

@@ -37,7 +37,7 @@
 # ---   *   ---   *   ---
 # info
 
-  our $VERSION = v0.03.1;
+  our $VERSION = v0.03.2;
   our $AUTHOR  = 'IBN-3DILA';
 
 # ---   *   ---   *   ---
@@ -75,6 +75,7 @@
 
   my @Out_Lines=();
   my %Out_Include=();
+  my %Out_Source=();
 
 # ---   *   ---   *   ---
 # shader attrs
@@ -259,8 +260,6 @@ sub make_src($name,$src) {
 
   state $vauth_re=qr{^(?:VERSION|AUTHOR)$};
 
-  push @Out_Lines,"  const char* $name=R\"glsl(";
-
   my $out     = $NULLSTR;
   my @pending = @{$src->{leaves}};
 
@@ -301,24 +300,30 @@ sub make_src($name,$src) {
     $out.='    '.$code;
 
 # ---   *   ---   *   ---
-# apply formatting
-# yes.
 
   };
 
   if(length $out) {
+
+    push @Out_Lines,"  const char* $name=R\"glsl(";
+
+    # make tmpfile
     owc("./tmp_code.fmat",$out);
 
+    # ^apply formatting
     my $call = $ENV{'ARPATH'}.'/bitter/bin/fmat';
     $out     = `$call "./tmp_code.fmat"`;
 
+    # remove tmp
     unlink("./tmp_code.fmat");
 
-  };
+    push @Out_Lines,"$out\n\n  )glsl\";\n";
+    push @Out_Lines,
+      "\n// ---   *   ---   *   ---\n\n";
 
-  # spit it out
-  push @Out_Lines,"$out\n\n  )glsl\";\n";
-  push @Out_Lines,"\n// ---   *   ---   *   ---\n\n";
+    $Out_Source{$name}=1;
+
+  };
 
 };
 
@@ -332,22 +337,36 @@ sub src_list($name,$type) {
   my $GENIUS="_DULL_SYNTAX_${type}_${name}";
   my @sources=get_extern($tree);
 
-  push @sources,"      $name";
-  push @Out_Lines,
+  my $out=$NULLSTR;
 
-    "  const char* ${GENIUS}[]={",
-    (join ",\n",@sources),
+  if($Out_Source{$name}) {
+    push @sources,"      $name";
+    push @Out_Lines,
 
-    "  };\n"
+      "  const char* ${GENIUS}[]={",
+      (join ",\n",@sources),
 
-  ;
+      "  };\n"
 
-  return
+    ;
 
-    "    .source_$type=$GENIUS,\n".
-    "    .source_${type}_sz=".int(@sources).","
+    $out=
+      "    .source_$type=$GENIUS,\n".
+      "    .source_${type}_sz=".int(@sources).","
 
-  ;
+    ;
+
+  } else {
+
+    $out=
+      "    .source_$type=NULL,\n".
+      "    .source_${type}_sz=0,"
+
+    ;
+
+  };
+
+  return $out;
 
 };
 
@@ -563,6 +582,7 @@ for my $fname(@Files) {
     $s->deep_value_repl(qr{^flat$},$NULLSTR);
     $s->deep_value_repl(qr{^uint$},'uint32_t');
     $s->deep_value_repl(qr{^int$},'int32_t');
+    $s->deep_value_repl(qr{^vec4$},'glm::vec4');
 
     push @Out_Lines,
       $s->to_string(keep_root=>1).';';
@@ -582,7 +602,7 @@ MAKE_HEADER:
 
     include=>[
 
-      '"bitter/kvrnel/Vec.hpp"',
+      '<glm/vec4.hpp>',
       '"sin/shader/Params.hpp"',
 
       keys %Out_Include

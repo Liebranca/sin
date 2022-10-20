@@ -1,0 +1,61 @@
+// ---   *   ---   *   ---
+// SOLID
+// Basic color shader
+//
+// LIBRE SOFTWARE
+// Licensed under GNU GPL3
+// be a bro and inherit
+//
+// CONTRIBUTORS
+// lyeb,
+
+// ---   *   ---   *   ---
+// info
+
+$:VERT;>
+
+  VERSION   v0.00.1b;
+  AUTHOR    "IBN-3DILA";
+
+// ---   *   ---   *   ---
+// deps
+
+  #include <version>
+  ;
+
+// ---   *   ---   *   ---
+// inputs
+
+  in vec4 Position;
+
+  uniform mat4 Model;
+  uniform mat4 View;
+
+// ---   *   ---   *   ---
+
+void main(void) {
+  gl_Position=(Model*Position)*View;
+
+};
+
+// ---   *   ---   *   ---
+// deps
+
+$:FRAG;>
+
+  #include <version>
+  ;
+
+// ---   *   ---   *   ---
+// outputs
+
+  out vec4 FragColor;
+
+// ---   *   ---   *   ---
+
+void main(void) {
+  FragColor=vec4(1,1,1,1);
+
+};
+
+// ---   *   ---   *   ---
