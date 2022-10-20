@@ -7,7 +7,8 @@
   #include <vector>
 
   #include "bitter/kvrnel/Style.hpp"
-  #include "shader/Globals.hpp"
+  #include "shader/Constants.hpp"
+  #include "shader/Params.hpp"
 
 // ---   *   ---   *   ---
 // info

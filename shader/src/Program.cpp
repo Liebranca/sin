@@ -17,13 +17,11 @@
 
   #include <GL/glew.h>
 
-  #include "stack.h"
-
   #include "ce/ardef.h"
   #include "ce/arstd.h"
 
   #include "shader/Params.hpp"
-  #include "Program.hpp"
+  #include "shader/Program.hpp"
 
 // ---   *   ---   *   ---
 // errchk boiler
@@ -101,7 +99,7 @@ int Program::compile(
 // ---   *   ---   *   ---
 // make and errchk
 
-  if(!(*shader=glCreateShader(shader_type))) {
+  if(!(*shader=glCreateShader(type))) {
 
     fprintf(stderr,
       "Shader couldn't be created\n"
@@ -151,7 +149,8 @@ TAIL:
 
 int Program::create(void) {
 
-  m_loc=glCreateProgram();
+  int out = AR_DONE;
+  m_loc   = glCreateProgram();
 
   int types[]={
     GL_VERTEX_SHADER,
@@ -352,7 +351,7 @@ inline void Program::fix_samplers(void) {
 // ---   *   ---   *   ---
 // errchk'd boiler
 
-int validate(void) {
+int Program::validate(void) {
 
   int out=AR_DONE;
   glValidateProgram(m_loc);

@@ -1,4 +1,4 @@
-// SinGL v0.03.00
+// SinGL v0.03.01
 // file assembled from font/src/lycon_sh.sg
 // ---   *   ---   *   ---
 // LIBRE BOILERPASTE
@@ -18,6 +18,7 @@
 // ---   *   ---   *   ---
 // deps
 
+  #include "bitter/kvrnel/Vec.hpp"
   #include "sin/shader/Params.hpp"
   #include "sin/font/lycon.hpp"
 
@@ -30,7 +31,7 @@
 // ---   *   ---   *   ---
 
 
-namespace shader::font::lycon_sh {
+namespace shader::font {
   const char* lycon_sh_vert=R"glsl(
 in vec4 Position;
 uniform vec4 Transform;
@@ -42,7 +43,7 @@ layout(std140)
 PAL;
 layout(std430,binding=1)
   buffer CharData {
-    flat uint i[2048];
+    uint i[2048];
   }
 CHR;
   out vec2 texCoords;
@@ -67,7 +68,7 @@ CHR;
   bg_col=PAL.color[((ch >> 8)&0xF0) >> 4];
   show_ctl=(ch >> 16)&0x1;
   ch=ch&0xFF;
-  };
+  };;
 
 
 
@@ -98,7 +99,7 @@ void main() {
   col.rgb+=bg_col.rgb*float (col.w < 0.04);
 
   gl_FragColor=col;
-}
+};
 
 
 
@@ -108,19 +109,21 @@ void main() {
 // ---   *   ---   *   ---
 
 
-  const Params lycon_sh={
-    .source_v={
-
+  const char* _DULL_SYNTAX_v_lycon_sh_vert[]={
       shader::version_vert,
       lycon_sh_vert
-    },
-    .source_v_sz=2,
-    .source_f={
+  };
 
+  const char* _DULL_SYNTAX_f_lycon_sh_frag[]={
       shader::version_frag,
       shader::font::lycon_frag,
       lycon_sh_frag
-    },
+  };
+
+  const Params lycon_sh={
+    .source_v=_DULL_SYNTAX_v_lycon_sh_vert,
+    .source_v_sz=2,
+    .source_f=_DULL_SYNTAX_f_lycon_sh_frag,
     .source_f_sz=3,
     .attrs={
 
@@ -153,9 +156,9 @@ void main() {
 
 // ---   *   ---   *   ---
 
-namespace shader::font::lycon_sh::st {
+namespace shader::font::st {
 typedef struct { vec4 color [16] ; } PAL ;
-typedef struct {  uint32_t i [2048] ; } CHR ;
+typedef struct { uint32_t i [2048] ; } CHR ;
 }
 
 

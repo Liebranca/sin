@@ -12,6 +12,7 @@
 // ---   *   ---   *   ---
 // deps
 
+  #include <GL/glew.h>
   #include "shader/Frame.hpp"
 
 // ---   *   ---   *   ---
@@ -33,7 +34,7 @@ Programs::Programs(void) {
 Programs::~Programs(void) {
 
   for(uint32_t i=0;i<NUM_PROGRAMS;i++) {
-    m_slots[idex].del();
+    m_slots[i].del();
 
   };
 
@@ -47,7 +48,9 @@ Program* Programs::nit(
 
 ) {
 
-  uint32_t idex=m_stack.pop_back();
+  uint32_t idex=m_stack[m_stack.size()-1];
+  m_stack.pop_back();
+
   int state=m_slots[idex].nit(idex,params);
 
   if(state!=AR_DONE) {
@@ -75,7 +78,7 @@ void Programs::del(Program* p) {
 // ---   *   ---   *   ---
 // set current program
 
-void use(Program* p) {
+void Programs::use(Program* p) {
 
   if(p!=m_current) {
 

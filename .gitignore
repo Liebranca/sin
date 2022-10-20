@@ -1,5 +1,18 @@
-# generated
+*
+!/**/
+!*.*
+
+*.bin
+*.o
+*.out
+*.daf
+*.joj
+*.crk
+
+mig/
+*~
+
+!bin/
+
 avto
 .avto-cache
-test.sg
-shblk.*

@@ -1,7 +1,7 @@
 >sin render v0.01.0a
 
 *>CLASSES
-~ Program/Shader
+x Program/Shader
 ~ Texture
 ~ ^ *.joj import
 

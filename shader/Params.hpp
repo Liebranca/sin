@@ -4,7 +4,7 @@
 // ---   *   ---   *   ---
 // deps
 
-  #include "shader/Constants.h"
+  #include "shader/Constants.hpp"
   #include <stdint.h>
 
 // ---   *   ---   *   ---
@@ -12,7 +12,7 @@
 
 namespace shader {
 
-  const char* version_vert="#version 460\n";
+  const char* version_vert="#version 450\n";
   const char* version_frag=version_vert;
 
   typedef struct {

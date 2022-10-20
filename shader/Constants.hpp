@@ -2,11 +2,6 @@
 #define __SHADER_CONSTANTS_H__
 
 // ---   *   ---   *   ---
-// deps
-
-  #include <stddef.h>
-
-// ---   *   ---   *   ---
 // shader settings defaults
 
 #ifndef NUM_ATTRS

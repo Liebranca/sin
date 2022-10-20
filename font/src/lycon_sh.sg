@@ -34,7 +34,7 @@ layout(std140) uniform Palette {
 } PAL;
 
 layout (std430, binding=1) buffer CharData {
-  flat uint i[2048];
+  uint i[2048];
 
 } CHR;
 

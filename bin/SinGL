@@ -37,7 +37,7 @@
 # ---   *   ---   *   ---
 # info
 
-  our $VERSION = v0.03.0;
+  our $VERSION = v0.03.1;
   our $AUTHOR  = 'IBN-3DILA';
 
 # ---   *   ---   *   ---
@@ -329,22 +329,23 @@ sub src_list($name,$type) {
 
   my $tree=($type eq 'v') ? $Vert : $Frag;
 
+  my $GENIUS="_DULL_SYNTAX_${type}_${name}";
   my @sources=get_extern($tree);
-  push @sources,"      $name";
 
+  push @sources,"      $name";
   push @Out_Lines,
 
-    "    .source_$type={\n",
+    "  const char* ${GENIUS}[]={",
     (join ",\n",@sources),
 
-    "    },"
+    "  };\n"
 
   ;
 
-  push @Out_Lines,
+  return
 
-    "    .source_${type}_sz=".
-    int(@sources).","
+    "    .source_$type=$GENIUS,\n".
+    "    .source_${type}_sz=".int(@sources).","
 
   ;
 
@@ -423,10 +424,17 @@ sub asm($name,$path) {
   make_src($v_name,$Vert);
   make_src($f_name,$Frag);
 
-  push @Out_Lines,"  const Params $name={";
+# ---   *   ---   *   ---
 
-  src_list($v_name,'v');
-  src_list($f_name,'f');
+  my $list_vert=src_list($v_name,'v');
+  my $list_frag=src_list($f_name,'f');
+
+  push @Out_Lines,
+    "  const Params $name={",
+    $list_vert,
+    $list_frag
+
+  ;
 
 # ---   *   ---   *   ---
 
@@ -521,6 +529,11 @@ for my $fname(@Files) {
   $name=~ s[\..+$][];
   $name=(split m[/],$name)[-1];
 
+  my @ar=split m[::],$path;
+  pop @ar;
+
+  $path=join q[/],@ar;
+
   asm($name,$path);
 
 # ---   *   ---   *   ---
@@ -568,7 +581,10 @@ MAKE_HEADER:
     add_guards=>1,
 
     include=>[
+
+      '"bitter/kvrnel/Vec.hpp"',
       '"sin/shader/Params.hpp"',
+
       keys %Out_Include
 
     ],
