@@ -37,7 +37,7 @@ package SG_File;
 # ---   *   ---   *   ---
 # info
 
-  our $VERSION = v0.04.0;
+  our $VERSION = v0.04.1;
   our $AUTHOR  = 'IBN-3DILA';
 
 # ---   *   ---   *   ---
@@ -147,8 +147,16 @@ sub get_vert_outputs($self) {
   state $f_re=qr{^((flat \s out)|out)$}x;
   state $o_re=qr{out}x;
 
-  my @branches=$self->{vert}->branches_in($f_re);
+  my @branches=();
 
+  # get outputs recursively
+  for my $sg($self,@{$self->{extern}}) {
+    push @branches,
+      $sg->{vert}->branches_in($f_re);
+
+  };
+
+  # ^convert outputs to frag inputs
   for my $branch(reverse @branches) {
 
     my $cpy=$branch->dup();
@@ -399,13 +407,22 @@ sub make_src($self,$name,$src) {
 
 sub src_list($self,$name,$type) {
 
-  my $tree=($type eq 'v')
-    ? $self->{vert}
-    : $self->{frag}
-    ;
+  my @sources=();
+
+  if($type eq 'v') {
+
+    @sources=$self->get_extern($self->{vert});
+
+    $self->get_vert_outputs();
+    $self->make_src($name,$self->{vert});
+
+  } else {
+    @sources=$self->get_extern($self->{frag});
+    $self->make_src($name,$self->{frag});
+
+  };
 
   my $GENIUS="_DULL_SYNTAX_${type}_${name}";
-  my @sources=$self->get_extern($tree);
 
   my $out=$NULLSTR;
 
@@ -503,8 +520,6 @@ sub obj_list($self,$name,$fn) {
 
 sub asm($self) {
 
-  $self->get_vert_outputs();
-
   my $v_name=$self->{name}."_vert";
   my $f_name=$self->{name}."_frag";
 
@@ -513,9 +528,6 @@ sub asm($self) {
     $self->{path}." {"
 
   ;
-
-  $self->make_src($v_name,$self->{vert});
-  $self->make_src($f_name,$self->{frag});
 
 # ---   *   ---   *   ---
 

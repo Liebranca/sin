@@ -7,6 +7,7 @@
   #include "chasm/window.h"
 
   #include "shader/src/Program.cpp"
+  #include "shader/src/Texture.cpp"
   #include "shader/src/Frame.cpp"
 
   #include "mesh/src/T3D.cpp"
@@ -39,27 +40,32 @@ int main(void) {
 
   p_frame.use(p);
 
+  Texture tex("../bitter/out");
+  tex.use();
+
   Meshes   m_frame;
   BUCK=&m_frame;
 
 // ---   *   ---   *   ---
 // wrap your head round this tri ;>
 
-  Mesh::Vertex verts[3]={
+  Mesh::Vertex verts[4]={
 
     {.XYZ={0xFF,0x00,0x80}},
     {.XYZ={0x00,0x00,0x80}},
+    {.XYZ={0x00,0xFF,0x80}},
 
-    {.XYZ={0x80,0xFF,0x80}},
-
-  };
-
-  uint16_t indices[3]={
-    0,1,2
+    {.XYZ={0xFF,0xFF,0x80}},
 
   };
 
-  m_frame.nit(verts,indices,3,3);
+  uint16_t indices[6]={
+    0,1,2,
+    0,2,3
+
+  };
+
+  m_frame.nit(verts,indices,4,6);
 
 // ---   *   ---   *   ---
 

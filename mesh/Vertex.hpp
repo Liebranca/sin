@@ -1,4 +1,4 @@
-// SinGL v0.04.00
+// SinGL v0.04.01
 // file assembled from mesh/src/Vertex.sg
 // ---   *   ---   *   ---
 // LIBRE BOILERPASTE
@@ -35,6 +35,7 @@ namespace shader::mesh {
 in uvec4 Vertex;
 uniform mat4 Model;
 uniform mat4 View;
+out vec2 Tex_Coords;
 const uint FRAC_MAXV[8]=
   { 0x01,0x03,0x07,0x0F,0x1F,0x3F,0x7F,0xFF };
 const float FRAC_STEP[8]=
@@ -61,13 +62,22 @@ float unfrac(uint b,float step,uint nbits,
   b-=mid*uint(!unsig);
   return float (int (b))*step;
 };
-float unfrac_xyz(uint b) {
+float unfrac_i8(uint b) {
   return unfrac(b,FRAC_STEP[FRAC_8BIT],FRAC_8BIT,
                 FRAC_SIGNED);
 };
+float unfrac_u8(uint b) {
+  return unfrac(b,FRAC_STEP[FRAC_8BIT],FRAC_8BIT,
+                FRAC_UNSIGNED);
+};
+vec2 extract_tex(void) {
+  return vec2(unfrac_u8(Vertex[0] >> 24),
+              unfrac_u8(Vertex[1]));
+};
 vec4 extract_xyz(void) {
-  return vec4(unfrac_xyz(Vertex[0]),
-              unfrac_xyz(Vertex[0] >> 8),0,1);
+  return vec4(unfrac_i8(Vertex[0]),
+              unfrac_i8(Vertex[0] >> 8),
+              unfrac_i8(Vertex[0] >> 16),1);
 };
 vec4 apply_transform(vec4 co) {
   return (Model*co)*View;
@@ -85,11 +95,26 @@ vec4 apply_transform(vec4 co) {
       Vertex_vert
   };
 
+  const char* Vertex_frag=R"glsl(
+in vec2 Tex_Coords;
+
+
+
+  )glsl";
+
+
+// ---   *   ---   *   ---
+
+
+  const char* _DULL_SYNTAX_f_Vertex_frag[]={
+      Vertex_frag
+  };
+
   const Params Vertex={
     .source_v=_DULL_SYNTAX_v_Vertex_vert,
     .source_v_sz=1,
-    .source_f=NULL,
-    .source_f_sz=0,
+    .source_f=_DULL_SYNTAX_f_Vertex_frag,
+    .source_f_sz=1,
     .attrs={
       "Vertex"
     },

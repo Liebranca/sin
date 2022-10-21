@@ -26,6 +26,11 @@ $:VERT;>
   uniform mat4 View;
 
 // ---   *   ---   *   ---
+// outputs
+
+  out vec2 Tex_Coords;
+
+// ---   *   ---   *   ---
 // ROM
 
   const uint FRAC_MAXV[8]={
@@ -86,7 +91,7 @@ float unfrac(
 
 // ---   *   ---   *   ---
 
-float unfrac_xyz(uint b) {
+float unfrac_i8(uint b) {
 
   return unfrac(
 
@@ -103,15 +108,43 @@ float unfrac_xyz(uint b) {
 
 // ---   *   ---   *   ---
 
+float unfrac_u8(uint b) {
+
+  return unfrac(
+
+    b,
+
+    FRAC_STEP[FRAC_8BIT],
+    FRAC_8BIT,
+
+    FRAC_UNSIGNED
+
+  );
+
+};
+
+// ---   *   ---   *   ---
+
+vec2 extract_tex(void) {
+
+  return vec2(
+
+    unfrac_u8(Vertex[0]>>24),
+    unfrac_u8(Vertex[1])
+
+  );
+
+};
+
+// ---   *   ---   *   ---
+
 vec4 extract_xyz(void) {
 
   return vec4(
 
-    unfrac_xyz(Vertex[0]),
-    unfrac_xyz(Vertex[0]>>8),
-    0,
-
-//    unfrac_xyz(Vertex[0]>>16),
+    unfrac_i8(Vertex[0]),
+    unfrac_i8(Vertex[0]>>8),
+    unfrac_i8(Vertex[0]>>16),
 
     1
 

@@ -1,4 +1,4 @@
-// SinGL v0.04.00
+// SinGL v0.04.01
 // file assembled from mesh/src/Solid.sg
 // ---   *   ---   *   ---
 // LIBRE BOILERPASTE
@@ -38,22 +38,8 @@ void main(void) {
   vec4 co=extract_xyz();
 
   gl_Position=apply_transform(co);
+  Tex_Coords=extract_tex();
 };
-
-
-
-  )glsl";
-
-
-// ---   *   ---   *   ---
-
-
-  const char* Solid_frag=R"glsl(
-;
-out vec4 FragColor;
-void main(void) {
-  FragColor=vec4(1,1,1,1);
-}
 
 
 
@@ -68,6 +54,23 @@ void main(void) {
       shader::mesh::Vertex_vert,
       Solid_vert
   };
+
+  const char* Solid_frag=R"glsl(
+in vec2 Tex_Coords;;
+uniform sampler2DArray Surface;
+out vec4 Frag_Color;
+void main(void) {
+  Frag_Color=texture(Surface,vec3(Tex_Coords,0));
+  Frag_Color.a=1;
+}
+
+
+
+  )glsl";
+
+
+// ---   *   ---   *   ---
+
 
   const char* _DULL_SYNTAX_f_Solid_frag[]={
       shader::version_frag,
@@ -97,9 +100,9 @@ void main(void) {
     },
     .num_ssbos=0,
     .samplers={
-
+      "Surface"
     },
-    .num_samplers=0,
+    .num_samplers=1,
   };
 };
 

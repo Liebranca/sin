@@ -27,8 +27,11 @@ $:VERT;>
 // ---   *   ---   *   ---
 
 void main(void) {
+
   vec4 co     = extract_xyz();
   gl_Position = apply_transform(co);
+
+  Tex_Coords  = extract_tex();
 
 };
 
@@ -41,14 +44,26 @@ $:FRAG;>
   ;
 
 // ---   *   ---   *   ---
+// inputs
+
+  uniform sampler2DArray Surface;
+
+// ---   *   ---   *   ---
 // outputs
 
-  out vec4 FragColor;
+  out vec4 Frag_Color;
 
 // ---   *   ---   *   ---
 
 void main(void) {
-  FragColor=vec4(1,1,1,1);
+
+  Frag_Color=texture(
+    Surface,
+    vec3(Tex_Coords,0)
+
+  );
+
+  Frag_Color.a=1;
 
 };
 

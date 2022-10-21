@@ -23,7 +23,7 @@ public:
 private:
 
   cx8 BATCH_SZ = 2;
-  cx8 BUFF_SZ  = 4;
+  cx8 BUFF_SZ  = 6;
 
   enum {
 
