@@ -1,0 +1,740 @@
+#!/usr/bin/perl
+# ---   *   ---   *   ---
+# SIN GL
+# GLSL preprocessor
+#
+# LIBRE SOFTWARE
+# Licensed under GNU GPL3
+# be a bro and inherit
+#
+# CONTRIBUTORS
+# lyeb,
+
+# ---   *   ---   *   ---
+# deps
+
+package SG_File;
+
+  use v5.36.0;
+  use strict;
+  use warnings;
+
+  use English qw(-no_match_vars);
+
+  use lib $ENV{'ARPATH'}.'/lib/sys/';
+
+  use Style;
+  use Arstd::IO;
+
+  use lib $ENV{'ARPATH'}.'/lib/';
+
+  use Emit::Std;
+  use Emit::C;
+
+  use Peso::Rd;
+  use Lang::SinGL;
+
+# ---   *   ---   *   ---
+# info
+
+  our $VERSION = v0.04.0;
+  our $AUTHOR  = 'IBN-3DILA';
+
+# ---   *   ---   *   ---
+# ROM
+
+  my $EXTERN_RE=qr{^\s*\#include\s+
+    <([^>]+)>
+
+  $}x;
+
+  my $UNIFORM_RE = qr{^uniform$}x;
+  my $LAYOUT_RE  = qr{^layout$}x;
+  my $BUFFER_RE  = qr{^buffer$}x;
+
+  my $SAMPLER_RE = qr{^sampler}x;
+
+# ---   *   ---   *   ---
+# constructor
+
+sub nit($class,$fname) {
+
+  my $rd=Peso::Rd::parse(
+    Lang->SinGL,$fname
+
+  );
+
+  # set the siggy for later ;>
+  my $v=(sprintf 'v%vd',$VERSION);
+  my @v=split m[\.],$v;
+
+  $v[1]='0'.$v[1] if length $v[1]==1;
+  $v[2]='0'.$v[2] if length $v[2]==1;
+
+  $v=join q[.],@v;
+
+  my @sig=(
+    "// SinGL $v",
+    "// file assembled from $fname"
+
+  );
+
+# ---   *   ---   *   ---
+
+  $fname=~ s[src/][];
+
+  my ($vert,$frag)=Lang->SinGL->hier_sort($rd);
+  my $tree=$rd->select_block(-ROOT)->{tree};
+
+# ---   *   ---   *   ---
+
+  my $path=$fname;
+  $path=~ s[\..+$][];
+  $path=~ s[/][::]sxmg;
+
+  my $name=$fname;
+  $name=~ s[\..+$][];
+  $name=(split m[/],$name)[-1];
+
+  my @ar=split m[::],$path;
+  pop @ar;
+
+  $path=join q[/],@ar;
+
+# ---   *   ---   *   ---
+
+  my $f=bless {
+
+    rd    => $rd,
+
+    vert  => $vert,
+    frag  => $frag,
+
+    tree  => $tree,
+    fname => $fname,
+
+    name  => $name,
+    path  => $path,
+
+    out_lines   =>[],
+    out_include =>{},
+    out_source  =>{},
+
+    extern      =>[],
+    siggy       =>\@sig,
+
+  },$class;
+
+  return $f;
+
+};
+
+# ---   *   ---   *   ---
+# shader attrs
+
+sub get_vert_inputs($self) {
+
+  state $re=qr{^in$}x;
+  return $self->{vert}->branches_in($re);
+
+};
+
+# ---   *   ---   *   ---
+# vert out to frag in
+
+sub get_vert_outputs($self) {
+
+  state $f_re=qr{^((flat \s out)|out)$}x;
+  state $o_re=qr{out}x;
+
+  my @branches=$self->{vert}->branches_in($f_re);
+
+  for my $branch(reverse @branches) {
+
+    my $cpy=$branch->dup();
+
+    $cpy->deep_value_repl($o_re,'in');
+    $self->{frag}->insert(0,'blank');
+    $cpy->insert(int(@{$cpy->{leaves}}),';');
+
+    $self->{frag}->{leaves}->[0]->repl($cpy);
+
+  };
+
+  return @branches;
+
+};
+
+# ---   *   ---   *   ---
+# get uniforms cross-shader
+
+sub get_program_uniforms($self) {
+
+  my @branches=$self->{tree}
+    ->branches_in($UNIFORM_RE);
+
+  return grep {
+
+     @{$ARG->{leaves}}>0
+  && !defined $ARG->branch_in($SAMPLER_RE)
+
+  } @branches;
+
+};
+
+# ---   *   ---   *   ---
+# ^ubos
+
+sub get_program_ubos($self) {
+
+  my @branches=$self->{tree}
+    ->branches_in($LAYOUT_RE);
+
+  return grep {
+    defined $ARG->branch_in($UNIFORM_RE)
+
+  } @branches;
+
+};
+
+# ---   *   ---   *   ---
+# ^ssbos
+
+sub get_program_ssbos($self) {
+
+  my @branches=$self->{tree}
+    ->branches_in($LAYOUT_RE);
+
+  return grep {
+    defined $ARG->branch_in($BUFFER_RE)
+
+  } @branches;
+
+};
+
+# ---   *   ---   *   ---
+# get samplers from fragment shader
+# NOTE: untested!
+
+sub get_frag_samplers($self) {
+
+  my @branches=$self->{frag}
+    ->branches_in($UNIFORM_RE);
+
+  return grep {
+
+     @{$ARG->{leaves}}>0
+  && defined $ARG->branch_in($SAMPLER_RE)
+
+  } @branches;
+
+};
+
+# ---   *   ---   *   ---
+# get list of external sources
+
+sub get_extern($self,$shader) {
+
+  my @branches=$shader->branches_in($EXTERN_RE);
+
+  for my $branch(@branches) {
+
+    $branch=$branch->{value};
+    $branch=~ s[$EXTERN_RE][$1];
+
+    chomp $branch;
+
+    if($branch eq 'version') {
+      next;
+
+    };
+
+# ---   *   ---   *   ---
+# get header for include in out file
+
+    my $header=$branch;
+    my $found=Shb7::ffind("$header",'hpp');
+
+    errout(
+      q[Header file not found for <%s>],
+
+      args=>[$header],
+      lvl=>$AR_FATAL
+
+    ) unless $found;
+
+    my $add_extern=0;
+    if(!exists $self->{out_include}->{$found}) {
+
+      $found=Shb7::shpath($found);
+      $found="\"$found\"";
+
+      $self->{out_include}->{$found}=1;
+      $add_extern=1;
+
+    };
+
+# ---   *   ---   *   ---
+# get real name of shader
+
+    my @path=split m[/],$branch;
+    my $name=pop @path;
+
+    push @path,'src',$name;
+
+    $found=Shb7::ffind((join q[/],@path),'sg');
+
+    errout(
+      q[Shader file not found for <%s>],
+
+      args=>[$branch],
+      lvl=>$AR_FATAL
+
+    ) unless $found;
+
+    if($add_extern) {
+      push @{$self->{extern}},
+        SG_File->nit($found);
+
+    };
+
+    $branch=~ s[\..+$][];
+    $branch=~ s[/][::]sxmg;
+
+# ---   *   ---   *   ---
+
+  };
+
+  my $ext=($shader==$self->{frag})
+    ? '_frag'
+    : '_vert'
+    ;
+
+  return map {
+    '      shader::'."$ARG".$ext
+
+  } @branches;
+
+};
+
+# ---   *   ---   *   ---
+# writes out tree to C++ raw string
+
+sub make_src($self,$name,$src) {
+
+  state $vauth_re=qr{^(?:VERSION|AUTHOR)$};
+
+  my $out     = $NULLSTR;
+  my @pending = @{$src->{leaves}};
+
+  while(@pending) {
+
+    my $branch=shift @pending;
+
+# ---   *   ---   *   ---
+# strip #include directive
+
+    if($branch->{value}=~ $EXTERN_RE) {
+      next;
+
+# ---   *   ---   *   ---
+# strip version and author directives
+
+    } elsif($branch->{value}=~ $vauth_re) {
+
+      while(
+
+          @pending
+      &&  $pending[0]->{value} ne ';'
+
+      ) {shift @pending};
+
+      shift @pending;next;
+
+    };
+
+# ---   *   ---   *   ---
+# convert tree branch to text
+
+    my $code=$branch->to_string(
+      keep_root=>1
+
+    );
+
+    $out.='    '.$code;
+
+# ---   *   ---   *   ---
+
+  };
+
+  if(length $out) {
+
+    push @{$self->{out_lines}},
+      "  const char* $name=R\"glsl(";
+
+    # make tmpfile
+    owc("./tmp_code.fmat",$out);
+
+    # ^apply formatting
+    my $call = $ENV{'ARPATH'}.'/bitter/bin/fmat';
+    $out     = `$call "./tmp_code.fmat"`;
+
+    # remove tmp
+    unlink("./tmp_code.fmat");
+
+    push @{$self->{out_lines}},
+      "$out\n\n  )glsl\";\n",
+      "\n// ---   *   ---   *   ---\n\n"
+
+    ;
+
+    $self->{out_source}->{$name}=1;
+
+  };
+
+};
+
+# ---   *   ---   *   ---
+# makes list of source strings
+
+sub src_list($self,$name,$type) {
+
+  my $tree=($type eq 'v')
+    ? $self->{vert}
+    : $self->{frag}
+    ;
+
+  my $GENIUS="_DULL_SYNTAX_${type}_${name}";
+  my @sources=$self->get_extern($tree);
+
+  my $out=$NULLSTR;
+
+  if($self->{out_source}->{$name}) {
+
+    push @sources,"      $name";
+
+    push @{$self->{out_lines}},
+
+      "  const char* ${GENIUS}[]={",
+      (join ",\n",@sources),
+
+      "  };\n"
+
+    ;
+
+    $out=
+      "    .source_$type=$GENIUS,\n".
+      "    .source_${type}_sz=".int(@sources).","
+
+    ;
+
+  } else {
+
+    $out=
+      "    .source_$type=NULL,\n".
+      "    .source_${type}_sz=0,"
+
+    ;
+
+  };
+
+  return $out;
+
+};
+
+# ---   *   ---   *   ---
+# gets AUTHOR field of sin shader
+
+sub get_author($self) {
+
+  my $out='ANON';
+  my $b=$self->{vert}->branch_in(qr{^AUTHOR$});
+
+  if($b) {
+
+    if(!@{$b->{leaves}}) {
+      $out=$b->{parent}->{leaves}->[
+        $b->{idex}+1
+
+      ]->{value};
+
+    } else {
+      $out=$b->{leaves}->[-1]->{value};
+
+    };
+
+    $out=~ s["][]sxgm;
+
+  };
+
+  return $out;
+
+};
+
+# ---   *   ---   *   ---
+# generic attr list
+
+sub obj_list($self,$name,$fn) {
+
+  my @ar=();
+
+  for my $sg($self,@{$self->{extern}}) {
+    push @ar,map {q[      "].
+      $ARG->{leaves}->[-1]->{value}.
+
+    q["]} $fn->($sg);
+
+  };
+
+  push @{$self->{out_lines}},
+
+    "    .$name={",
+    (join ",\n",@ar),
+
+    "    },",
+    "    .num_$name=".int(@ar).","
+
+  ;
+
+};
+
+# ---   *   ---   *   ---
+# assemble shader params
+
+sub asm($self) {
+
+  $self->get_vert_outputs();
+
+  my $v_name=$self->{name}."_vert";
+  my $f_name=$self->{name}."_frag";
+
+  push @{$self->{out_lines}},
+    'namespace shader::'.
+    $self->{path}." {"
+
+  ;
+
+  $self->make_src($v_name,$self->{vert});
+  $self->make_src($f_name,$self->{frag});
+
+# ---   *   ---   *   ---
+
+  my $list_vert=$self->src_list($v_name,'v');
+  my $list_frag=$self->src_list($f_name,'f');
+
+  push @{$self->{out_lines}},
+    "  const Params $self->{name}={",
+    $list_vert,
+    $list_frag
+
+  ;
+
+# ---   *   ---   *   ---
+
+  $self->obj_list('attrs',\&get_vert_inputs);
+
+  $self->obj_list('uniforms',\&get_program_uniforms);
+  $self->obj_list('ubos',\&get_program_ubos);
+  $self->obj_list('ssbos',\&get_program_ssbos);
+
+  $self->obj_list('samplers',\&get_frag_samplers);
+
+# ---   *   ---   *   ---
+
+  push @{$self->{out_lines}},
+    "  };\n};\n",
+    "\n// ---   *   ---   *   ---\n"
+
+  ;
+
+};
+
+# ---   *   ---   *   ---
+# make structs from input blocks
+
+sub make_structs($self) {
+
+  my @structs=(
+    $self->get_program_ubos(),
+    $self->get_program_ssbos()
+
+  );
+
+  return if !@structs;
+
+# ---   *   ---   *   ---
+# walk the decl list
+
+  push @{$self->{out_lines}},
+    'namespace shader::'.$self->{path}."::st {";
+
+  for my $s(@structs) {
+
+    $s->{value}='typedef struct';
+    for my $leaf(@{$s->{leaves}}) {
+      last if $leaf->{value} eq '{';
+
+      $s->pluck($leaf);
+
+    };
+
+# ---   *   ---   *   ---
+# type-name swapping
+
+    $s->deep_value_repl(qr{^flat$},$NULLSTR);
+    $s->deep_value_repl(qr{^uint$},'uint32_t');
+    $s->deep_value_repl(qr{^int$},'int32_t');
+    $s->deep_value_repl(qr{^vec4$},'glm::vec4');
+
+    push @{$self->{out_lines}},
+      $s->to_string(keep_root=>1).';';
+
+# ---   *   ---   *   ---
+# close off the namespace
+
+  };
+
+  push @{$self->{out_lines}},'}';
+
+};
+
+# ---   *   ---   *   ---
+# create hpp file
+
+sub make_header($self) {
+
+  my %O=(
+
+    add_guards=>1,
+
+    include=>[
+      '<glm/vec4.hpp>',
+      '"sin/shader/Params.hpp"',
+      keys %{$self->{out_include}}
+
+    ],
+
+    define=>[],
+    author=>$self->get_author(),
+
+  );
+
+# ---   *   ---   *   ---
+# ^put on the macros
+
+  unshift @{$self->{out_lines}},
+    Emit::C->boiler_open($self->{name},%O);
+
+  push @{$self->{out_lines}},
+    Emit::C->boiler_close($self->{name},%O);
+
+  # remind the user who's daddy
+  unshift @{$self->{out_lines}},
+    @{$self->{siggy}};
+
+};
+
+# ---   *   ---   *   ---
+# ^exec
+
+package main;
+
+  use v5.36.0;
+  use strict;
+  use warnings;
+
+  use English qw(-no_match_vars);
+
+  use lib $ENV{'ARPATH'}.'/lib/sys/';
+
+  use Style;
+  use Arstd::IO;
+
+  use Cli;
+
+# ---   *   ---   *   ---
+# command line
+
+  my $M=Cli->nit(
+
+    @{$Cli::Fstruct::ATTRS},
+
+    {id=>'inc',short=>'-I',argc=>1},
+    {id=>'out',short=>'-o',argc=>1},
+
+    {id=>'echo',short=>'-e',argc=>0},
+
+  );
+
+# ---   *   ---   *   ---
+# get command line args
+
+my @Files=Cli::Fstruct::proto_search($M);
+
+# get path
+my @Includes=($M->{inc} ne $NULL)
+  ? split $COMMA_RE,$M->{inc}
+  : ()
+  ;
+
+# ^set
+Shb7::stinc(
+  $ENV{'ARPATH'}.'/sin/',
+  @Includes
+
+);
+
+# ---   *   ---   *   ---
+# get output dir
+
+my $Out_Dir=($M->{out} ne $NULL)
+  ? $M->{out}
+  : glob('./')
+  ;
+
+# ^catch
+errout(
+
+  q[Not a directory: %s],
+
+  args=>[$Out_Dir],
+  lvl=>$AR_FATAL
+
+) unless -d $Out_Dir;
+
+# ---   *   ---   *   ---
+# main loop
+
+for my $fname(@Files) {
+
+  my $sg=SG_File->nit($fname);
+
+  $sg->asm();
+  $sg->make_structs();
+  $sg->make_header();
+
+# ---   *   ---   *   ---
+# spit it
+
+  my $out=join "\n",@{$sg->{out_lines}};
+
+  $out=~ s[
+
+    \#ifdef \s+ __cplusplus
+    [^\#]+
+    \#endif
+
+  ][]sxmg;
+
+  if($M->{echo} eq $NULL) {
+    owc("$Out_Dir/$sg->{name}.hpp",$out);
+
+  } else {
+    say $out;
+
+  };
+
+};
+
+# ---   *   ---   *   ---
+1; # ret

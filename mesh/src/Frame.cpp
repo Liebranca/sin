@@ -17,21 +17,21 @@
 
 // ---   *   ---   *   ---
 
-void Meshes::nit(void) {
+Meshes::Meshes(void) {
 
   // gl alloc
   glGenVertexArrays(1,&m_vao);
-  glGenBuffers(1,&m_glbuff);
+  glGenBuffers(NUM_BUFFS,&m_buff[0]);
   glBindVertexArray(m_vao);
 
   // nit data
-  glBindBuffer(GL_ARRAY_BUFFER,m_glbuff);
+  glBindBuffer(GL_ARRAY_BUFFER,m_buff[VBO]);
 
   glBufferData(
     GL_ARRAY_BUFFER,
 
-    Meshes::BATCH_SZ
-  * (sizeof(Mesh::Vertex)*3),
+    Meshes::BUFF_SZ
+  * sizeof(Mesh::Vertex),
 
     NULL,
     GL_DYNAMIC_DRAW
@@ -40,11 +40,11 @@ void Meshes::nit(void) {
 
   // set attrib pointers
   glEnableVertexAttribArray(0);
-  glVertexAttribPointer(
-    0,4,GL_FLOAT,GL_FALSE,
+  glVertexAttribIPointer(
+    0,4,GL_UNSIGNED_INT,
 
     sizeof(Mesh::Vertex),
-    (void*) offsetof(Mesh::Vertex,Position)
+    (void*) offsetof(Mesh::Vertex,data)
 
   );
 
@@ -79,16 +79,32 @@ void Meshes::nit(void) {
 //  );
 
 // ---   *   ---   *   ---
-// shader stuff was here
+// indices
+
+  glBindBuffer(
+    GL_ELEMENT_ARRAY_BUFFER,
+    m_buff[IBO]
+
+  );
+
+  glBufferData(
+    GL_ELEMENT_ARRAY_BUFFER,
+
+    Meshes::BUFF_SZ
+  * sizeof(uint16_t),
+
+    NULL,
+    GL_STATIC_DRAW
+
+  );
 
 };
 
 // ---   *   ---   *   ---
 // destroy
 
-void Meshes::del(void) {
-//  glDeleteBuffers(1,&m_ubo);
-  glDeleteBuffers(1,&m_glbuff);
+Meshes::~Meshes(void) {
+  glDeleteBuffers(NUM_BUFFS,&m_buff[0]);
   glDeleteVertexArrays(1,&m_vao);
 
 };
@@ -96,26 +112,65 @@ void Meshes::del(void) {
 // ---   *   ---   *   ---
 // pushes geometry to gl buffer
 
-void Meshes::upload(
+uint32_t Meshes::nit(
 
-  void*    data,
-  uint16_t vcount
+  void*    verts,
+  void*    indices,
+
+  uint16_t vcount,
+  uint16_t icount
 
 ) {
 
-  glBindBuffer(GL_ARRAY_BUFFER,m_glbuff);
+  // fill out struct
+  m_mesh[m_top]=Mesh(
 
+    m_top,
+    m_icount,
+
+    vcount,
+    icount
+
+  );
+
+// ---   *   ---   *   ---
+
+  // verts
+  glBindBuffer(GL_ARRAY_BUFFER,m_buff[VBO]);
   glBufferSubData(
-    GL_ARRAY_BUFFER,0,
+    GL_ARRAY_BUFFER,m_vcount,
 
     vcount
   * sizeof(Mesh::Vertex),
 
-    data
+    verts
 
   );
 
   m_vcount+=vcount;
+
+// ---   *   ---   *   ---
+// indices
+
+  glBindBuffer(
+    GL_ELEMENT_ARRAY_BUFFER,
+    m_buff[IBO]
+
+  );
+
+  glBufferSubData(
+    GL_ELEMENT_ARRAY_BUFFER,m_icount,
+
+    icount
+  * sizeof(uint16_t),
+
+    indices
+
+  );
+
+  m_icount+=icount;
+
+  return m_top++;
 
 };
 
@@ -135,20 +190,8 @@ void Meshes::upload(
 
 // ---   *   ---   *   ---
 
-void Meshes::use(void) {
+inline void Meshes::use(void) {
   glBindVertexArray(m_vao);
-
-};
-
-void Meshes::draw(uint32_t idex) {
-
-//  Mesh& me=m_buff[idex];
-
-  glDrawArrays(
-    GL_TRIANGLES,
-    0,m_vcount
-
-  );
 
 };
 

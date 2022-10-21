@@ -14,27 +14,21 @@
 
 $:VERT;>
 
-  VERSION   v0.00.1b;
+  VERSION   v0.00.2b;
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
 // deps
 
   #include <version>
+  #include <mesh/Vertex>
   ;
-
-// ---   *   ---   *   ---
-// inputs
-
-  in vec4 Position;
-
-  uniform mat4 Model;
-  uniform mat4 View;
 
 // ---   *   ---   *   ---
 
 void main(void) {
-  gl_Position=(Model*Position)*View;
+  vec4 co     = extract_xyz();
+  gl_Position = apply_transform(co);
 
 };
 

@@ -12,17 +12,19 @@
   #include "mesh/src/T3D.cpp"
   #include "mesh/src/Camera.cpp"
 
+  #include "mesh/src/Mesh.cpp"
   #include "mesh/src/Frame.cpp"
-  #include "mesh/solid.hpp"
+
+  #include "mesh/Solid.hpp"
 
 // ---   *   ---   *   ---
 
-static Meshes m_frame;
+static void* BUCK;
 
 // ---   *   ---   *   ---
 
 void draw(void) {
-  m_frame.draw(0);
+  ((Meshes*) BUCK)->draw(0);
 
 };
 
@@ -33,19 +35,31 @@ int main(void) {
   winnt("CHASM",640,480,0);
 
   Programs p_frame;
-  Program* p=p_frame.nit(&shader::mesh::solid);
+  Program* p=p_frame.nit(&shader::mesh::Solid);
 
   p_frame.use(p);
-  m_frame.nit();
+
+  Meshes   m_frame;
+  BUCK=&m_frame;
+
+// ---   *   ---   *   ---
+// wrap your head round this tri ;>
 
   Mesh::Vertex verts[3]={
-    glm::vec4(1,-1,0,1),
-    glm::vec4(0,1,0,1),
-    glm::vec4(-1,-1,0,1),
+
+    {.XYZ={0xFF,0x00,0x80}},
+    {.XYZ={0x00,0x00,0x80}},
+
+    {.XYZ={0x80,0xFF,0x80}},
 
   };
 
-  m_frame.upload(verts,3);
+  uint16_t indices[3]={
+    0,1,2
+
+  };
+
+  m_frame.nit(verts,indices,3,3);
 
 // ---   *   ---   *   ---
 
@@ -90,16 +104,14 @@ int main(void) {
     );
 
     transform.move(vel);
-
     winrend(0,&draw);
 
   };
 
-  m_frame.del();
-  p_frame.del(p);
+// ---   *   ---   *   ---
+// cleanup
 
   windl();
-
   return 0;
 
 };
