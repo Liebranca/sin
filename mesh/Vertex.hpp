@@ -71,8 +71,8 @@ float unfrac_u8(uint b) {
                 FRAC_UNSIGNED);
 };
 vec2 extract_tex(void) {
-  return vec2(unfrac_u8(Vertex[0] >> 24),
-              unfrac_u8(Vertex[1]));
+  return vec2(unfrac_u8(Vertex[1] >> 16),
+              unfrac_u8(Vertex[1] >> 24));
 };
 vec4 extract_xyz(void) {
   return vec4(unfrac_i8(Vertex[0]),

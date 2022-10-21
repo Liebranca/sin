@@ -129,8 +129,8 @@ vec2 extract_tex(void) {
 
   return vec2(
 
-    unfrac_u8(Vertex[0]>>24),
-    unfrac_u8(Vertex[1])
+    unfrac_u8(Vertex[1]>>16),
+    unfrac_u8(Vertex[1]>>24)
 
   );
 

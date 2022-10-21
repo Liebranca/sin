@@ -61,7 +61,6 @@ uniform sampler2DArray Surface;
 out vec4 Frag_Color;
 void main(void) {
   Frag_Color=texture(Surface,vec3(Tex_Coords,0));
-  Frag_Color.a=1;
 }
 
 
