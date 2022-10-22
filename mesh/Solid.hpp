@@ -56,11 +56,15 @@ void main(void) {
   };
 
   const char* Solid_frag=R"glsl(
-in vec2 Tex_Coords;;
+in vec2 Tex_Coords;
+flat in uint Tile_Index;;
 uniform sampler2DArray Surface;
 out vec4 Frag_Color;
+const float Mults[4]={ 0.0,0.5,0.75,1.0 };
 void main(void) {
-  Frag_Color=texture(Surface,vec3(Tex_Coords,0));
+  Frag_Color=
+    texture(Surface,
+            vec3(Tex_Coords,0))*Mults[Tile_Index];
 }
 
 
@@ -95,9 +99,9 @@ void main(void) {
     },
     .num_ubos=0,
     .ssbos={
-
+      "Tile_Indices"
     },
-    .num_ssbos=0,
+    .num_ssbos=1,
     .samplers={
       "Surface"
     },

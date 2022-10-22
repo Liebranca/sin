@@ -265,13 +265,9 @@ inline void Program::fix_uniforms(void) {
 
   ) {
 
-    m_uniforms[uniform_loc]=(
-
-      glGetUniformLocation(
-        m_loc,
-        m_params->uniforms[uniform_loc]
-
-      )
+    m_uniforms[uniform_loc]=glGetUniformLocation(
+      m_loc,
+      m_params->uniforms[uniform_loc]
 
     );
 
@@ -293,13 +289,9 @@ inline void Program::fix_ubos(void) {
 
   ) {
 
-    m_ubos[ubo_loc]=(
-
-      glGetUniformBlockIndex(
-        m_loc,
-        m_params->ubos[ubo_loc]
-
-      )
+    m_ubos[ubo_loc]=glGetUniformBlockIndex(
+      m_loc,
+      m_params->ubos[ubo_loc]
 
     );
 
@@ -307,6 +299,41 @@ inline void Program::fix_ubos(void) {
       m_loc,
       m_ubos[ubo_loc],
       ubo_loc
+
+    );
+
+  };
+
+};
+
+// ---   *   ---   *   ---
+// ^shader storage buffers
+
+inline void Program::fix_ssbos(void) {
+
+  for(
+
+    uint32_t ssbo_loc=0;
+
+    ssbo_loc<m_params->num_ssbos;
+    ssbo_loc++
+
+  ) {
+
+    m_ssbos[ssbo_loc]=glGetProgramResourceIndex(
+      m_loc,
+
+      GL_SHADER_STORAGE_BLOCK,
+
+      ("_"+std::string(
+      m_params->ssbos[ssbo_loc]
+
+      )).c_str()
+
+    );
+
+    glShaderStorageBlockBinding(
+      m_loc,m_ssbos[ssbo_loc],ssbo_loc
 
     );
 
@@ -328,13 +355,9 @@ inline void Program::fix_samplers(void) {
 
   ) {
 
-    m_samplers[texslot]=(
-
-      glGetUniformLocation(
-        m_loc,
-        m_params->samplers[texslot]
-
-      )
+    m_samplers[texslot]=glGetUniformLocation(
+      m_loc,
+      m_params->samplers[texslot]
 
     );
 
@@ -404,6 +427,7 @@ int Program::nit(
 
   this->fix_uniforms();
   this->fix_ubos();
+  this->fix_ssbos();
   this->fix_samplers();
 
   out=this->validate();

@@ -78,6 +78,7 @@ private:
   inline void fix_attrs(void);
   inline void fix_uniforms(void);
   inline void fix_ubos(void);
+  inline void fix_ssbos(void);
   inline void fix_samplers(void);
 
 // ---   *   ---   *   ---

@@ -25,10 +25,16 @@ $:VERT;>
   uniform mat4 Model;
   uniform mat4 View;
 
+  layout (std430) buffer _Tile_Indices {
+    uint buff[4096];
+
+  } Tile_Indices;
+
 // ---   *   ---   *   ---
 // outputs
 
   out vec2 Tex_Coords;
+  flat out uint Tile_Index;
 
 // ---   *   ---   *   ---
 // ROM
@@ -126,6 +132,11 @@ float unfrac_u8(uint b) {
 // ---   *   ---   *   ---
 
 vec2 extract_tex(void) {
+
+  Tile_Index=Tile_Indices.buff[
+    Vertex[2]&0xFF
+
+  ];
 
   return vec2(
 

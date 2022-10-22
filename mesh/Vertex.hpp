@@ -35,9 +35,17 @@ namespace shader::mesh {
 in uvec4 Vertex;
 uniform mat4 Model;
 uniform mat4 View;
-out vec2 Tex_Coords;
-const uint FRAC_MAXV[8]=
-  { 0x01,0x03,0x07,0x0F,0x1F,0x3F,0x7F,0xFF };
+
+layout(std430)
+  buffer _Tile_Indices {
+    uint buff[4096];
+  }
+Tile_Indices;
+  out vec2 Tex_Coords;
+  flat out uint Tile_Index;
+  const uint FRAC_MAXV[8]=
+    { 0x01,0x03,0x07,0x0F,0x1F,0x3F,0x7F,
+0xFF };
 const float FRAC_STEP[8]=
   { 1.0f / 0x0002,1.0f / 0x0004,1.0f / 0x0008,
 1.0f / 0x0010,1.0f / 0x0020,1.0f / 0x0040,1.0f / 0x0080,
@@ -71,6 +79,7 @@ float unfrac_u8(uint b) {
                 FRAC_UNSIGNED);
 };
 vec2 extract_tex(void) {
+  Tile_Index=Tile_Indices.buff[Vertex[2]&0xFF];
   return vec2(unfrac_u8(Vertex[1] >> 16),
               unfrac_u8(Vertex[1] >> 24));
 };
@@ -97,6 +106,7 @@ vec4 apply_transform(vec4 co) {
 
   const char* Vertex_frag=R"glsl(
 in vec2 Tex_Coords;
+flat in uint Tile_Index;
 
 
 
@@ -129,9 +139,9 @@ in vec2 Tex_Coords;
     },
     .num_ubos=0,
     .ssbos={
-
+      "Tile_Indices"
     },
-    .num_ssbos=0,
+    .num_ssbos=1,
     .samplers={
 
     },
@@ -142,6 +152,9 @@ in vec2 Tex_Coords;
 
 // ---   *   ---   *   ---
 
+namespace shader::mesh::st {
+typedef struct { uint32_t buff [4096] ; } Tile_Indices ;
+}
 
 
 // ---   *   ---   *   ---

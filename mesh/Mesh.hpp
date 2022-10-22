@@ -29,7 +29,7 @@ public:
         uint8_t  XYZ[3];
         uint8_t  NTB[3];
 
-        uint8_t  TEX[2];
+        uint8_t  TEX[3];
 
       };
 

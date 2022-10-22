@@ -48,15 +48,6 @@ Meshes::Meshes(void) {
 
   );
 
-//  glEnableVertexAttribArray(1);
-//  glVertexAttribPointer(
-//    1,4,GL_BYTE,GL_FALSE,
-//
-//    sizeof(Mesh::Vertex),
-//    (void*) offsetof(Mesh::Vertex,c)
-//
-//  );
-
 // ---   *   ---   *   ---
 
 //  glGenBuffers(1,&m_ubo);
@@ -95,6 +86,41 @@ Meshes::Meshes(void) {
 
     NULL,
     GL_STATIC_DRAW
+
+  );
+
+// ---   *   ---   *   ---
+// tilefetch buffer
+
+  glBindBuffer(
+    GL_SHADER_STORAGE_BUFFER,
+    m_buff[TILE_SSBO]
+
+  );
+
+  glBufferData(
+    GL_SHADER_STORAGE_BUFFER,
+
+    Meshes::BUFF_SZ
+  * sizeof(uint8_t),
+
+    NULL, GL_DYNAMIC_DRAW
+
+  );
+
+  glBindBufferBase(
+    GL_SHADER_STORAGE_BUFFER,
+    0,
+
+    m_buff[TILE_SSBO]
+
+  );
+
+// ---   *   ---   *   ---
+// get mem
+
+  m_tiles=std::unique_ptr<uint32_t>(
+    new uint32_t[Meshes::BUFF_SZ]
 
   );
 
@@ -171,6 +197,28 @@ uint32_t Meshes::nit(
   m_icount+=icount;
 
   return m_top++;
+
+};
+
+// ---   *   ---   *   ---
+
+void Meshes::update_tiles(void) {
+
+  glBindBuffer(
+    GL_SHADER_STORAGE_BUFFER,
+    m_buff[TILE_SSBO]
+
+  );
+
+  glBufferSubData(
+    GL_SHADER_STORAGE_BUFFER,0,
+
+    Meshes::BUFF_SZ
+  * sizeof(uint32_t),
+
+    m_tiles.get()
+
+  );
 
 };
 
