@@ -46,25 +46,45 @@ int main(void) {
   Meshes m_frame;
   BUCK=&m_frame;
 
-  m_frame.get_tile(0)=0;
-  m_frame.get_tile(1)=1;
-  m_frame.get_tile(2)=2;
-  m_frame.get_tile(3)=3;
-
-  m_frame.update_tiles();
+  uint16_t tile_x=0;
+  uint16_t tile_y=0;
 
 // ---   *   ---   *   ---
-// wrap your head round this tri ;>
+// wrap your head round this quad ;>
 
   Mesh::Vertex verts[4]={
 
-    {.XYZ={0xFF,0x00,0x80},.TEX={0xFF,0x00,0x00}},
-    {.XYZ={0x00,0x00,0x80},.TEX={0x00,0x00,0x01}},
-    {.XYZ={0x00,0xFF,0x80},.TEX={0x00,0xFF,0x02}},
+    { .XYZ = {0xFF,0x00,0x80},
+      .TEX = {0xFF,0x00},
 
-    {.XYZ={0xFF,0xFF,0x80},.TEX={0xFF,0xFF,0x03}},
+      .ID  = 0x0000
+
+    },
+
+    { .XYZ = {0x00,0x00,0x80},
+      .TEX = {0x00,0x00},
+
+      .ID  = 0x0000
+
+    },
+
+    { .XYZ = {0x00,0xFF,0x80},
+      .TEX = {0x00,0xFF},
+
+      .ID  = 0x0000
+
+    },
+
+    { .XYZ = {0xFF,0xFF,0x80},
+      .TEX = {0xFF,0xFF},
+
+      .ID  = 0x0000
+
+    },
 
   };
+
+// ---   *   ---   *   ---
 
   uint16_t indices[6]={
     0,1,2,
@@ -117,6 +137,16 @@ int main(void) {
     );
 
     transform.move(vel);
+
+    tile_y+=tile_x==7;
+    tile_y&=3;
+
+    tile_x++;
+    tile_x*=tile_x<8;
+
+    m_frame.get_tile(0)=tile_x|(tile_y<<8);
+    m_frame.update_tiles();
+
     winrend(0,&draw);
 
   };

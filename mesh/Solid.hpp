@@ -60,11 +60,12 @@ in vec2 Tex_Coords;
 flat in uint Tile_Index;;
 uniform sampler2DArray Surface;
 out vec4 Frag_Color;
-const float Mults[4]={ 0.0,0.5,0.75,1.0 };
 void main(void) {
+  ivec3 dim=textureSize(Surface,0);
+  float uv_step=(1.0f / dim[0])*16;
+
   Frag_Color=
-    texture(Surface,
-            vec3(Tex_Coords,0))*Mults[Tile_Index];
+    texture(Surface,vec3(Tex_Coords*uv_step,0));
 }
 
 

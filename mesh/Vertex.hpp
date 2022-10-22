@@ -59,7 +59,8 @@ const uint FRAC_6BIT=5;
 const uint FRAC_7BIT=6;
 const uint FRAC_8BIT=7;
 const bool FRAC_SIGNED=false;
-const bool FRAC_UNSIGNED=true;
+const bool FRAC_UNSIG=true;
+const float UV_STEP=FRAC_STEP[FRAC_4BIT];
 float unfrac(uint b,float step,uint nbits,
              bool unsig) {
   uint max=FRAC_MAXV[nbits];
@@ -76,12 +77,17 @@ float unfrac_i8(uint b) {
 };
 float unfrac_u8(uint b) {
   return unfrac(b,FRAC_STEP[FRAC_8BIT],FRAC_8BIT,
-                FRAC_UNSIGNED);
+                FRAC_UNSIG);
 };
 vec2 extract_tex(void) {
-  Tile_Index=Tile_Indices.buff[Vertex[2]&0xFF];
+  uint shift_x=
+    Tile_Indices.buff[Vertex[2]&0xFFFF]&0xFFFF;
+  uint shift_y=shift_x >> 8;
+
+  shift_x&=0xFF;
   return vec2(unfrac_u8(Vertex[1] >> 16),
-              unfrac_u8(Vertex[1] >> 24));
+              1-unfrac_u8(Vertex[1] >> 24)) +
+    vec2(shift_x,shift_y);
 };
 vec4 extract_xyz(void) {
   return vec4(unfrac_i8(Vertex[0]),

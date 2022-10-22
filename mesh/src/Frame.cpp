@@ -102,9 +102,10 @@ Meshes::Meshes(void) {
     GL_SHADER_STORAGE_BUFFER,
 
     Meshes::BUFF_SZ
-  * sizeof(uint8_t),
+  * sizeof(uint32_t),
 
-    NULL, GL_DYNAMIC_DRAW
+    NULL,
+    GL_DYNAMIC_DRAW
 
   );
 

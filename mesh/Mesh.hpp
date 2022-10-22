@@ -28,8 +28,10 @@ public:
 
         uint8_t  XYZ[3];
         uint8_t  NTB[3];
+        uint8_t  TEX[2];  // 8
 
-        uint8_t  TEX[3];
+        uint16_t ID;      // 10
+        uint16_t BONE;    // 12
 
       };
 
