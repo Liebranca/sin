@@ -324,11 +324,7 @@ inline void Program::fix_ssbos(void) {
       m_loc,
 
       GL_SHADER_STORAGE_BLOCK,
-
-      ("_"+std::string(
       m_params->ssbos[ssbo_loc]
-
-      )).c_str()
 
     );
 

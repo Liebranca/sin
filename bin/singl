@@ -37,7 +37,7 @@ package SG_File;
 # ---   *   ---   *   ---
 # info
 
-  our $VERSION = v0.04.1;
+  our $VERSION = v0.04.2;
   our $AUTHOR  = 'IBN-3DILA';
 
 # ---   *   ---   *   ---
@@ -150,7 +150,7 @@ sub get_vert_outputs($self) {
   my @branches=();
 
   # get outputs recursively
-  for my $sg($self,@{$self->{extern}}) {
+  for my $sg(@{$self->{extern}},$self) {
     push @branches,
       $sg->{vert}->branches_in($f_re);
 
@@ -495,7 +495,7 @@ sub obj_list($self,$name,$fn) {
 
   my @ar=();
 
-  for my $sg($self,@{$self->{extern}}) {
+  for my $sg(@{$self->{extern}},$self) {
     push @ar,map {q[      "].
       $ARG->{leaves}->[-1]->{value}.
 
@@ -510,6 +510,59 @@ sub obj_list($self,$name,$fn) {
 
     "    },",
     "    .num_$name=".int(@ar).","
+
+  ;
+
+};
+
+# ---   *   ---   *   ---
+# get block name of interface block
+
+sub iface_name($self,$nd) {
+
+  state $re=qr{
+    (?: $BUFFER_RE | $UNIFORM_RE)
+
+  }x;
+
+  my $idex=$nd->branch_in($re);
+  $idex=$idex->{idex}+1;
+
+  return $nd->{leaves}->[$idex]->{value};
+
+};
+
+# ---   *   ---   *   ---
+# same as obj_list, for interface blocks
+
+sub iface_list($self,$name,$fn) {
+
+  my @names=();
+
+  for my $sg(@{$self->{extern}},$self) {
+    my @branches=$fn->($sg);
+
+    for my $nd(@branches) {
+      push @names,$self->iface_name($nd);
+
+    };
+
+  };
+
+# ---   *   ---   *   ---
+
+  @names=map {q[      "].
+    $ARG.
+
+  q["]} @names;
+
+  push @{$self->{out_lines}},
+
+    "    .$name={",
+    (join ",\n",@names),
+
+    "    },",
+    "    .num_$name=".int(@names).","
 
   ;
 
@@ -546,8 +599,9 @@ sub asm($self) {
   $self->obj_list('attrs',\&get_vert_inputs);
 
   $self->obj_list('uniforms',\&get_program_uniforms);
-  $self->obj_list('ubos',\&get_program_ubos);
-  $self->obj_list('ssbos',\&get_program_ssbos);
+
+  $self->iface_list('ubos',\&get_program_ubos);
+  $self->iface_list('ssbos',\&get_program_ssbos);
 
   $self->obj_list('samplers',\&get_frag_samplers);
 
@@ -582,6 +636,8 @@ sub make_structs($self) {
 
   for my $s(@structs) {
 
+    my $name=$self->iface_name($s);
+
     $s->{value}='typedef struct';
     for my $leaf(@{$s->{leaves}}) {
       last if $leaf->{value} eq '{';
@@ -589,6 +645,8 @@ sub make_structs($self) {
       $s->pluck($leaf);
 
     };
+
+    $s->pluck($s->{leaves}->[-1]);
 
 # ---   *   ---   *   ---
 # type-name swapping
@@ -599,7 +657,7 @@ sub make_structs($self) {
     $s->deep_value_repl(qr{^vec4$},'glm::vec4');
 
     push @{$self->{out_lines}},
-      $s->to_string(keep_root=>1).';';
+      $s->to_string(keep_root=>1)."$name;";
 
 # ---   *   ---   *   ---
 # close off the namespace

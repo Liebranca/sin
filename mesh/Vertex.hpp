@@ -1,4 +1,4 @@
-// SinGL v0.04.01
+// SinGL v0.04.02
 // file assembled from mesh/src/Vertex.sg
 // ---   *   ---   *   ---
 // LIBRE BOILERPASTE
@@ -145,7 +145,7 @@ flat in uint Tile_Index;
     },
     .num_ubos=0,
     .ssbos={
-      "Tile_Indices"
+      "_Tile_Indices"
     },
     .num_ssbos=1,
     .samplers={
@@ -159,7 +159,7 @@ flat in uint Tile_Index;
 // ---   *   ---   *   ---
 
 namespace shader::mesh::st {
-typedef struct { uint32_t buff [4096] ; } Tile_Indices ;
+typedef struct { uint32_t buff [4096] ; } _Tile_Indices;
 }
 
 

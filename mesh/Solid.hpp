@@ -1,4 +1,4 @@
-// SinGL v0.04.01
+// SinGL v0.04.02
 // file assembled from mesh/src/Solid.sg
 // ---   *   ---   *   ---
 // LIBRE BOILERPASTE
@@ -100,7 +100,7 @@ void main(void) {
     },
     .num_ubos=0,
     .ssbos={
-      "Tile_Indices"
+      "_Tile_Indices"
     },
     .num_ssbos=1,
     .samplers={
