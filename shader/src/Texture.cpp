@@ -12,7 +12,7 @@
 // ---   *   ---   *   ---
 // deps
 
-  #include "bitter/ff/JOJ.hpp"
+  #include <GL/glew.h>
   #include "shader/Texture.hpp"
 
 // ---   *   ---   *   ---
@@ -23,8 +23,10 @@ Texture::Texture(std::string fpath) {
   JOJ src(fpath);
   src.unpack();
 
-  auto pixels = src.to_buff(1);
-  m_img_sz    = src.get_img_sz();
+  auto pixels = src.to_buff(0,JOJ::UNPACK_ATLAS);
+  m_img_sz    = src.get_atlas_sz();
+
+  m_tab       = src.get_atlas_desc(0);
 
 // ---   *   ---   *   ---
 
@@ -53,7 +55,7 @@ Texture::Texture(std::string fpath) {
     m_img_sz,m_img_sz,1,
     GL_RGBA,
 
-    GL_FLOAT,pixels.get()
+    GL_FLOAT,&pixels[0]
 
   );
 

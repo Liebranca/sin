@@ -10,6 +10,7 @@
   #include <glm/gtx/transform.hpp>
 
   #include "bitter/kvrnel/Style.hpp"
+  #include "mesh/T3D.hpp"
 
 //#include "SIN_Constants.h"
 //#include "GAOL_Frustum.h"

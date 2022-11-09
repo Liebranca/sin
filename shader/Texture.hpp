@@ -5,7 +5,9 @@
 // deps
 
   #include <string>
+
   #include "bitter/kvrnel/Style.hpp"
+  #include "bitter/ff/JOJ.hpp"
 
 // ---   *   ---   *   ---
 // info
@@ -14,7 +16,7 @@ class Texture {
 
 public:
 
-  VERSION   "v0.00.1b";
+  VERSION   "v0.00.2b";
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -26,6 +28,7 @@ private:
   uint32_t m_slot = 0;
 
   uint64_t m_img_sz;
+  std::vector<uint64_t> m_tab;
 
 // ---   *   ---   *   ---
 // iface
@@ -41,6 +44,11 @@ public:
 
   // bind
   void use(void);
+
+  inline std::vector<uint64_t>& get_tab(void) {
+    return m_tab;
+
+  };
 
 };
 

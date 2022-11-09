@@ -19,7 +19,6 @@
 //  #include "lymath/ZJC_GOPS.h"
 //  #include "../Chasm/wind/chMANG.h"
 
-  #include "mesh/T3D.hpp"
   #include "mesh/Camera.hpp"
 
 // ---   *   ---   *   ---

@@ -4,7 +4,9 @@
 // ---   *   ---   *   ---
 // deps
 
+  #include <GL/glew.h>
   #include <glm/vec4.hpp>
+
   #include "bitter/kvrnel/Style.hpp"
 
 // ---   *   ---   *   ---
@@ -14,7 +16,7 @@ class Mesh {
 
 public:
 
-  VERSION   "v0.00.2b";
+  VERSION   "v0.00.3b";
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -40,6 +42,34 @@ public:
     };
 
   } Vertex;
+
+// ---   *   ---   *   ---
+// constructor options
+
+  enum {
+
+    SPRITE_FRAME=0
+
+  };
+
+// ---   *   ---   *   ---
+// constructor helper
+
+  typedef struct {
+
+    std::vector<Mesh::Vertex> verts;
+    std::vector<uint16_t>     indices;
+
+  } Prim;
+
+  typedef struct {
+
+    Prim&    me;
+
+    uint16_t vert;
+    uint16_t idex;
+
+  } Build;
 
 // ---   *   ---   *   ---
 // attrs
@@ -79,7 +109,19 @@ public:
 
   };
 
-  inline void draw(void);
+  inline void draw(void) {
+
+    glDrawElements(
+
+      GL_TRIANGLES,
+      m_icount,
+
+      GL_UNSIGNED_SHORT,
+      m_offset
+
+    );
+
+  };
 
 };
 

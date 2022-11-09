@@ -1,6 +1,6 @@
 // ---   *   ---   *   ---
-// MESH
-// Points and lines come together
+// SPRITE
+// Little devils
 //
 // LIBRE SOFTWARE
 // Licensed under GNU GPL3
@@ -12,9 +12,15 @@
 // ---   *   ---   *   ---
 // deps
 
-  #include "mesh/Mesh.hpp"
+  #include "mesh/Sprite.hpp"
 
 // ---   *   ---   *   ---
-// keeping this just in case ;>
+
+Sprite::Sprite(uint16_t cnt) {
+
+  Mem<uint32_t> frames(cnt);
+  m_frames.copy(frames);
+
+};
 
 // ---   *   ---   *   ---

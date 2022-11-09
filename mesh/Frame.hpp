@@ -7,7 +7,9 @@
   #include <memory>
 
   #include "bitter/kvrnel/Style.hpp"
+
   #include "mesh/Mesh.hpp"
+  #include "mesh/Sprite.hpp"
 
 // ---   *   ---   *   ---
 // info
@@ -16,7 +18,7 @@ class Meshes {
 
 public:
 
-  VERSION   "v0.00.2b";
+  VERSION   "v0.00.3b";
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -26,11 +28,11 @@ private:
 
   // so we're clear on what the
   // size is actually measuring
-  cx8 TRIANGLES = 3;
-  cx8 BUFF_SZ   = 4 * TRIANGLES;
+  cx8  TRIANGLES = 3;
+  cx16 BUFF_SZ   = 128 * TRIANGLES;
 
   // ^max instances independent of size
-  cx8 BATCH_SZ  = 2;
+  cx8  BATCH_SZ  = 2;
 
   enum {
 
@@ -59,6 +61,34 @@ private:
   std::unique_ptr<uint32_t> m_tiles;
 
 // ---   *   ---   *   ---
+// guts
+
+  void push_quad(
+
+    Mesh::Build& bld,
+
+    uint64_t     desc,
+    float        img_step
+
+  );
+
+  Mesh::Prim make_sprite_frame(
+    std::vector<uint64_t>& tab,
+    uint64_t& offset
+
+  );
+
+  // ^entry point
+  uint32_t make_prim(
+
+    std::vector<uint64_t>& tab,
+
+    uint64_t& offset,
+    uint16_t  type
+
+  );
+
+// ---   *   ---   *   ---
 // interface
 
 public:
@@ -75,6 +105,12 @@ public:
 
     uint16_t vcount,
     uint16_t icount
+
+  );
+
+  std::vector<uint32_t> make_sprite(
+    Texture& atlas,
+    uint16_t idex
 
   );
 

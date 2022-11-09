@@ -13,6 +13,11 @@
 // deps
 
   #include <cstddef>
+  #include <GL/glew.h>
+
+  #include "bitter/kvrnel/Bytes.hpp"
+  #include "bitter/ff/JOJ.hpp"
+
   #include "mesh/Frame.hpp"
 
 // ---   *   ---   *   ---
@@ -198,6 +203,240 @@ uint32_t Meshes::nit(
   m_icount+=icount;
 
   return m_top++;
+
+};
+
+// ---   *   ---   *   ---
+
+void Meshes::push_quad(
+
+  Mesh::Build& bld,
+
+  uint64_t     desc,
+  float        img_step
+
+) {
+
+  Mesh::Prim& me = bld.me;
+
+  uint16_t    v  = bld.vert;
+  uint16_t    i  = bld.idex;
+
+  uint16_t    x  = desc&0xFFFF;
+  uint16_t    y  = (desc>>16)&0xFFFF;
+
+  uint16_t    id = desc>>32;
+
+// ---   *   ---   *   ---
+// DEAR G++
+//
+// PLEASE SHUT UP WITH THE
+// NARROWING CONVERSION ERRMES
+
+  uint8_t co_x[2]={
+    uint8_t(x*2),uint8_t(x*2+2)
+
+  };
+
+  uint8_t co_y[2]={
+    uint8_t(y*2),uint8_t(y*2+2),
+
+  };
+
+// ---   *   ---   *   ---
+
+  float step=
+    Frac::STEP[Frac::STEP_8BIT];
+
+  float nbits=
+    Frac::BITS[Frac::SIZE_8BIT];
+
+  float fx=float(x)*img_step;
+  float fy=float(y)*img_step;
+
+  uint8_t uv_x[2]={
+
+    frac<uint8_t>(
+      fx,step,nbits,Frac::UNSIGNED
+
+    ),
+
+    frac<uint8_t>(
+      fx+img_step,step,nbits,Frac::UNSIGNED
+
+    ),
+
+  };
+
+  uint8_t uv_y[2]={
+
+    frac<uint8_t>(
+      fy,step,nbits,Frac::UNSIGNED
+
+    ),
+
+    frac<uint8_t>(
+      fy+img_step,step,nbits,Frac::UNSIGNED
+
+    ),
+
+  };
+
+// ---   *   ---   *   ---
+
+  // 1,-1
+  me.verts[v+0]=(Mesh::Vertex) {
+
+    .XYZ = {co_x[1],co_y[0],0x80},
+    .TEX = {uv_x[1],uv_y[0]},
+
+    .ID  = id
+
+  };
+
+  // -1,-1
+  me.verts[v+1]=(Mesh::Vertex) {
+
+    .XYZ = {co_x[0],co_y[0],0x80},
+    .TEX = {uv_x[0],uv_y[0]},
+
+    .ID  = id
+
+  };
+
+  // -1,1
+  me.verts[v+2]=(Mesh::Vertex) {
+
+    .XYZ = {co_x[0],co_y[1],0x80},
+    .TEX = {uv_x[0],uv_y[1]},
+
+    .ID  = id
+
+  };
+
+  // 1,1
+  me.verts[v+3]=(Mesh::Vertex) {
+
+    .XYZ = {co_x[1],co_y[1],0x80},
+    .TEX = {uv_x[1],uv_y[1]},
+
+    .ID  = id
+
+  };
+
+  me.indices[i+0]=i+0;
+  me.indices[i+1]=i+1;
+  me.indices[i+2]=i+2;
+
+  me.indices[i+3]=i+0;
+  me.indices[i+4]=i+2;
+  me.indices[i+5]=i+3;
+
+  bld.vert+=4;
+  bld.idex+=6;
+
+};
+
+// ---   *   ---   *   ---
+
+Mesh::Prim Meshes::make_sprite_frame(
+  std::vector<uint64_t>& tab,
+  uint64_t& offset
+
+) {
+
+  Mesh::Prim  me;
+  Mesh::Build bld={
+
+    .me   = me,
+
+    .vert = 0,
+    .idex = 0
+
+  };
+
+  uint64_t tile_cnt = tab[offset+0];
+  uint64_t img_sz   = tab[offset+1];
+
+  uint16_t i        = offset+2;
+
+  // 1 step == 1 tile-width worth of pixels
+  float step=1/(float(img_sz)/JOJ::STD_TILE_SZ);
+
+  // 4 verts (2 tris) per tile
+  // 3 indices per tri
+  me.verts.resize(4*tile_cnt);
+  me.indices.resize(6*tile_cnt);
+
+  while(i<offset+2+tile_cnt) {
+    this->push_quad(bld,tab[i++],step);
+
+  };
+
+  offset=i;
+
+  return me;
+
+};
+
+// ---   *   ---   *   ---
+
+uint32_t Meshes::make_prim(
+
+  std::vector<uint64_t>& tab,
+
+  uint64_t& offset,
+  uint16_t  type
+
+) {
+
+  uint32_t   out;
+  Mesh::Prim me;
+
+  switch(type) {
+
+  case Mesh::SPRITE_FRAME:
+    me=this->make_sprite_frame(tab,offset);
+    break;
+
+  };
+
+  return this->nit(
+    me.verts.data(),
+    me.indices.data(),
+    me.verts.size(),
+    me.indices.size()
+
+  );
+
+};
+
+// ---   *   ---   *   ---
+
+std::vector<uint32_t> Meshes::make_sprite(
+
+  Texture& atlas,
+  uint16_t idex
+
+) {
+
+  std::vector<uint32_t> out;
+  std::vector<uint64_t>& tab=atlas.get_tab();
+
+  uint64_t offset=0;
+
+  while(tab[offset]) {
+
+    printf("%u\n",tab[offset]);
+
+    out.push_back(this->make_prim(
+      tab,offset,Mesh::SPRITE_FRAME
+
+    ));
+
+  };
+
+  return out;
 
 };
 

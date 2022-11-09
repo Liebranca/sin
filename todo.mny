@@ -1,14 +1,17 @@
 >sin render v0.01.0a
 
+*>Sprite tilesheets
+~ Build *.joj helper for 16x16 atlases
+~ ^ point to dir
+~ ^ read in blocks
+~ ^ save block ids to dict
+~ ^ per-frame animation meta
+
 *>CLASSES
 x Program/Shader
-~ Texture
-~ ^ *.joj import
-
-~ Mesh
-~ ^ Vertex
-~ ^ Line
-~ ^ Poly
+x Texture
+x ^ *.joj import
+x Mesh
 ~ ^ *.crk import
 
 *>SinGL

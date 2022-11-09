@@ -54,7 +54,7 @@ $:VERT;>
   };
 
 // ---   *   ---   *   ---
-// image these are enums ;>
+// imagine these are enums ;>
 
   const uint FRAC_1BIT   = 0;
   const uint FRAC_2BIT   = 1;
@@ -67,9 +67,6 @@ $:VERT;>
 
   const bool FRAC_SIGNED = false;
   const bool FRAC_UNSIG  = true;
-
-  // wrong: should be 16 pixels
-  const float UV_STEP    = FRAC_STEP[FRAC_4BIT];
 
 // ---   *   ---   *   ---
 // see: bitter/kvrnel/Bytes.hpp
@@ -136,20 +133,17 @@ float unfrac_u8(uint b) {
 
 vec2 extract_tex(void) {
 
-  uint shift_x=Tile_Indices.buff[
+  uint quad_id=Tile_Indices.buff[
     Vertex[2]&0xFFFF
 
   ]&0xFFFF;
-
-  uint shift_y=shift_x>>8;
-  shift_x&=0xFF;
 
   return vec2(
 
     unfrac_u8(Vertex[1]>>16),
   1-unfrac_u8(Vertex[1]>>24)
 
-  )+vec2(shift_x,shift_y);
+  );
 
 };
 

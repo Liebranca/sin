@@ -6,16 +6,12 @@
 
   #include "chasm/window.h"
 
-  #include "shader/src/Program.cpp"
-  #include "shader/src/Texture.cpp"
-  #include "shader/src/Frame.cpp"
+  #include "shader/Texture.hpp"
+  #include "shader/Frame.hpp"
 
-  #include "mesh/src/T3D.cpp"
-  #include "mesh/src/Camera.cpp"
+  #include "mesh/Camera.hpp"
 
-  #include "mesh/src/Mesh.cpp"
-  #include "mesh/src/Frame.cpp"
-
+  #include "mesh/Frame.hpp"
   #include "mesh/Solid.hpp"
 
 // ---   *   ---   *   ---
@@ -49,50 +45,7 @@ int main(void) {
   uint16_t tile_x=0;
   uint16_t tile_y=0;
 
-// ---   *   ---   *   ---
-// wrap your head round this quad ;>
-
-  Mesh::Vertex verts[4]={
-
-    { .XYZ = {0xFF,0x00,0x80},
-      .TEX = {0xFF,0x00},
-
-      .ID  = 0x0000
-
-    },
-
-    { .XYZ = {0x00,0x00,0x80},
-      .TEX = {0x00,0x00},
-
-      .ID  = 0x0000
-
-    },
-
-    { .XYZ = {0x00,0xFF,0x80},
-      .TEX = {0x00,0xFF},
-
-      .ID  = 0x0000
-
-    },
-
-    { .XYZ = {0xFF,0xFF,0x80},
-      .TEX = {0xFF,0xFF},
-
-      .ID  = 0x0000
-
-    },
-
-  };
-
-// ---   *   ---   *   ---
-
-  uint16_t indices[6]={
-    0,1,2,
-    0,2,3
-
-  };
-
-  m_frame.nit(verts,indices,4,6);
+  m_frame.make_sprite(tex,0);
 
 // ---   *   ---   *   ---
 
@@ -138,14 +91,14 @@ int main(void) {
 
     transform.move(vel);
 
-    tile_y+=tile_x==7;
-    tile_y&=3;
-
-    tile_x++;
-    tile_x*=tile_x<8;
-
-    m_frame.get_tile(0)=tile_x|(tile_y<<8);
-    m_frame.update_tiles();
+//    tile_y+=tile_x==7;
+//    tile_y&=3;
+//
+//    tile_x++;
+//    tile_x*=tile_x<8;
+//
+//    m_frame.get_tile(0)=tile_x|(tile_y<<8);
+//    m_frame.update_tiles();
 
     winrend(0,&draw);
 
