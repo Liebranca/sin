@@ -170,7 +170,10 @@ uint32_t Meshes::nit(
   // verts
   glBindBuffer(GL_ARRAY_BUFFER,m_buff[VBO]);
   glBufferSubData(
-    GL_ARRAY_BUFFER,m_vcount,
+    GL_ARRAY_BUFFER,
+
+    m_vcount
+  * sizeof(Mesh::Vertex),
 
     vcount
   * sizeof(Mesh::Vertex),
@@ -191,7 +194,10 @@ uint32_t Meshes::nit(
   );
 
   glBufferSubData(
-    GL_ELEMENT_ARRAY_BUFFER,m_icount,
+    GL_ELEMENT_ARRAY_BUFFER,
+
+    m_icount
+  * sizeof(uint16_t),
 
     icount
   * sizeof(uint16_t),
@@ -213,6 +219,8 @@ void Meshes::push_quad(
   Mesh::Build& bld,
 
   uint64_t     desc,
+  uint16_t     img_sz,
+
   float        img_step
 
 ) {
@@ -222,24 +230,15 @@ void Meshes::push_quad(
   uint16_t    v  = bld.vert;
   uint16_t    i  = bld.idex;
 
-  uint16_t    x  = desc&0xFFFF;
-  uint16_t    y  = (desc>>16)&0xFFFF;
-
-  uint16_t    id = desc>>32;
-
-// ---   *   ---   *   ---
-// DEAR G++
-//
-// PLEASE SHUT UP WITH THE
-// NARROWING CONVERSION ERRMES
-
-  uint8_t co_x[2]={
-    uint8_t(x*2),uint8_t(x*2+2)
+  uint16_t co[2]={
+    uint16_t(desc&0xFFFF),
+    uint16_t((desc>>16)&0xFFFF)
 
   };
 
-  uint8_t co_y[2]={
-    uint8_t(y*2),uint8_t(y*2+2),
+  uint16_t uv[2]={
+    uint16_t((desc>>32)&0xFFFF),
+    uint16_t((desc>>48)&0xFFFF)
 
   };
 
@@ -248,37 +247,80 @@ void Meshes::push_quad(
   float step=
     Frac::STEP[Frac::STEP_8BIT];
 
-  float nbits=
+  uint8_t nbits=
     Frac::BITS[Frac::SIZE_8BIT];
 
-  float fx=float(x)*img_step;
-  float fy=float(y)*img_step;
+  float co_f[2]={
+    float(co[0])*img_step,
+    float(co[1])*img_step
+
+  };
+
+  float uv_f[2]={
+    float(uv[0])*img_step,
+    float(uv[1])*img_step
+
+  };
+
+  uint16_t id=0;
+
+// ---   *   ---   *   ---
+
+  uint8_t co_x[2]={
+
+    frac<uint8_t>(
+      co_f[0],step,nbits,Frac::UNSIGNED
+
+    ),
+
+    frac<uint8_t>(
+      co_f[0]+img_step,step,nbits,Frac::UNSIGNED
+
+    )
+
+  };
+
+  uint8_t co_y[2]={
+
+    frac<uint8_t>(
+      co_f[1],step,nbits,Frac::UNSIGNED
+
+    ),
+
+    frac<uint8_t>(
+      co_f[1]+img_step,step,nbits,Frac::UNSIGNED
+
+    )
+
+  };
+
+// ---   *   ---   *   ---
 
   uint8_t uv_x[2]={
 
     frac<uint8_t>(
-      fx,step,nbits,Frac::UNSIGNED
+      uv_f[0],step,nbits,Frac::UNSIGNED
 
     ),
 
     frac<uint8_t>(
-      fx+img_step,step,nbits,Frac::UNSIGNED
+      uv_f[0]+img_step,step,nbits,Frac::UNSIGNED
 
-    ),
+    )
 
   };
 
   uint8_t uv_y[2]={
 
     frac<uint8_t>(
-      fy,step,nbits,Frac::UNSIGNED
+      uv_f[1],step,nbits,Frac::UNSIGNED
 
     ),
 
     frac<uint8_t>(
-      fy+img_step,step,nbits,Frac::UNSIGNED
+      uv_f[1]+img_step,step,nbits,Frac::UNSIGNED
 
-    ),
+    )
 
   };
 
@@ -324,13 +366,15 @@ void Meshes::push_quad(
 
   };
 
-  me.indices[i+0]=i+0;
-  me.indices[i+1]=i+1;
-  me.indices[i+2]=i+2;
+// ---   *   ---   *   ---
 
-  me.indices[i+3]=i+0;
-  me.indices[i+4]=i+2;
-  me.indices[i+5]=i+3;
+  me.indices[i+0]=m_vcount+bld.vert+0;
+  me.indices[i+1]=m_vcount+bld.vert+1;
+  me.indices[i+2]=m_vcount+bld.vert+2;
+
+  me.indices[i+3]=m_vcount+bld.vert+0;
+  me.indices[i+4]=m_vcount+bld.vert+2;
+  me.indices[i+5]=m_vcount+bld.vert+3;
 
   bld.vert+=4;
   bld.idex+=6;
@@ -361,7 +405,7 @@ Mesh::Prim Meshes::make_sprite_frame(
   uint16_t i        = offset+2;
 
   // 1 step == 1 tile-width worth of pixels
-  float step=1/(float(img_sz)/JOJ::STD_TILE_SZ);
+  float step=1.0f/(float(img_sz)/JOJ::STD_TILE_SZ);
 
   // 4 verts (2 tris) per tile
   // 3 indices per tri
@@ -369,7 +413,7 @@ Mesh::Prim Meshes::make_sprite_frame(
   me.indices.resize(6*tile_cnt);
 
   while(i<offset+2+tile_cnt) {
-    this->push_quad(bld,tab[i++],step);
+    this->push_quad(bld,tab[i++],img_sz,step);
 
   };
 
@@ -427,8 +471,6 @@ std::vector<uint32_t> Meshes::make_sprite(
 
   while(tab[offset]) {
 
-    printf("%u\n",tab[offset]);
-
     out.push_back(this->make_prim(
       tab,offset,Mesh::SPRITE_FRAME
 
@@ -475,12 +517,5 @@ void Meshes::update_tiles(void) {
 //  );
 //
 //};
-
-// ---   *   ---   *   ---
-
-inline void Meshes::use(void) {
-  glBindVertexArray(m_vao);
-
-};
 
 // ---   *   ---   *   ---

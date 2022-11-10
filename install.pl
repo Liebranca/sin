@@ -22,6 +22,26 @@ Avt::set_config(
   incl=>[qw(bitter)],
   libs=>[qw(bitter chasm)],
 
+  post_build=>q{
+
+    chdir Shb7::dir('sin');
+
+    my $ex   = "bin/singl";
+    my @call = (
+
+      $ex,
+
+      q[-o],"mesh",
+
+      "mesh/src/Vertex.sg",
+      "mesh/src/Solid.sg",
+
+    );
+
+    system {$call[0]} @call;
+
+  },
+
 );
 
 Avt::scan();

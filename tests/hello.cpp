@@ -22,6 +22,7 @@ static void* BUCK;
 
 void draw(void) {
   ((Meshes*) BUCK)->draw(0);
+//  ((Meshes*) BUCK)->draw(1);
 
 };
 
@@ -42,9 +43,7 @@ int main(void) {
   Meshes m_frame;
   BUCK=&m_frame;
 
-  uint16_t tile_x=0;
-  uint16_t tile_y=0;
-
+  m_frame.use();
   m_frame.make_sprite(tex,0);
 
 // ---   *   ---   *   ---
@@ -55,13 +54,13 @@ int main(void) {
     .width  = 640,
     .height = 480,
 
-    .scale  = 0.0045f,
-    .near   = 0.01f,
+    .scale  = 0.0040f,
+    .near   = 0.001f,
     .far    = 100.0f
 
   };
 
-  Camera cam({0,0,0},lens);
+  Camera cam({0,0,8},lens);
   cam.use_ortho();
 
   glm::vec3 vel({0.1,0.0,0.0});
@@ -88,17 +87,6 @@ int main(void) {
       &cam.get_view()[0][0]
 
     );
-
-    transform.move(vel);
-
-//    tile_y+=tile_x==7;
-//    tile_y&=3;
-//
-//    tile_x++;
-//    tile_x*=tile_x<8;
-//
-//    m_frame.get_tile(0)=tile_x|(tile_y<<8);
-//    m_frame.update_tiles();
 
     winrend(0,&draw);
 

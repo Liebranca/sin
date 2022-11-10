@@ -48,7 +48,7 @@ public:
       width *= scale;
 
       height *= 0.5f;
-      height *= scale;
+      height *= -scale;
 
       return glm::ortho(
         -width,width,

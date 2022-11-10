@@ -133,15 +133,10 @@ float unfrac_u8(uint b) {
 
 vec2 extract_tex(void) {
 
-  uint quad_id=Tile_Indices.buff[
-    Vertex[2]&0xFFFF
-
-  ]&0xFFFF;
-
   return vec2(
 
     unfrac_u8(Vertex[1]>>16),
-  1-unfrac_u8(Vertex[1]>>24)
+    unfrac_u8(Vertex[1]>>24)
 
   );
 

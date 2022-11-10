@@ -353,7 +353,7 @@ sub make_src($self,$name,$src) {
        $branch->{value}
     =~ $vauth_re
 
-    ) /*be*/ { while(
+    ) { while(
 
           @pending
       &&  $pending[0]->{value} ne ';'

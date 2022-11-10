@@ -68,6 +68,8 @@ private:
     Mesh::Build& bld,
 
     uint64_t     desc,
+    uint16_t     img_sz,
+
     float        img_step
 
   );
@@ -115,7 +117,10 @@ public:
   );
 
   // bind buffers
-  inline void use(void);
+  inline void use(void) {
+    glBindVertexArray(m_vao);
+
+  };
 
   // draw specific mesh
   inline void draw(uint32_t idex) {
