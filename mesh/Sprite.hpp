@@ -16,7 +16,7 @@ class Sprite {
 
 public:
 
-  VERSION     "v0.00.1b";
+  VERSION     "v0.00.2b";
   AUTHOR      "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -24,16 +24,37 @@ public:
 
 private:
 
-  Mem<uint32_t> m_frames;
+  uint64_t m_cur=0;
+
+  std::vector<uint32_t> m_frames;
 
 // ---   *   ---   *   ---
 // iface
 
 public:
 
-  Sprite(uint16_t cnt);
-  inline uint32_t& operator[](long i) {
+  Sprite(std::vector<uint32_t>& frames) {
+    m_frames=frames;
+
+  };
+
+  Sprite(std::vector<uint32_t> frames) {
+    m_frames=frames;
+
+  };
+
+  inline uint32_t operator[](uint64_t i) {
+    i-=i*(i>=m_frames.size());
     return m_frames[i];
+
+  };
+
+  inline uint32_t play(void) {
+
+    uint32_t out=m_cur++;
+    m_cur*=1-(m_cur>=m_frames.size());
+
+    return out;
 
   };
 

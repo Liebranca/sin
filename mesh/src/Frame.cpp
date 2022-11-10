@@ -158,7 +158,7 @@ uint32_t Meshes::nit(
   m_mesh[m_top]=Mesh(
 
     m_top,
-    m_icount,
+    m_icount*sizeof(uint16_t),
 
     vcount,
     icount
@@ -217,11 +217,10 @@ uint32_t Meshes::nit(
 void Meshes::push_quad(
 
   Mesh::Build& bld,
-
   uint64_t     desc,
-  uint16_t     img_sz,
 
-  float        img_step
+  float        tile_step,
+  float        atlas_step
 
 ) {
 
@@ -251,18 +250,18 @@ void Meshes::push_quad(
     Frac::BITS[Frac::SIZE_8BIT];
 
   float co_f[2]={
-    float(co[0])*img_step,
-    float(co[1])*img_step
+    float(co[0])*tile_step,
+    float(co[1])*tile_step
 
   };
 
   float uv_f[2]={
-    float(uv[0])*img_step,
-    float(uv[1])*img_step
+    float(uv[0])*atlas_step,
+    float(uv[1])*atlas_step
 
   };
 
-  uint16_t id=0;
+  uint16_t id=m_top;
 
 // ---   *   ---   *   ---
 
@@ -274,7 +273,7 @@ void Meshes::push_quad(
     ),
 
     frac<uint8_t>(
-      co_f[0]+img_step,step,nbits,Frac::UNSIGNED
+      co_f[0]+tile_step,step,nbits,Frac::UNSIGNED
 
     )
 
@@ -288,7 +287,7 @@ void Meshes::push_quad(
     ),
 
     frac<uint8_t>(
-      co_f[1]+img_step,step,nbits,Frac::UNSIGNED
+      co_f[1]+tile_step,step,nbits,Frac::UNSIGNED
 
     )
 
@@ -304,7 +303,7 @@ void Meshes::push_quad(
     ),
 
     frac<uint8_t>(
-      uv_f[0]+img_step,step,nbits,Frac::UNSIGNED
+      uv_f[0]+atlas_step,step,nbits,Frac::UNSIGNED
 
     )
 
@@ -318,7 +317,7 @@ void Meshes::push_quad(
     ),
 
     frac<uint8_t>(
-      uv_f[1]+img_step,step,nbits,Frac::UNSIGNED
+      uv_f[1]+atlas_step,step,nbits,Frac::UNSIGNED
 
     )
 
@@ -372,9 +371,9 @@ void Meshes::push_quad(
   me.indices[i+1]=m_vcount+bld.vert+1;
   me.indices[i+2]=m_vcount+bld.vert+2;
 
-  me.indices[i+3]=m_vcount+bld.vert+0;
-  me.indices[i+4]=m_vcount+bld.vert+2;
-  me.indices[i+5]=m_vcount+bld.vert+3;
+  me.indices[i+3]=m_vcount+bld.vert+2;
+  me.indices[i+4]=m_vcount+bld.vert+3;
+  me.indices[i+5]=m_vcount+bld.vert+0;
 
   bld.vert+=4;
   bld.idex+=6;
@@ -400,20 +399,32 @@ Mesh::Prim Meshes::make_sprite_frame(
   };
 
   uint64_t tile_cnt = tab[offset+0];
-  uint64_t img_sz   = tab[offset+1];
+  uint16_t i        = ++offset;
 
-  uint16_t i        = offset+2;
-
-  // 1 step == 1 tile-width worth of pixels
-  float step=1.0f/(float(img_sz)/JOJ::STD_TILE_SZ);
+  // scale multipliers for each quad
+  uint64_t steps    = tab[1];
 
   // 4 verts (2 tris) per tile
   // 3 indices per tri
   me.verts.resize(4*tile_cnt);
   me.indices.resize(6*tile_cnt);
 
-  while(i<offset+2+tile_cnt) {
-    this->push_quad(bld,tab[i++],img_sz,step);
+  // scales vertex coords
+  uint64_t steps_u = steps&0xFFFFFFFF;
+  float tile_step  = *((float*) &steps_u);
+
+  // scales texture coords
+  steps_u=steps>>32;
+  float atlas_step=*((float*) &steps_u);
+
+  while(i<offset+tile_cnt) {
+
+    this->push_quad(
+      bld,tab[i++],
+      tile_step,
+      atlas_step
+
+    );
 
   };
 
@@ -467,9 +478,10 @@ std::vector<uint32_t> Meshes::make_sprite(
   std::vector<uint32_t> out;
   std::vector<uint64_t>& tab=atlas.get_tab();
 
-  uint64_t offset=0;
+  uint64_t cnt=tab[0];
+  uint64_t offset=2;
 
-  while(tab[offset]) {
+  for(uint64_t i=0;i<cnt;i++) {
 
     out.push_back(this->make_prim(
       tab,offset,Mesh::SPRITE_FRAME

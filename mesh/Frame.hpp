@@ -66,11 +66,10 @@ private:
   void push_quad(
 
     Mesh::Build& bld,
-
     uint64_t     desc,
-    uint16_t     img_sz,
 
-    float        img_step
+    float        tile_step,
+    float        atlas_step
 
   );
 

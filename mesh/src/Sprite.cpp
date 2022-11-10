@@ -16,11 +16,4 @@
 
 // ---   *   ---   *   ---
 
-Sprite::Sprite(uint16_t cnt) {
-
-  Mem<uint32_t> frames(cnt);
-  m_frames.copy(frames);
-
-};
-
 // ---   *   ---   *   ---

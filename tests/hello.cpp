@@ -4,7 +4,7 @@
   #include <glm/mat4x4.hpp>
 
 
-  #include "chasm/window.h"
+  #include "chasm/Window.hpp"
 
   #include "shader/Texture.hpp"
   #include "shader/Frame.hpp"
@@ -16,21 +16,19 @@
 
 // ---   *   ---   *   ---
 
-static void* BUCK;
-
-// ---   *   ---   *   ---
-
-void draw(void) {
-  ((Meshes*) BUCK)->draw(0);
-//  ((Meshes*) BUCK)->draw(1);
-
-};
-
-// ---   *   ---   *   ---
-
 int main(void) {
 
-  winnt("CHASM",640,480,0);
+  Win::Desc win_desc={
+    .title="HELLO.CPP",
+    .width=640,
+    .height=480,
+
+    .fullscreen=false,
+    .fps=4
+
+  };
+
+  Win win(win_desc);
 
   Programs p_frame;
   Program* p=p_frame.nit(&shader::mesh::Solid);
@@ -41,10 +39,9 @@ int main(void) {
   tex.use();
 
   Meshes m_frame;
-  BUCK=&m_frame;
 
   m_frame.use();
-  m_frame.make_sprite(tex,0);
+  Sprite dummy(m_frame.make_sprite(tex,0));
 
 // ---   *   ---   *   ---
 
@@ -88,14 +85,11 @@ int main(void) {
 
     );
 
-    winrend(0,&draw);
+    win.refresh(0);
+    m_frame.draw(dummy.play());
 
   };
 
-// ---   *   ---   *   ---
-// cleanup
-
-  windl();
   return 0;
 
 };

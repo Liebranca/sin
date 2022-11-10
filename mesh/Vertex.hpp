@@ -79,6 +79,7 @@ float unfrac_u8(uint b) {
                 FRAC_UNSIG);
 };
 vec2 extract_tex(void) {
+  Tile_Index=Vertex[2]&0xFFFF;
   return vec2(unfrac_u8(Vertex[1] >> 16),
               unfrac_u8(Vertex[1] >> 24));
 };
