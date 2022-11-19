@@ -28,7 +28,7 @@ private:
   uint16_t m_vcount;
   uint16_t m_icount;
 
-  void*    m_offset;
+  uint64_t m_offset;
 
 // ---   *   ---   *   ---
 // iface
@@ -41,10 +41,10 @@ public:
   // nit
   Mesh(
     uint16_t id,
-
-    uint16_t offset,
     uint16_t vcount,
-    uint16_t icount
+    uint16_t icount,
+
+    uint64_t offset
 
   ) {
 
@@ -53,7 +53,7 @@ public:
     m_vcount = vcount;
     m_icount = icount;
 
-    m_offset = (void*) ((uintptr_t) offset);
+    m_offset = offset;
 
   };
 
@@ -65,7 +65,7 @@ public:
       m_icount,
 
       GL_UNSIGNED_SHORT,
-      m_offset
+      (void*) m_offset
 
     );
 

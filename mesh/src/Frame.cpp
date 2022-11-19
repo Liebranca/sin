@@ -144,11 +144,6 @@ Meshes::~Meshes(void) {
 
 uint32_t Meshes::nit(CRK::Prim& p) {
 
-  for(auto& i : p.indices) {
-    i+=m_vcount;
-
-  };
-
   void*    verts   = p.verts.data();
   void*    indices = p.indices.data();
 
@@ -159,10 +154,10 @@ uint32_t Meshes::nit(CRK::Prim& p) {
   m_mesh[m_top]=Mesh(
 
     m_top,
-    m_icount*sizeof(uint16_t),
-
     vcount,
-    icount
+    icount,
+
+    m_icount*sizeof(uint16_t)
 
   );
 
@@ -225,7 +220,7 @@ std::vector<uint32_t> Meshes::make_sprite(
   CRK crk(fpath);
   crk.unpack();
 
-  auto me=crk.data();
+  auto& me=crk.data();
 
   for(auto& p : me) {
     out.push_back(this->nit(p));

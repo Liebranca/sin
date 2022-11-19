@@ -86,6 +86,7 @@ public:
 
   // draw specific mesh
   inline void draw(uint32_t idex) {
+
     m_mesh[idex].draw();
 
   };

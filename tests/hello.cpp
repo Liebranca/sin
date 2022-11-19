@@ -3,7 +3,6 @@
 
   #include <glm/mat4x4.hpp>
 
-
   #include "chasm/Window.hpp"
 
   #include "shader/Texture.hpp"
@@ -36,7 +35,7 @@ int main(void) {
 
   p_frame.use(p);
 
-  Texture tex("out");
+  Texture tex("../bitter/out");
   tex.use();
 
   Meshes m_frame;
@@ -44,7 +43,7 @@ int main(void) {
   m_frame.use();
 
   Sprite dummy(
-    m_frame.make_sprite("out.crk")
+    m_frame.make_sprite("../bitter/out.crk")
 
   );
 
@@ -56,7 +55,7 @@ int main(void) {
     .width  = 640,
     .height = 480,
 
-    .scale  = 0.0010f,
+    .scale  = 0.0005f,
     .near   = 0.001f,
     .far    = 100.0f
 
