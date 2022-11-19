@@ -16,8 +16,6 @@
   #include <GL/glew.h>
 
   #include "bitter/kvrnel/Bytes.hpp"
-  #include "bitter/ff/JOJ.hpp"
-
   #include "mesh/Frame.hpp"
 
 // ---   *   ---   *   ---
@@ -36,7 +34,7 @@ Meshes::Meshes(void) {
     GL_ARRAY_BUFFER,
 
     Meshes::BUFF_SZ
-  * sizeof(Mesh::Vertex),
+  * sizeof(CRK::Vertex),
 
     NULL,
     GL_DYNAMIC_DRAW
@@ -48,8 +46,8 @@ Meshes::Meshes(void) {
   glVertexAttribIPointer(
     0,4,GL_UNSIGNED_INT,
 
-    sizeof(Mesh::Vertex),
-    (void*) offsetof(Mesh::Vertex,data)
+    sizeof(CRK::Vertex),
+    (void*) offsetof(CRK::Vertex,data)
 
   );
 
@@ -144,15 +142,18 @@ Meshes::~Meshes(void) {
 // ---   *   ---   *   ---
 // pushes geometry to gl buffer
 
-uint32_t Meshes::nit(
+uint32_t Meshes::nit(CRK::Prim& p) {
 
-  void*    verts,
-  void*    indices,
+  for(auto& i : p.indices) {
+    i+=m_vcount;
 
-  uint16_t vcount,
-  uint16_t icount
+  };
 
-) {
+  void*    verts   = p.verts.data();
+  void*    indices = p.indices.data();
+
+  uint16_t vcount  = p.verts.size();
+  uint16_t icount  = p.indices.size();
 
   // fill out struct
   m_mesh[m_top]=Mesh(
@@ -173,10 +174,10 @@ uint32_t Meshes::nit(
     GL_ARRAY_BUFFER,
 
     m_vcount
-  * sizeof(Mesh::Vertex),
+  * sizeof(CRK::Vertex),
 
     vcount
-  * sizeof(Mesh::Vertex),
+  * sizeof(CRK::Vertex),
 
     verts
 
@@ -214,279 +215,20 @@ uint32_t Meshes::nit(
 
 // ---   *   ---   *   ---
 
-void Meshes::push_quad(
-
-  Mesh::Build& bld,
-  uint64_t     desc,
-
-  float        tile_step,
-  float        atlas_step
-
-) {
-
-  Mesh::Prim& me = bld.me;
-
-  uint16_t    v  = bld.vert;
-  uint16_t    i  = bld.idex;
-
-  uint16_t co[2]={
-    uint16_t(desc&0xFFFF),
-    uint16_t((desc>>16)&0xFFFF)
-
-  };
-
-  uint16_t uv[2]={
-    uint16_t((desc>>32)&0xFFFF),
-    uint16_t((desc>>48)&0xFFFF)
-
-  };
-
-// ---   *   ---   *   ---
-
-  float step=
-    Frac::STEP[Frac::STEP_8BIT];
-
-  uint8_t nbits=
-    Frac::BITS[Frac::SIZE_8BIT];
-
-  float co_f[2]={
-    float(co[0])*tile_step,
-    float(co[1])*tile_step
-
-  };
-
-  float uv_f[2]={
-    float(uv[0])*atlas_step,
-    float(uv[1])*atlas_step
-
-  };
-
-  uint16_t id=m_top;
-
-// ---   *   ---   *   ---
-
-  uint8_t co_x[2]={
-
-    frac<uint8_t>(
-      co_f[0],step,nbits,Frac::UNSIGNED
-
-    ),
-
-    frac<uint8_t>(
-      co_f[0]+tile_step,step,nbits,Frac::UNSIGNED
-
-    )
-
-  };
-
-  uint8_t co_y[2]={
-
-    frac<uint8_t>(
-      co_f[1],step,nbits,Frac::UNSIGNED
-
-    ),
-
-    frac<uint8_t>(
-      co_f[1]+tile_step,step,nbits,Frac::UNSIGNED
-
-    )
-
-  };
-
-// ---   *   ---   *   ---
-
-  uint8_t uv_x[2]={
-
-    frac<uint8_t>(
-      uv_f[0],step,nbits,Frac::UNSIGNED
-
-    ),
-
-    frac<uint8_t>(
-      uv_f[0]+atlas_step,step,nbits,Frac::UNSIGNED
-
-    )
-
-  };
-
-  uint8_t uv_y[2]={
-
-    frac<uint8_t>(
-      uv_f[1],step,nbits,Frac::UNSIGNED
-
-    ),
-
-    frac<uint8_t>(
-      uv_f[1]+atlas_step,step,nbits,Frac::UNSIGNED
-
-    )
-
-  };
-
-// ---   *   ---   *   ---
-
-  // 1,-1
-  me.verts[v+0]=(Mesh::Vertex) {
-
-    .XYZ = {co_x[1],co_y[0],0x80},
-    .TEX = {uv_x[1],uv_y[0]},
-
-    .ID  = id
-
-  };
-
-  // -1,-1
-  me.verts[v+1]=(Mesh::Vertex) {
-
-    .XYZ = {co_x[0],co_y[0],0x80},
-    .TEX = {uv_x[0],uv_y[0]},
-
-    .ID  = id
-
-  };
-
-  // -1,1
-  me.verts[v+2]=(Mesh::Vertex) {
-
-    .XYZ = {co_x[0],co_y[1],0x80},
-    .TEX = {uv_x[0],uv_y[1]},
-
-    .ID  = id
-
-  };
-
-  // 1,1
-  me.verts[v+3]=(Mesh::Vertex) {
-
-    .XYZ = {co_x[1],co_y[1],0x80},
-    .TEX = {uv_x[1],uv_y[1]},
-
-    .ID  = id
-
-  };
-
-// ---   *   ---   *   ---
-
-  me.indices[i+0]=m_vcount+bld.vert+0;
-  me.indices[i+1]=m_vcount+bld.vert+1;
-  me.indices[i+2]=m_vcount+bld.vert+2;
-
-  me.indices[i+3]=m_vcount+bld.vert+2;
-  me.indices[i+4]=m_vcount+bld.vert+3;
-  me.indices[i+5]=m_vcount+bld.vert+0;
-
-  bld.vert+=4;
-  bld.idex+=6;
-
-};
-
-// ---   *   ---   *   ---
-
-Mesh::Prim Meshes::make_sprite_frame(
-  std::vector<uint64_t>& tab,
-  uint64_t& offset
-
-) {
-
-  Mesh::Prim  me;
-  Mesh::Build bld={
-
-    .me   = me,
-
-    .vert = 0,
-    .idex = 0
-
-  };
-
-  uint64_t tile_cnt = tab[offset+0];
-  uint16_t i        = ++offset;
-
-  // scale multipliers for each quad
-  uint64_t steps    = tab[1];
-
-  // 4 verts (2 tris) per tile
-  // 3 indices per tri
-  me.verts.resize(4*tile_cnt);
-  me.indices.resize(6*tile_cnt);
-
-  // scales vertex coords
-  uint64_t steps_u = steps&0xFFFFFFFF;
-  float tile_step  = *((float*) &steps_u);
-
-  // scales texture coords
-  steps_u=steps>>32;
-  float atlas_step=*((float*) &steps_u);
-
-  while(i<offset+tile_cnt) {
-
-    this->push_quad(
-      bld,tab[i++],
-      tile_step,
-      atlas_step
-
-    );
-
-  };
-
-  offset=i;
-
-  return me;
-
-};
-
-// ---   *   ---   *   ---
-
-uint32_t Meshes::make_prim(
-
-  std::vector<uint64_t>& tab,
-
-  uint64_t& offset,
-  uint16_t  type
-
-) {
-
-  uint32_t   out;
-  Mesh::Prim me;
-
-  switch(type) {
-
-  case Mesh::SPRITE_FRAME:
-    me=this->make_sprite_frame(tab,offset);
-    break;
-
-  };
-
-  return this->nit(
-    me.verts.data(),
-    me.indices.data(),
-    me.verts.size(),
-    me.indices.size()
-
-  );
-
-};
-
-// ---   *   ---   *   ---
-
 std::vector<uint32_t> Meshes::make_sprite(
-
-  Texture& atlas,
-  uint16_t idex
+  std::string fpath
 
 ) {
 
   std::vector<uint32_t> out;
-  std::vector<uint64_t>& tab=atlas.get_tab();
 
-  uint64_t cnt=tab[0];
-  uint64_t offset=2;
+  CRK crk(fpath);
+  crk.unpack();
 
-  for(uint64_t i=0;i<cnt;i++) {
+  auto me=crk.data();
 
-    out.push_back(this->make_prim(
-      tab,offset,Mesh::SPRITE_FRAME
-
-    ));
+  for(auto& p : me) {
+    out.push_back(this->nit(p));
 
   };
 

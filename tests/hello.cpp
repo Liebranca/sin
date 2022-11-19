@@ -29,19 +29,24 @@ int main(void) {
   };
 
   Win win(win_desc);
+  win.set_ambient_color(6);
 
   Programs p_frame;
   Program* p=p_frame.nit(&shader::mesh::Solid);
 
   p_frame.use(p);
 
-  Texture tex("../bitter/out");
+  Texture tex("out");
   tex.use();
 
   Meshes m_frame;
 
   m_frame.use();
-  Sprite dummy(m_frame.make_sprite(tex,0));
+
+  Sprite dummy(
+    m_frame.make_sprite("out.crk")
+
+  );
 
 // ---   *   ---   *   ---
 
@@ -51,7 +56,7 @@ int main(void) {
     .width  = 640,
     .height = 480,
 
-    .scale  = 0.0040f,
+    .scale  = 0.0010f,
     .near   = 0.001f,
     .far    = 100.0f
 

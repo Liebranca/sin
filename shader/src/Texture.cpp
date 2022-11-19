@@ -13,7 +13,9 @@
 // deps
 
   #include <GL/glew.h>
+
   #include "shader/Texture.hpp"
+  #include "bitter/ff/JOJ.hpp"
 
 // ---   *   ---   *   ---
 // make
@@ -25,8 +27,6 @@ Texture::Texture(std::string fpath) {
 
   auto pixels = src.to_buff(0,JOJ::UNPACK_ATLAS);
   m_img_sz    = src.get_atlas_sz();
-
-  m_tab       = src.get_atlas_desc(0);
 
 // ---   *   ---   *   ---
 
@@ -118,8 +118,12 @@ Texture::Texture(std::string fpath) {
 // ^destroy
 
 Texture::~Texture(void) {
-  glBindTexture(GL_TEXTURE_2D_ARRAY,0);
-  glDeleteTextures(1,&m_loc);
+
+  if(m_loc) {
+    glBindTexture(GL_TEXTURE_2D_ARRAY,0);
+    glDeleteTextures(1,&m_loc);
+
+  };
 
 };
 

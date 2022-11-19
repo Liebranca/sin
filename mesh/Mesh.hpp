@@ -16,60 +16,8 @@ class Mesh {
 
 public:
 
-  VERSION   "v0.00.3b";
+  VERSION   "v0.00.4b";
   AUTHOR    "IBN-3DILA";
-
-// ---   *   ---   *   ---
-// helper
-
-  typedef struct {
-
-    union {
-
-      struct {
-
-        uint8_t  XYZ[3];
-        uint8_t  NTB[3];
-        uint8_t  TEX[2];  // 8
-
-        uint16_t ID;      // 10
-        uint16_t BONE;    // 12
-
-      };
-
-      uint8_t data[16];
-
-    };
-
-  } Vertex;
-
-// ---   *   ---   *   ---
-// constructor options
-
-  enum {
-
-    SPRITE_FRAME=0
-
-  };
-
-// ---   *   ---   *   ---
-// constructor helper
-
-  typedef struct {
-
-    std::vector<Mesh::Vertex> verts;
-    std::vector<uint16_t>     indices;
-
-  } Prim;
-
-  typedef struct {
-
-    Prim&    me;
-
-    uint16_t vert;
-    uint16_t idex;
-
-  } Build;
 
 // ---   *   ---   *   ---
 // attrs
