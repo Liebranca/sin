@@ -19,7 +19,7 @@ class Meshes {
 
 public:
 
-  VERSION   "v0.00.3b";
+  VERSION   "v0.00.4b";
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -33,7 +33,7 @@ private:
   cx16 BUFF_SZ   = 0x400 * TRIANGLES;
 
   // ^max instances independent of size
-  cx8  BATCH_SZ  = 2;
+  cx16 BATCH_SZ  = 256;
 
   enum {
 

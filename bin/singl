@@ -26,6 +26,8 @@ package SG_File;
   use Style;
   use Arstd::IO;
 
+  use Shb7;
+
   use lib $ENV{'ARPATH'}.'/lib/';
 
   use Emit::Std;
@@ -37,7 +39,7 @@ package SG_File;
 # ---   *   ---   *   ---
 # info
 
-  our $VERSION = v0.04.2;
+  our $VERSION = v0.04.3;
   our $AUTHOR  = 'IBN-3DILA';
 
 # ---   *   ---   *   ---
@@ -721,8 +723,11 @@ package main;
   use lib $ENV{'ARPATH'}.'/lib/sys/';
 
   use Style;
+
+  use Arstd::Path;
   use Arstd::IO;
 
+  use Shb7;
   use Cli;
 
 # ---   *   ---   *   ---
@@ -751,7 +756,7 @@ my @Includes=($M->{inc} ne $NULL)
   ;
 
 # ^set
-Shb7::stinc(
+Shb7::push_includes(
   $ENV{'ARPATH'}.'/sin/',
   @Includes
 
@@ -776,9 +781,43 @@ errout(
 ) unless -d $Out_Dir;
 
 # ---   *   ---   *   ---
+# gives back files that need to
+# be re-processed
+
+sub flist_filter(@ar) {
+
+  my @out=();
+
+  for my $fname(@ar) {
+
+    my $name = nxbasef($fname);
+    my $dst  = "$Out_Dir/$name.hpp";
+
+    push @out,$fname
+    if Shb7::moo($dst,$fname);
+
+  };
+
+  if(@out) {
+
+    say {*STDERR}
+      $Emit::Std::ARTAG,
+      "Rebuilding SinGL headers... "
+
+    ;
+
+  };
+
+  return @out;
+
+};
+
+# ---   *   ---   *   ---
 # main loop
 
-for my $fname(@Files) {
+for my $fname(flist_filter(@Files)) {
+
+  say {*STDERR} $Emit::Std::ARSEP,$fname;
 
   my $sg=SG_File->nit($fname);
 

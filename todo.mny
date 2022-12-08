@@ -1,5 +1,8 @@
 >sin render v0.01.0a
 
+*>Quality-of-life
+~ DAF imports for resources
+
 *>Sprite tilesheets
 x Build *.joj helper for 16x16 atlases
 x ^ point to dir

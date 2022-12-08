@@ -13,6 +13,8 @@
   #include "mesh/Frame.hpp"
   #include "mesh/Solid.hpp"
 
+  #include "bitter/ff/DAF.hpp"
+
 // ---   *   ---   *   ---
 
 int main(void) {
@@ -35,17 +37,24 @@ int main(void) {
 
   p_frame.use(p);
 
-  Texture tex("../bitter/out");
-  tex.use();
+  std::string path=
+    "/home/lyeb/Desktop/spritebake/sheet.daf";
+
+  DAF daf(path,Bin::READ);
+  daf.unpack();
 
   Meshes m_frame;
-
   m_frame.use();
 
+  Texture tex(path+"e0");
+  tex.use();
+
   Sprite dummy(
-    m_frame.make_sprite("../bitter/out.crk")
+    m_frame.make_sprite(path+"e1")
 
   );
+
+  daf.close();
 
 // ---   *   ---   *   ---
 
@@ -68,7 +77,7 @@ int main(void) {
 
 // ---   *   ---   *   ---
 
-  int panic=20;
+  int panic=16;
   while(panic--) {
 
     glUniformMatrix4fv(
