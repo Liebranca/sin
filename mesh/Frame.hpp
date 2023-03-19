@@ -30,7 +30,7 @@ private:
   // so we're clear on what the
   // size is actually measuring
   cx8  TRIANGLES = 3;
-  cx16 BUFF_SZ   = 0x400 * TRIANGLES;
+  cx16 BUFF_SZ   = 0x1000 * TRIANGLES;
 
   // ^max instances independent of size
   cx16 BATCH_SZ  = 256;

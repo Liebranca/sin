@@ -25,7 +25,7 @@ int main(void) {
     .height=480,
 
     .fullscreen=false,
-    .fps=4
+    .fps=6
 
   };
 
@@ -77,7 +77,7 @@ int main(void) {
 
 // ---   *   ---   *   ---
 
-  int panic=16;
+  int panic=59;
   while(panic--) {
 
     glUniformMatrix4fv(

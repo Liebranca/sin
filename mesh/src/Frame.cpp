@@ -88,7 +88,7 @@ Meshes::Meshes(void) {
   * sizeof(uint16_t),
 
     NULL,
-    GL_STATIC_DRAW
+    GL_DYNAMIC_DRAW
 
   );
 

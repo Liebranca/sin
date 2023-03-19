@@ -4,6 +4,8 @@
 // ---   *   ---   *   ---
 // deps
 
+  #include <iostream>
+
   #include <GL/glew.h>
   #include <glm/vec4.hpp>
 

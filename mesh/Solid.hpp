@@ -1,4 +1,4 @@
-// SinGL v0.04.02
+// SinGL v0.04.03
 // file assembled from mesh/src/Solid.sg
 // ---   *   ---   *   ---
 // LIBRE BOILERPASTE
@@ -7,7 +7,7 @@
 // LICENSED UNDER GNU GPL3
 // BE A BRO AND INHERIT
 //
-// COPYLEFT IBN-3DILA 2022
+// COPYLEFT ANON 2023
 // ---   *   ---   *   ---
 
 #ifndef __SOLID_H__
@@ -33,13 +33,8 @@
 
 namespace shader::mesh {
   const char* Solid_vert=R"glsl(
-;
-void main(void) {
-  vec4 co=extract_xyz();
-
-  gl_Position=apply_transform(co);
-  Tex_Coords=extract_tex();
-};
+AUTHOR "IBN-3DILA";;
+void;
 
 
 
@@ -56,13 +51,11 @@ void main(void) {
   };
 
   const char* Solid_frag=R"glsl(
-in vec2 Tex_Coords;
-flat in uint Tile_Index;;
-uniform sampler2DArray Surface;
-out vec4 Frag_Color;
-void main(void) {
-  Frag_Color=texture(Surface,vec3(Tex_Coords,0));
-}
+in vec2;
+flat in uint;;
+uniform sampler2DArray;
+out vec4;
+void
 
 
 
@@ -83,12 +76,12 @@ void main(void) {
     .source_f=_DULL_SYNTAX_f_Solid_frag,
     .source_f_sz=2,
     .attrs={
-      "Vertex"
+      "uvec4"
     },
     .num_attrs=1,
     .uniforms={
-      "Model",
-      "View"
+      "mat4",
+      "mat4"
     },
     .num_uniforms=2,
     .ubos={
@@ -96,11 +89,11 @@ void main(void) {
     },
     .num_ubos=0,
     .ssbos={
-      "_Tile_Indices"
+
     },
-    .num_ssbos=1,
+    .num_ssbos=0,
     .samplers={
-      "Surface"
+      "sampler2DArray"
     },
     .num_samplers=1,
   };

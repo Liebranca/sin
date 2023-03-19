@@ -88,6 +88,9 @@ sub nit($class,$fname) {
   my ($vert,$frag)=Lang->SinGL->hier_sort($rd);
   my $tree=$rd->select_block(-ROOT)->{tree};
 
+$tree->prich();
+exit;
+
 # ---   *   ---   *   ---
 
   my $path=$fname;
@@ -793,8 +796,8 @@ sub flist_filter(@ar) {
     my $name = nxbasef($fname);
     my $dst  = "$Out_Dir/$name.hpp";
 
-    push @out,$fname
-    if Shb7::moo($dst,$fname);
+    push @out,$fname;
+#    if Shb7::moo($dst,$fname);
 
   };
 
@@ -802,7 +805,7 @@ sub flist_filter(@ar) {
 
     say {*STDERR}
       $Emit::Std::ARTAG,
-      "Rebuilding SinGL headers... "
+      "rebuilding SinGL headers... "
 
     ;
 
