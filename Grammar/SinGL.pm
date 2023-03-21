@@ -19,7 +19,9 @@ package Grammar::SinGL;
   use strict;
   use warnings;
 
+  use Carp;
   use Readonly;
+
   use English qw(-no_match_vars);
 
   use lib $ENV{'ARPATH'}.'/avtomat/sys/';
@@ -32,6 +34,7 @@ package Grammar::SinGL;
   use Arstd::String;
   use Arstd::IO;
 
+  use Shb7::Find;
   use Tree::Grammar;
 
   use lib $ENV{'ARPATH'}.'/avtomat/hacks/';
@@ -55,19 +58,25 @@ BEGIN {
 
   sub Frame_Vars($class) { return {
 
-    -vx_attrs => [],
-    -px_attrs => [],
+    -vx_out    => $NULLSTR,
+    -px_out    => $NULLSTR,
 
-    -uniforms => [],
-    -samplers => [],
+    -vx_attrs  => [],
+    -px_attrs  => [],
 
-    -ubos     => [],
-    -ssbos    => [],
+    -uniforms  => [],
+    -samplers  => [],
 
-    -cmode    => $NULLSTR,
+    -ubos      => [],
+    -ssbos     => [],
+
+    -vx_extern => [],
+    -px_extern => [],
+
+    -cmode     => $NULLSTR,
 
     %{Grammar->Frame_Vars()},
-    -passes=>['_ctx','_opz','_run'],
+    -passes=>['_ctx','_opz','_emit'],
 
   }};
 
@@ -153,6 +162,20 @@ BEGIN {
   rule('~<name>');
   rule('~<term>');
   rule('~<nterm>');
+
+# ---   *   ---   *   ---
+# ^spit as-is
+
+sub any_emit($self,$branch) {
+
+  # get ctx
+  my $dst = $self->get_dst($branch);
+  my $s   = $branch->leaf_value(0);
+
+  # paste
+  $$dst.="$s";
+
+};
 
 # ---   *   ---   *   ---
 # meta ops
@@ -283,30 +306,69 @@ sub include($self,$branch) {
 
 };
 
+sub include_ctx($self,$branch) {
+
+  my $frame = $self->{frame};
+  my $cmode = $frame->{-cmode};
+
+  my $attr  = $NULLSTR;
+
+  if((uc $cmode) eq 'VERT') {
+    $attr='vx_extern';
+
+  } elsif((uc $cmode) eq 'FRAG') {
+    $attr='px_extern';
+
+  };
+
+  $self->reg_attr($attr,$branch)
+  if $attr ne $NULLSTR;
+
+};
+
+# ---   *   ---   *   ---
+# template: push to frame array
+
+sub reg_attr($self,$key,$o) {
+
+  my $frame=$self->{frame};
+  my $attrs=$frame->{"-$key"};
+
+  push @$attrs,$o;
+
+};
+
 # ---   *   ---   *   ---
 # shader inputs
 
   rule('%<uniform-key=uniform>');
   rule('~<io-key>');
 
-  rule('$<io> io-key prim name');
-  rule('$<uniform> &io uniform-key prim name');
+  rule('$<io> io-key name name');
+  rule('$<uniform> &io uniform-key name name');
 
 # ---   *   ---   *   ---
 # ^post-parse
 
 sub io($self,$branch) {
 
-  my ($key) = $branch->ipluck(0);
-  $key      = $key->leaf_value(0);
+  # remove keyword
+  my ($key)=$branch->ipluck(0);
+  $key=$key->leaf_value(0);
 
-  my $flat  = ($key=~ s[^flat \s+][]x);
-  my $st    = $branch->bhash();
+  # get name of type
+  my $prim=$branch->branch_in(qr{^name$});
+  $prim->{value}='type';
 
-  my $o     = {
+  # get flat modifier
+  my $flat = ($key=~ s[^flat \s+][]x);
+
+  # build hash from tree
+  my $st = $branch->bhash();
+  my $o  = {
 
     name => $st->{name},
-    type => $st->{prim},
+    type => $st->{type},
 
     flat => $flat,
 
@@ -330,42 +392,91 @@ sub io_ctx($self,$branch) {
   my $key   = $branch->{value};
   my $o     = $branch->leaf_value(0);
 
-  # remember vertex shader inputs
-  $self->reg_vx_attrs($branch)
-  if $key eq 'in';
+  my $attr  = $NULLSTR;
 
-  # convert vertex out to frag in
-  $self->reg_px_attrs($branch)
+# ---   *   ---   *   ---
+# vertex shader inputs
 
-  if $key eq 'out'
-  && (uc $cmode) eq 'VERT'
+  if((uc $cmode) eq 'VERT') {
+
+    if($key eq 'in') {
+      $attr='vx_attrs';
+
+    } elsif($key eq 'out') {
+      $attr='px_attrs';
+
+    };
+
+# ---   *   ---   *   ---
+# uniforms
+
+  } elsif($key eq 'uniform') {
+
+    if($o->{type}=~ m[^sampler]) {
+      $attr='samplers';
+
+    } else {
+      $attr='uniforms';
+
+    };
+
+  };
+
+# ---   *   ---   *   ---
+# ^write to frame
+
+  $self->reg_attr($attr,$branch)
+  if $attr ne $NULLSTR;
+
+};
+
+# ---   *   ---   *   ---
+# outs code
+
+sub io_emit($self,$branch) {
+
+  # get ctx
+  my $dst = $self->get_dst($branch);
+  my $st  = $branch->leaf_value(0);
+
+  # make line from branch
+  my $s   = join q[ ],
+
+    ('flat' x int($st->{flat})),
+
+    $branch->{value},
+    $st->{type},
+    $st->{name},
+
   ;
 
-};
+  # clean
+  $s=~ s[^\s+][];
 
-# ---   *   ---   *   ---
-# registers vertex shader in
-# as vertex attributes
-
-sub reg_vx_attrs($self,$o) {
-
-  my $frame=$self->{frame};
-  my $attrs=$frame->{-vx_attrs};
-
-  push @$attrs,$o;
+  # ^append to codestr
+  $$dst.="  $s;\n";
 
 };
 
 # ---   *   ---   *   ---
-# registers vertex shader out
-# as frag shader in
+# ^get dst string for emitters
 
-sub reg_px_attrs($self,$o) {
+sub get_dst($self,$branch) {
 
-  my $frame=$self->{frame};
-  my $attrs=$frame->{-px_attrs};
+  my $out   = undef;
 
-  push @$attrs,$o;
+  my $frame = $self->{frame};
+  my $cmode = $branch->{parent}->{value};
+
+  if((uc $cmode) eq 'VERT') {
+    $out=\$frame->{-vx_out};
+
+  } elsif((uc $cmode) eq 'FRAG') {
+    $out=\$frame->{-px_out};
+
+  };
+
+  return $out;
 
 };
 
@@ -500,6 +611,69 @@ sub layout($self,$branch) {
 };
 
 # ---   *   ---   *   ---
+# ^second pass
+
+sub layout_ctx($self,$branch) {
+
+  my $st   = $branch->leaf_value(0);
+  my $attr = $NULLSTR;
+
+  if($st->{type} eq 'uniform') {
+    $attr='ubos';
+
+  } elsif($st->{type} eq 'buffer') {
+    $attr='ssbos';
+
+  };
+
+  $self->reg_attr($attr,$branch)
+  if $attr ne $NULLSTR;
+
+};
+
+# ---   *   ---   *   ---
+# code spit
+
+sub layout_emit($self,$branch) {
+
+  # get ctx
+  my $dst = $self->get_dst($branch);
+  my $st  = $branch->leaf_value(0);
+
+  # paste decls
+  my $body=$NULLSTR; map {
+
+    $body.=q[    ] . (join q[ ],
+
+      $ARG->{type},
+      $ARG->{name},
+
+      ("[$ARG->{size}]" x ($ARG->{size} ne 1))
+
+    ) . ";\n";
+
+  } @{$st->{body}};
+
+  # build line
+  my $s=q[  ] . join q[ ],
+
+    $branch->{value},
+    '(' . (join q[,],@{$st->{args}}) . ')',
+
+    $st->{type},
+    $st->{blk_name},
+
+  ;
+
+  # paste decls
+  $s.=" {\n$body\n  } $st->{ice_name}";
+
+  # cat to codestr
+  $$dst.="$s;\n";
+
+};
+
+# ---   *   ---   *   ---
 
   rule(q[
     |<meta>
@@ -533,7 +707,68 @@ sub layout($self,$branch) {
 }; # BEGIN
 
 # ---   *   ---   *   ---
+# generic errme
+
+sub throw($me) {
+
+  croak
+
+    "SinGL died on { $me }" .
+    "\nABORT"
+
+  ;
+
+};
+
+# ---   *   ---   *   ---
+# generates extern field of
+# out struct
+
+sub st_extern($self) {
+
+  my $frame = $self->{frame};
+
+  my $vx    = $frame->{-vx_extern};
+  my $px    = $frame->{-px_extern};
+
+  my $out   = {
+    vx => [$self->solve_extern($vx)],
+    px => [$self->solve_extern($px)],
+
+  };
+
+  return $out;
+
+};
+
+# ---   *   ---   *   ---
+# ^gets absolute path to
+# included files
+
+sub solve_extern($self,$ar) {
+
+  my @out=();
+
+  for my $nd(@$ar) {
+
+    my $path=$nd->leaf_value(0);
+    next if $path eq 'version';
+
+    my $f=ffind($path)
+    or throw("include $path");
+
+    push @out,$f;
+
+  };
+
+  return @out;
+
+};
+
+# ---   *   ---   *   ---
 # test
+
+package main;
 
 my $prog=q[
 
@@ -542,7 +777,7 @@ my $prog=q[
 
 $:VERT;>
 
-  #include <path/to/file>
+  #include <bin/singl>
 
   uniform mat4 n0;
   flat in uint n1;
@@ -551,7 +786,7 @@ $:VERT;>
 
   layout (std430) buffer blockn {
     uint x[128];
-    uint y[128];
+    uint y;
 
   } icen;
 
@@ -563,8 +798,13 @@ void main(void) {
 
 ];
 
-my $ice=Grammar::SinGL->parse($prog,-r=>2);
+my $ice=Grammar::SinGL->parse($prog,-r=>3);
+
 $ice->{p3}->prich();
+
+
+say "// VERT\n\n",$ice->{frame}->{-vx_out};
+say "\n// FRAG\n\n",$ice->{frame}->{-px_out};
 
 # ---   *   ---   *   ---
 1; # ret
