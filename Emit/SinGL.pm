@@ -72,25 +72,40 @@ package Emit::SinGL;
 # make cpp header from sg stout
 
 sub hpp($class,$stout) {
+
   $stout=Vault::fchk($stout);
 
-  my $params_blk=$class->hpp_params($stout);
+  my $decls_blk=
+    $class->get_src($stout,'vx')
+  . $class->get_src($stout,'px')
+  ;
 
+  my $params_blk=$class->get_params($stout);
+
+  say $decls_blk;
   say $params_blk;
 
 };
 
-sub hpp_params($class,$stout) {
+sub get_params($class,$stout) {
 
-  my $out=
+  my $name = $stout->{sh_name};
 
-    "  const Params $stout->{sh_name}={\n"
+  my $gvx  = $class->get_GENIUS($stout,'vx');
+  my $gpx  = $class->get_GENIUS($stout,'px');
 
-  . "    .source_v     = \n"
-  . "    .source_v_sz  = \n"
+  my $out  =
 
-  . "    .source_f     = \n"
-  . "    .source_f_sz  = \n"
+    $gvx->{decl}
+  . $gpx->{decl}
+
+  . "  const Params ={\n"
+
+  . "    .source_v     = $gvx->{name},\n"
+  . "    .source_v_sz  = $gvx->{cnt},\n\n"
+
+  . "    .source_f     = $gpx->{name},\n"
+  . "    .source_f_sz  = $gpx->{cnt},\n\n"
 
   . $class->hpp_params_cattr($stout,'attrs')
   . $class->hpp_params_cattr($stout,'uniforms')
@@ -116,15 +131,90 @@ sub hpp_params_cattr($class,$stout,$key) {
     : ()
     ;
 
+  my $pad=q[      ];
+
   return
 
     "    .$key={\n"
-  . "      " . (join ",\n",@ar) . "\n"
+  . "      " . (join ",\n$pad",@ar) . "\n"
 
   . "    },\n"
   . "    .num_$key=" . int(@ar) . ",\n\n"
 
   ;
+
+};
+
+# ---   *   ---   *   ---
+# GENIUS
+#
+# an ironical moniker befitting
+# syntactical dullness
+#
+# shortened to g cat name cat shd
+
+sub get_GENIUS($class,$stout,$mode) {
+
+  my $src_name=
+    $class->get_src_name($stout,$mode);
+
+  my $name = "g_$stout->{sh_name}_${mode}";
+  my $pad  = q[    ];
+
+  my @ar   = (
+
+    "shader\::version_${mode}",
+
+    ('NI_extern_src_list'),
+    "$src_name"
+
+  );
+
+  my $decl=
+    "  const char* ${name}[]={\n"
+  . "    " . (join ",\n$pad",@ar) . "\n"
+  . "  };\n\n"
+  ;
+
+  return {
+
+    name => $name,
+
+    decl => $decl,
+    cnt  => int(@ar),
+
+  };
+
+};
+
+# ---   *   ---   *   ---
+
+sub get_src($class,$stout,$mode) {
+
+  my $name=$class->get_src_name(
+    $stout,$mode
+
+  );
+
+  return
+
+    "  const char* $name="
+  . q[R"glsl(]
+  . "\n"
+
+  . $stout->{local}->{$mode}
+
+  . q[)glsl";]
+  . "\n\n"
+
+  ;
+
+};
+
+# ---   *   ---   *   ---
+
+sub get_src_name($class,$stout,$mode) {
+  return "$stout->{sh_name}_${mode}_src";
 
 };
 

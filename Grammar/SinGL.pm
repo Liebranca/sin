@@ -822,6 +822,13 @@ sub iattr_body($self,$ar) {
 
 };
 
+sub get_local($self) { return {
+  vx=>$self->{frame}->{-vx_out},
+  px=>$self->{frame}->{-px_out},
+
+
+}};
+
 # ---   *   ---   *   ---
 # ^combo of all
 # generates out struct
@@ -831,6 +838,7 @@ sub stout($self) { return {
   sh_name  => 'not_implemented',
 
   extern   => $self->get_extern(),
+  local    => $self->get_local(),
 
   attrs    => $self->get_cattr('vx_attrs'),
   uniforms => $self->get_cattr('uniforms'),
@@ -880,9 +888,6 @@ my $ice=Grammar::SinGL->parse($prog,-r=>3);
 Emit::SinGL->hpp($ice->stout());
 
 #$ice->{p3}->prich();
-
-#say "// VERT\n\n",$ice->{frame}->{-vx_out};
-#say "\n// FRAG\n\n",$ice->{frame}->{-px_out};
 
 # ---   *   ---   *   ---
 1; # ret
