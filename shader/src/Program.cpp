@@ -213,7 +213,7 @@ inline void Program::fix_attrs(void) {
 
     uint32_t attr_loc=0;
 
-    attr_loc<m_params->num_attrs;
+    attr_loc < m_params->num_attrs;
     attr_loc++
 
   ) {
@@ -260,7 +260,7 @@ inline void Program::fix_uniforms(void) {
 
     uint32_t uniform_loc=0;
 
-    uniform_loc<m_params->num_uniforms;
+    uniform_loc < m_params->num_uniforms;
     uniform_loc++
 
   ) {
@@ -284,7 +284,7 @@ inline void Program::fix_ubos(void) {
 
     uint32_t ubo_loc=0;
 
-    ubo_loc<m_params->num_ubos;
+    ubo_loc < m_params->num_ubos;
     ubo_loc++
 
   ) {
@@ -315,7 +315,7 @@ inline void Program::fix_ssbos(void) {
 
     uint32_t ssbo_loc=0;
 
-    ssbo_loc<m_params->num_ssbos;
+    ssbo_loc < m_params->num_ssbos;
     ssbo_loc++
 
   ) {

@@ -24,31 +24,34 @@ package Grammar::SinGL;
 
   use English qw(-no_match_vars);
 
-  use lib $ENV{'ARPATH'}.'/avtomat/sys/';
+  use lib $ENV{'ARPATH'}.'/lib/sys/';
 
   use Style;
   use Chk;
   use Fmat;
+
+  use Type;
 
   use Arstd::Array;
   use Arstd::String;
   use Arstd::IO;
 
   use Shb7::Find;
+  use Shb7::Path;
+
   use Tree::Grammar;
 
-  use lib $ENV{'ARPATH'}.'/avtomat/hacks/';
-  use Shwl;
-
-  use lib $ENV{'ARPATH'}.'/avtomat/';
+  use lib $ENV{'ARPATH'}.'/lib/';
 
   use Lang;
   use Grammar;
 
+  use Emit::SinGL;
+
 # ---   *   ---   *   ---
 # info
 
-  our $VERSION = v0.00.1;#b
+  our $VERSION = v0.00.2;#b
   our $AUTHOR  = 'IBN-3DILA';
 
 # ---   *   ---   *   ---
@@ -110,18 +113,6 @@ BEGIN {
 
     ),
 
-    prim=>qr{(
-
-      void | bool | int | uint | float
-
-      | [biu]?vec[234]
-      | mat[234]
-
-      | sampler([^\s]+)?
-      | buffer
-
-    )}x,
-
     lcom=>Lang::eaf(q[\/\/]),
 
     q[shd-type]=>Lang::eiths(
@@ -158,7 +149,6 @@ BEGIN {
 # base patterns
 
   rule('~<any>');
-  rule('~<prim>');
   rule('~<name>');
   rule('~<term>');
   rule('~<nterm>');
@@ -360,8 +350,8 @@ sub io($self,$branch) {
   my $prim=$branch->branch_in(qr{^name$});
   $prim->{value}='type';
 
-  # get flat modifier
-  my $flat = ($key=~ s[^flat \s+][]x);
+  # get flat spec
+  my $flat=($key=~ s[^flat \s+][]x);
 
   # build hash from tree
   my $st = $branch->bhash();
@@ -410,7 +400,7 @@ sub io_ctx($self,$branch) {
 # ---   *   ---   *   ---
 # uniforms
 
-  } elsif($key eq 'uniform') {
+  };if($key eq 'uniform') {
 
     if($o->{type}=~ m[^sampler]) {
       $attr='samplers';
@@ -721,10 +711,9 @@ sub throw($me) {
 };
 
 # ---   *   ---   *   ---
-# generates extern field of
-# out struct
+# generates extern field of stout
 
-sub st_extern($self) {
+sub get_extern($self) {
 
   my $frame = $self->{frame};
 
@@ -757,7 +746,9 @@ sub solve_extern($self,$ar) {
     my $f=ffind($path)
     or throw("include $path");
 
-    push @out,$f;
+    my $o=obj_from_src($f,ext=>'p3st');
+
+    push @out,$f=>$o;
 
   };
 
@@ -766,9 +757,93 @@ sub solve_extern($self,$ar) {
 };
 
 # ---   *   ---   *   ---
-# test
+# get single field attr for stout
 
-package main;
+sub get_cattr($self,$key) {
+
+  my $out   = [];
+
+  my $frame = $self->{frame};
+  my $attrs = $frame->{"-$key"};
+
+  for my $attr(@$attrs) {
+
+    my $st   = $attr->leaf_value(0);
+    my $type = Emit::SinGL
+      ->typecon($st->{type});
+
+    push @$out,$st->{name}=>$type;
+
+  };
+
+  return $out;
+
+};
+
+# ---   *   ---   *   ---
+# ^same idea, but for interface blocks
+
+sub get_iattr($self,$key) {
+
+  my $out   = [];
+
+  my $frame = $self->{frame};
+  my $attrs = $frame->{"-$key"};
+
+  for my $attr(@$attrs) {
+
+    my $st   = $attr->leaf_value(0);
+    my $cpy  = {%$st};
+
+    my $name = $cpy->{blk_name};
+    delete $cpy->{blk_name};
+
+    $self->iattr_body($cpy->{body});
+
+    push @$out,$name=>$cpy;
+
+
+  };
+
+  return $out;
+
+};
+
+# ---   *   ---   *   ---
+# ^elem walk
+
+sub iattr_body($self,$ar) {
+
+  for my $elem(@$ar) {
+    $elem->{type}=Emit::SinGL
+      ->typecon($elem->{type});
+
+  };
+
+};
+
+# ---   *   ---   *   ---
+# ^combo of all
+# generates out struct
+
+sub stout($self) { return {
+
+  sh_name  => 'not_implemented',
+
+  extern   => $self->get_extern(),
+
+  attrs    => $self->get_cattr('vx_attrs'),
+  uniforms => $self->get_cattr('uniforms'),
+
+  ubos     => $self->get_iattr('ubos'),
+  ssbos    => $self->get_iattr('ssbos'),
+
+  samplers => $self->get_cattr('samplers'),
+
+}};
+
+# ---   *   ---   *   ---
+# test
 
 my $prog=q[
 
@@ -792,6 +867,8 @@ $:VERT;>
 
 $:FRAG;>
 
+  uniform sampler2D diffuse;
+
 void main(void) {
 
 };
@@ -800,11 +877,12 @@ void main(void) {
 
 my $ice=Grammar::SinGL->parse($prog,-r=>3);
 
-$ice->{p3}->prich();
+Emit::SinGL->hpp($ice->stout());
 
+#$ice->{p3}->prich();
 
-say "// VERT\n\n",$ice->{frame}->{-vx_out};
-say "\n// FRAG\n\n",$ice->{frame}->{-px_out};
+#say "// VERT\n\n",$ice->{frame}->{-vx_out};
+#say "\n// FRAG\n\n",$ice->{frame}->{-px_out};
 
 # ---   *   ---   *   ---
 1; # ret
