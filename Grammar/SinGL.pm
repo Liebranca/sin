@@ -41,6 +41,8 @@ package Grammar::SinGL;
 
   use Tree::Grammar;
 
+  use Vault;
+
   use lib $ENV{'ARPATH'}.'/lib/';
 
   use Lang;
@@ -851,43 +853,31 @@ sub stout($self) { return {
 }};
 
 # ---   *   ---   *   ---
-# test
+# parse and return source descriptor
 
-my $prog=q[
+sub fregen($class,$path) {
 
-  VERSION   v0.00.1b;
-  AUTHOR    'IBN-3DILA';
+  my $prog = orc($path);
+  my $ice  = $class->parse($prog,-r=>3);
 
-$:VERT;>
-
-  #include <bin/singl>
-
-  uniform mat4 n0;
-  flat in uint n1;
-
-  out uint n2;
-
-  layout (std430) buffer blockn {
-    uint x[128];
-    uint y;
-
-  } icen;
-
-$:FRAG;>
-
-  uniform sampler2D diffuse;
-
-void main(void) {
+  return $ice->stout();
 
 };
 
-];
+# ---   *   ---   *   ---
+# ^caches result of parsing
+# re-runs parse if source is updated
 
-my $ice=Grammar::SinGL->parse($prog,-r=>3);
+sub fparse($class,$path) {
 
-Emit::SinGL->hpp($ice->stout());
+  my $stout=Vault::cached(
+    $path,\&fregen,$class,$path
 
-#$ice->{p3}->prich();
+  );
+
+  return $stout;
+
+};
 
 # ---   *   ---   *   ---
 1; # ret

@@ -35,6 +35,9 @@ package Emit::SinGL;
   use Vault;
 
   use lib $ENV{'ARPATH'}.'/lib/';
+
+  use Emit::C;
+
   use parent 'Emit';
 
 # ---   *   ---   *   ---
@@ -75,6 +78,11 @@ sub hpp($class,$stout) {
 
   $stout=Vault::fchk($stout);
 
+  my $struc_blk=
+    $class->get_struc($stout,'ubos')
+  . $class->get_struc($stout,'ssbos')
+  ;
+
   my $decls_blk=
     $class->get_src($stout,'vx')
   . $class->get_src($stout,'px')
@@ -84,6 +92,7 @@ sub hpp($class,$stout) {
 
   say $decls_blk;
   say $params_blk;
+  say $struc_blk;
 
 };
 
@@ -215,6 +224,50 @@ sub get_src($class,$stout,$mode) {
 
 sub get_src_name($class,$stout,$mode) {
   return "$stout->{sh_name}_${mode}_src";
+
+};
+
+# ---   *   ---   *   ---
+
+sub get_struc($class,$stout,$mode) {
+
+  my $out   = $NULLSTR;
+  my $pad   = q[  ];
+  my $attrs = $stout->{$mode};
+
+  goto SKIP if ! @$attrs;
+
+  my @keys  = array_keys($attrs);
+
+  for my $attr(array_values($attrs)) {
+
+    my $key = shift @keys;
+    my @ar  = map {
+
+      $pad
+
+    . Emit::C->typecon($ARG->{type})
+    . " $ARG->{name}"
+
+    . (($ARG->{size} > 1)
+        ? "[$ARG->{size}]"
+        : $NULLSTR
+
+      )
+
+    } @{$attr->{body}};
+
+    $out.=
+      "  struct $key {\n"
+    . $pad . (join ";\n$pad",@ar) . ";\n\n"
+
+    . "  };\n"
+    ;
+
+  };
+
+SKIP:
+  return $out;
 
 };
 
