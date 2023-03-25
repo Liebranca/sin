@@ -108,7 +108,7 @@ sub flist_filter(@ar) {
   for my $fname(@ar) {
 
     my $name = nxbasef($fname);
-    my $dst  = "$Out_Dir/$name.hpp";
+    my $dst  = "$Out_Dir/$name.hpp_sg";
 
     push @out,$fname=>$dst
     if moo($dst,$fname);
@@ -141,6 +141,8 @@ while(@Pending) {
   say {*STDERR} $Emit::Std::ARSEP,$fname;
 
   my $stout = Grammar::SinGL->fparse($fname,$dst);
+     $stout = Grammar::SinGL->flatten($stout);
+
   my $code  = Emit::SinGL->hpp($stout);
 
   my $v=vstr($VERSION);

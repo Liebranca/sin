@@ -12,7 +12,7 @@
 // ---   *   ---   *   ---
 // info
 
-$:VERT;>
+$:VERT;> 
 
   VERSION   v0.00.2b;
   AUTHOR    "IBN-3DILA";
@@ -40,6 +40,7 @@ void main(void) {
 $:FRAG;>
 
   #include <version>
+  #include <mesh/Vertex>
 
 // ---   *   ---   *   ---
 // inputs

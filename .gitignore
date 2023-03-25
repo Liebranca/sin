@@ -8,6 +8,7 @@
 *.daf
 *.joj
 *.crk
+*.hpp_sg
 
 mig/
 *~

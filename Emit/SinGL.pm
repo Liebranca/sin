@@ -46,7 +46,7 @@ package Emit::SinGL;
 # ---   *   ---   *   ---
 # info
 
-  our $VERSION = v0.00.2;#b
+  our $VERSION = v0.00.3;#b
   our $AUTHOR  = 'IBN-3DILA';
 
 # ---   *   ---   *   ---
@@ -81,8 +81,10 @@ sub hpp($class,$stout) {
 
   $stout=Vault::fchk($stout);
 
-  my $out   = $NULLSTR;
-  my $scope = $class->get_src_scope($stout);
+  my $out      = $NULLSTR;
+
+  my $scope    = $class->get_src_scope($stout);
+  my $st_scope = "$scope\::S$stout->{name}";
 
   my %O=(
 
@@ -104,8 +106,8 @@ sub hpp($class,$stout) {
   ;
 
   my $decls_blk=
-    $class->get_src($stout,'vx')
-  . $class->get_src($stout,'px')
+    $class->get_src($stout,'v')
+  . $class->get_src($stout,'f')
   ;
 
   my $params_blk=$class->get_params($stout);
@@ -117,9 +119,12 @@ sub hpp($class,$stout) {
   . "namespace $scope {\n"
   . "$decls_blk\n"
   . "$params_blk\n"
-  . "$struc_blk\n"
 
   . "\n}; // $scope\n"
+
+  . "namespace $st_scope {\n"
+  . "$struc_blk\n"
+  . "\n}; // $st_scope\n"
 
   . Emit::C->boiler_close($stout->{name},%O)
 
@@ -135,21 +140,21 @@ sub get_params($class,$stout) {
 
   my $name = $stout->{name};
 
-  my $gvx  = $class->get_GENIUS($stout,'vx');
-  my $gpx  = $class->get_GENIUS($stout,'px');
+  my $gv   = $class->get_GENIUS($stout,'v');
+  my $gf   = $class->get_GENIUS($stout,'f');
 
   my $out  =
 
-    $gvx->{decl}
-  . $gpx->{decl}
+    $gv->{decl}
+  . $gf->{decl}
 
-  . "  const Params ={\n"
+  . "  const Params $name={\n"
 
-  . "    .source_v     = $gvx->{name},\n"
-  . "    .source_v_sz  = $gvx->{cnt},\n\n"
+  . "    .source_v     = $gv->{name},\n"
+  . "    .source_v_sz  = $gv->{cnt},\n\n"
 
-  . "    .source_f     = $gpx->{name},\n"
-  . "    .source_f_sz  = $gpx->{cnt},\n\n"
+  . "    .source_f     = $gf->{name},\n"
+  . "    .source_f_sz  = $gf->{cnt},\n\n"
 
   . $class->hpp_params_cattr($stout,'attrs')
   . $class->hpp_params_cattr($stout,'uniforms')
@@ -174,6 +179,8 @@ sub hpp_params_cattr($class,$stout,$key) {
     ? array_keys($stout->{$key})
     : ()
     ;
+
+  @ar=map {q["] . $ARG . q["]} @ar;
 
   my $pad=q[      ];
 
@@ -369,20 +376,20 @@ sub get_deps_list($class,$stout) {
   my $flist = $stout->{extern};
 
   push @out,
-    @{$flist->{vx}},
-    @{$flist->{px}}
+    @{$flist->{v}},
+    @{$flist->{f}}
 
   ;
 
   map {
     $ARG=~ s[/src/][/];
-    $ARG=~ s[\.sg$][.hpp];
+    $ARG=~ s[\.sg$][.hpp_sg];
 
   } @out;
 
   return (
 
-    '<glm::vec4>',
+    '<glm/vec4.hpp>',
     '"sin/shader/Params.hpp"',
 
     map {q["] . shpath($ARG) . q["] } @out

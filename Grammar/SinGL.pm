@@ -66,27 +66,27 @@ BEGIN {
 
   sub Frame_Vars($class) { return {
 
-    -vx_out      => $NULLSTR,
-    -px_out      => $NULLSTR,
+    -v_out      => $NULLSTR,
+    -f_out      => $NULLSTR,
 
-    -vx_attrs    => [],
-    -px_attrs    => [],
+    -v_attrs    => [],
+    -f_attrs    => [],
 
-    -vx_uniforms => [],
-    -px_uniforms => [],
+    -v_uniforms => [],
+    -f_uniforms => [],
 
-    -vx_ubos     => [],
-    -px_ubos     => [],
+    -v_ubos     => [],
+    -f_ubos     => [],
 
-    -vx_ssbos    => [],
-    -px_ssbos    => [],
+    -v_ssbos    => [],
+    -f_ssbos    => [],
 
-    -vx_extern   => [],
-    -px_extern   => [],
+    -v_extern   => [],
+    -f_extern   => [],
 
-    -samplers    => [],
+    -samplers   => [],
 
-    -cmode       => $NULLSTR,
+    -cmode      => $NULLSTR,
 
     %{Grammar->Frame_Vars()},
     -passes=>['_ctx','_opz','_emit'],
@@ -224,7 +224,7 @@ sub pe_anchor_opz($self,$branch) {
 
   my $type=$branch->{value};
 
-  $self->paste_px_attrs($branch)
+  $self->paste_frag_attrs($branch)
   if (uc $type) eq 'FRAG';
 
 };
@@ -232,10 +232,10 @@ sub pe_anchor_opz($self,$branch) {
 # ---   *   ---   *   ---
 # syncs frag in to vert out
 
-sub paste_px_attrs($self,$branch) {
+sub paste_frag_attrs($self,$branch) {
 
   my $frame = $self->{frame};
-  my $attrs = $frame->{-px_attrs};
+  my $attrs = $frame->{-f_attrs};
 
   my $i     = 0;
 
@@ -314,10 +314,10 @@ sub include_ctx($self,$branch) {
   my $attr  = $NULLSTR;
 
   if((uc $cmode) eq 'VERT') {
-    $attr='vx_extern';
+    $attr='v_extern';
 
   } elsif((uc $cmode) eq 'FRAG') {
-    $attr='px_extern';
+    $attr='f_extern';
 
   };
 
@@ -400,10 +400,10 @@ sub io_ctx($self,$branch) {
   if((uc $cmode) eq 'VERT') {
 
     if($key eq 'in') {
-      $attr='vx_attrs';
+      $attr='v_attrs';
 
     } elsif($key eq 'out') {
-      $attr='px_attrs';
+      $attr='f_attrs';
 
     };
 
@@ -418,8 +418,8 @@ sub io_ctx($self,$branch) {
     } else {
 
       my $mode=($cmode eq 'VERT')
-        ? 'vx'
-        : 'px'
+        ? 'v'
+        : 'f'
         ;
 
       $attr="${mode}_uniforms";
@@ -475,10 +475,10 @@ sub get_dst($self,$branch) {
   my $cmode = $branch->{parent}->{value};
 
   if((uc $cmode) eq 'VERT') {
-    $out=\$frame->{-vx_out};
+    $out=\$frame->{-v_out};
 
   } elsif((uc $cmode) eq 'FRAG') {
-    $out=\$frame->{-px_out};
+    $out=\$frame->{-f_out};
 
   };
 
@@ -635,8 +635,8 @@ sub layout_ctx($self,$branch) {
   };
 
   my $mode=($cmode eq 'VERT')
-    ? 'vx'
-    : 'px'
+    ? 'v'
+    : 'f'
     ;
 
   $self->reg_attr("${mode}_$attr",$branch)
@@ -844,14 +844,14 @@ sub stout_of($self,$mode) { return {
 
   # vertex attributes
   # only if vert shader
-  ($mode eq 'vx')
-  ? (attrs => $self->get_cattr('vx_attrs'))
+  ($mode eq 'v')
+  ? (attrs => $self->get_cattr('v_attrs'))
   : ()
   ,
 
   # samplers
   # only if frag shader
-  ($mode eq 'px')
+  ($mode eq 'f')
   ? (samplers => $self->get_cattr('samplers'))
   : ()
   ,
@@ -896,8 +896,8 @@ sub stout($self,$scope,$name) { return {
   author  => $self->get_mtag('author'),
   version => $self->get_mtag('version'),
 
-  vx      => $self->stout_of('vx'),
-  px      => $self->stout_of('px'),
+  v       => $self->stout_of('v'),
+  f       => $self->stout_of('f'),
 
 }};
 
@@ -914,9 +914,12 @@ sub fregen($class,$path,$name=undef) {
   $name= shpath($name);
   $name=~ s[/src/][/];
 
-  my $scope = dirof($name);
-     $name  = nxbasef($name);
-     $scope = shpath($scope);
+  my $scope=dirof($name);
+  $name=nxbasef($name);
+
+  my $mod=modof($scope);
+  $scope=shpath($scope);
+  $scope=~ s[${mod}/][];
 
   return $ice->stout($scope,$name);
 
@@ -935,8 +938,7 @@ sub fparse($class,$path,$name=undef) {
 
   );
 
-  # give flattened copy
-  return $class->flatten($stout);
+  return $stout;
 
 };
 
@@ -987,16 +989,16 @@ sub merge($class,$dst,$src,$mode) {
 
 sub flatten($class,$stout) {
 
-  my $cpy = Vault::deepcpy($stout);
+  my $cpy=Vault::deepcpy($stout);
 
   # dependency checks
-  $class->depchk($cpy,'vx');
-  $class->depchk($cpy,'px');
+  $class->depchk($cpy,'v');
+  $class->depchk($cpy,'f');
 
-  my $vx  = $cpy->{vx};
-  my $px  = $cpy->{px};
+  my $v=$cpy->{v};
+  my $f=$cpy->{f};
 
-  my $tab = {
+  my $tab={
 
     local    => {},
     extern   => {},
@@ -1006,34 +1008,34 @@ sub flatten($class,$stout) {
 
 # ---   *   ---   *   ---
 
-  for my $key(keys %$vx) {
+  for my $key(keys %$v) {
 
     if($key=~ m[^( local|extern (_s)? )$]x) {
-      $tab->{$1}->{vx}=$vx->{$key};
+      $tab->{$1}->{v}=$v->{$key};
       next;
 
     };
 
-    $cpy->{$key}=$vx->{$key};
+    $cpy->{$key}=$v->{$key};
 
   };
 
-  for my $key(keys %$px) {
+  for my $key(keys %$f) {
 
     if($key=~ m[^( local|extern (_s)? )$]x) {
-      $tab->{$1}->{px}=$px->{$key};
+      $tab->{$1}->{f}=$f->{$key};
       next;
 
     };
 
-    push @{$cpy->{$key}},@{$px->{$key}};
+    push @{$cpy->{$key}},@{$f->{$key}};
 
   };
 
 # ---   *   ---   *   ---
 
-  delete $cpy->{vx};
-  delete $cpy->{px};
+  delete $cpy->{v};
+  delete $cpy->{f};
 
   $cpy->{local}    = $tab->{local};
   $cpy->{extern}   = $tab->{extern};

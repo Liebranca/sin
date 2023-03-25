@@ -11,7 +11,7 @@
   #include "mesh/Camera.hpp"
 
   #include "mesh/Frame.hpp"
-  #include "mesh/Solid.hpp"
+  #include "mesh/Solid.hpp_sg"
 
   #include "bitter/ff/DAF.hpp"
 
