@@ -277,7 +277,7 @@ sub meta_tag($self,$branch) {
 
   $branch->clear();
   $branch->init($st->{nterm});
-  $branch->{value}=$st->{q[meta-tag-key]};
+  $branch->{value}=(uc $st->{q[meta-tag-key]});
 
 };
 
@@ -864,32 +864,59 @@ sub stout_of($self,$mode) { return {
 }};
 
 # ---   *   ---   *   ---
+# get value of meta-tag
+
+sub get_mtag($self,$key) {
+
+  $key=uc $key;
+
+  my $tree = $self->{p3};
+  my $tag  = $tree->branch_in(qr{^$key$});
+
+  my $out  = ($tag)
+    ? $tag->leaf_value(0)
+    : 'non'
+    ;
+
+  $out=~ s[^ (?: "|') | (?: "|') $][]sxmg;
+
+  return $out;
+
+};
+
+# ---   *   ---   *   ---
 # ^combo of all
 # generates out struct
 
 sub stout($self,$scope,$name) { return {
 
-  name  => $name,
-  scope => $scope,
+  name    => $name,
+  scope   => $scope,
 
-  vx    => $self->stout_of('vx'),
-  px    => $self->stout_of('px'),
+  author  => $self->get_mtag('author'),
+  version => $self->get_mtag('version'),
+
+  vx      => $self->stout_of('vx'),
+  px      => $self->stout_of('px'),
 
 }};
 
 # ---   *   ---   *   ---
 # parse and return source descriptor
 
-sub fregen($class,$path) {
+sub fregen($class,$path,$name=undef) {
 
-  my $prog  = orc($path);
-  my $ice   = $class->parse($prog,-r=>3);
+  my $prog = orc($path);
+  my $ice  = $class->parse($prog,-r=>3);
 
-  my $name  = shpath($path);
-     $name  =~ s[/src/][/];
+  $name=($name) ? $name : $path;
+
+  $name= shpath($name);
+  $name=~ s[/src/][/];
 
   my $scope = dirof($name);
      $name  = nxbasef($name);
+     $scope = shpath($scope);
 
   return $ice->stout($scope,$name);
 
@@ -899,12 +926,12 @@ sub fregen($class,$path) {
 # ^caches result of parsing
 # re-runs parse if source is updated
 
-sub fparse($class,$path) {
+sub fparse($class,$path,$name=undef) {
 
   # get file meta
   $path=abs_path($path);
   my $stout=Vault::fcached(
-    $path,\&fregen,$class,$path
+    $path,\&fregen,$class,$path,$name
 
   );
 
@@ -977,6 +1004,8 @@ sub flatten($class,$stout) {
 
   };
 
+# ---   *   ---   *   ---
+
   for my $key(keys %$vx) {
 
     if($key=~ m[^( local|extern (_s)? )$]x) {
@@ -1001,6 +1030,8 @@ sub flatten($class,$stout) {
 
   };
 
+# ---   *   ---   *   ---
+
   delete $cpy->{vx};
   delete $cpy->{px};
 
@@ -1011,19 +1042,6 @@ sub flatten($class,$stout) {
   return $cpy;
 
 };
-
-# ---   *   ---   *   ---
-# test
-
-Grammar::SinGL->fparse('./font/src/lycon.sg');
-
-
-Emit::SinGL->hpp(
-
-Grammar::SinGL->fparse('./font/src/lycon_sh.sg')
-
-);
-
 
 # ---   *   ---   *   ---
 1; # ret

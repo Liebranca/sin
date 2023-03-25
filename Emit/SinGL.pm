@@ -29,6 +29,7 @@ package Emit::SinGL;
   use Style;
   use Chk;
 
+  use Arstd::String;
   use Arstd::Array;
   use Tree::Grammar;
 
@@ -79,11 +80,13 @@ package Emit::SinGL;
 sub hpp($class,$stout) {
 
   $stout=Vault::fchk($stout);
-  my $scope=$class->get_src_scope($stout);
+
+  my $out   = $NULLSTR;
+  my $scope = $class->get_src_scope($stout);
 
   my %O=(
 
-    author     => 'FORGOT_TO_IMPLEMENT',
+    author     => $stout->{author},
 
     add_guards => 1,
     define     => [],
@@ -94,8 +97,6 @@ sub hpp($class,$stout) {
     ],
 
   );
-
-  say Emit::C->boiler_open($stout->{name},%O);
 
   my $struc_blk=
     $class->get_struc($stout,'ubos')
@@ -109,16 +110,26 @@ sub hpp($class,$stout) {
 
   my $params_blk=$class->get_params($stout);
 
-  say "namespace $scope {\n";
-  say $decls_blk;
-  say $params_blk;
-  say $struc_blk;
+  $out.=
 
-  say "\n}; // $scope\n";
+    Emit::C->boiler_open($stout->{name},%O)
 
-  say Emit::C->boiler_close($stout->{name},%O);
+  . "namespace $scope {\n"
+  . "$decls_blk\n"
+  . "$params_blk\n"
+  . "$struc_blk\n"
+
+  . "\n}; // $scope\n"
+
+  . Emit::C->boiler_close($stout->{name},%O)
+
+  ;
+
+  return $out;
 
 };
+
+# ---   *   ---   *   ---
 
 sub get_params($class,$stout) {
 

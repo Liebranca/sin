@@ -170,6 +170,5 @@ vec4 apply_transform(vec4 co) {
 // ---   *   ---   *   ---
 
 $:FRAG;>
-;
 
 // ---   *   ---   *   ---

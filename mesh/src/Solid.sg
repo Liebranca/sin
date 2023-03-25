@@ -22,7 +22,6 @@ $:VERT;>
 
   #include <version>
   #include <mesh/Vertex>
-  ;
 
 // ---   *   ---   *   ---
 
@@ -41,7 +40,6 @@ void main(void) {
 $:FRAG;>
 
   #include <version>
-  ;
 
 // ---   *   ---   *   ---
 // inputs

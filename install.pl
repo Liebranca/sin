@@ -22,25 +22,25 @@ Avt::set_config(
   incl=>[qw(bitter)],
   libs=>[qw(chasm)],
 
-#  post_build=>q{
-#
-#    chdir Shb7::dir('sin');
-#
-#    my $ex   = "bin/singl";
-#    my @call = (
-#
-#      $ex,
-#
-#      q[-o],"mesh",
-#
-#      "mesh/src/Vertex.sg",
-#      "mesh/src/Solid.sg",
-#
-#    );
-#
-#    system {$call[0]} @call;
-#
-#  },
+  post_build=>q{
+
+    chdir Shb7::dir('sin');
+
+    my $ex   = "bin/singl";
+    my @call = (
+
+      $ex,
+
+      q[-o],"mesh",
+
+      "mesh/src/Vertex.sg",
+      "mesh/src/Solid.sg",
+
+    );
+
+    system {$call[0]} @call;
+
+  },
 
 );
 
