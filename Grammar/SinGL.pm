@@ -19,6 +19,8 @@ package Grammar::SinGL;
   use strict;
   use warnings;
 
+  use Cwd qw(abs_path);
+
   use Carp;
   use Readonly;
 
@@ -34,6 +36,7 @@ package Grammar::SinGL;
 
   use Arstd::Array;
   use Arstd::String;
+  use Arstd::Path;
   use Arstd::IO;
 
   use Shb7::Find;
@@ -63,22 +66,27 @@ BEGIN {
 
   sub Frame_Vars($class) { return {
 
-    -vx_out    => $NULLSTR,
-    -px_out    => $NULLSTR,
+    -vx_out      => $NULLSTR,
+    -px_out      => $NULLSTR,
 
-    -vx_attrs  => [],
-    -px_attrs  => [],
+    -vx_attrs    => [],
+    -px_attrs    => [],
 
-    -uniforms  => [],
-    -samplers  => [],
+    -vx_uniforms => [],
+    -px_uniforms => [],
 
-    -ubos      => [],
-    -ssbos     => [],
+    -vx_ubos     => [],
+    -px_ubos     => [],
 
-    -vx_extern => [],
-    -px_extern => [],
+    -vx_ssbos    => [],
+    -px_ssbos    => [],
 
-    -cmode     => $NULLSTR,
+    -vx_extern   => [],
+    -px_extern   => [],
+
+    -samplers    => [],
+
+    -cmode       => $NULLSTR,
 
     %{Grammar->Frame_Vars()},
     -passes=>['_ctx','_opz','_emit'],
@@ -323,8 +331,8 @@ sub include_ctx($self,$branch) {
 
 sub reg_attr($self,$key,$o) {
 
-  my $frame=$self->{frame};
-  my $attrs=$frame->{"-$key"};
+  my $frame = $self->{frame};
+  my $attrs = $frame->{"-$key"};
 
   push @$attrs,$o;
 
@@ -408,7 +416,13 @@ sub io_ctx($self,$branch) {
       $attr='samplers';
 
     } else {
-      $attr='uniforms';
+
+      my $mode=($cmode eq 'VERT')
+        ? 'vx'
+        : 'px'
+        ;
+
+      $attr="${mode}_uniforms";
 
     };
 
@@ -607,8 +621,10 @@ sub layout($self,$branch) {
 
 sub layout_ctx($self,$branch) {
 
-  my $st   = $branch->leaf_value(0);
-  my $attr = $NULLSTR;
+  my $cmode = $branch->{parent}->{value};
+
+  my $st    = $branch->leaf_value(0);
+  my $attr  = $NULLSTR;
 
   if($st->{type} eq 'uniform') {
     $attr='ubos';
@@ -618,7 +634,12 @@ sub layout_ctx($self,$branch) {
 
   };
 
-  $self->reg_attr($attr,$branch)
+  my $mode=($cmode eq 'VERT')
+    ? 'vx'
+    : 'px'
+    ;
+
+  $self->reg_attr("${mode}_$attr",$branch)
   if $attr ne $NULLSTR;
 
 };
@@ -715,46 +736,30 @@ sub throw($me) {
 # ---   *   ---   *   ---
 # generates extern field of stout
 
-sub get_extern($self) {
+sub get_extern($self,$mode) {
+
+  my $out   = [];
 
   my $frame = $self->{frame};
-
-  my $vx    = $frame->{-vx_extern};
-  my $px    = $frame->{-px_extern};
-
-  my $out   = {
-    vx => [$self->solve_extern($vx)],
-    px => [$self->solve_extern($px)],
-
-  };
-
-  return $out;
-
-};
-
-# ---   *   ---   *   ---
-# ^gets absolute path to
-# included files
-
-sub solve_extern($self,$ar) {
-
-  my @out=();
+  my $ar    = $frame->{"-${mode}_extern"};
 
   for my $nd(@$ar) {
 
     my $path=$nd->leaf_value(0);
     next if $path eq 'version';
 
-    my $f=ffind($path)
-    or throw("include $path");
+    my $f="$path.sg";
 
-    my $o=obj_from_src($f,ext=>'p3st');
+    $f=dirof($f) . q[/src/] . basef($f)
+    if ! -e $f;
 
-    push @out,$f=>$o;
+    $f=ffind($f) or throw("include $path");
+
+    push @$out,$f;
 
   };
 
-  return @out;
+  return $out;
 
 };
 
@@ -824,10 +829,37 @@ sub iattr_body($self,$ar) {
 
 };
 
-sub get_local($self) { return {
-  vx=>$self->{frame}->{-vx_out},
-  px=>$self->{frame}->{-px_out},
+sub get_local($self,$mode) {
+  return $self->{frame}->{"-${mode}_out"};
 
+};
+
+# ---   *   ---   *   ---
+# get props by shader type
+
+sub stout_of($self,$mode) { return {
+
+  extern   => $self->get_extern($mode),
+  local    => $self->get_local($mode),
+
+  # vertex attributes
+  # only if vert shader
+  ($mode eq 'vx')
+  ? (attrs => $self->get_cattr('vx_attrs'))
+  : ()
+  ,
+
+  # samplers
+  # only if frag shader
+  ($mode eq 'px')
+  ? (samplers => $self->get_cattr('samplers'))
+  : ()
+  ,
+
+  uniforms => $self->get_cattr("${mode}_uniforms"),
+
+  ubos     => $self->get_iattr("${mode}_ubos"),
+  ssbos    => $self->get_iattr("${mode}_ssbos"),
 
 }};
 
@@ -835,20 +867,13 @@ sub get_local($self) { return {
 # ^combo of all
 # generates out struct
 
-sub stout($self) { return {
+sub stout($self,$scope,$name) { return {
 
-  sh_name  => 'not_implemented',
+  name  => $name,
+  scope => $scope,
 
-  extern   => $self->get_extern(),
-  local    => $self->get_local(),
-
-  attrs    => $self->get_cattr('vx_attrs'),
-  uniforms => $self->get_cattr('uniforms'),
-
-  ubos     => $self->get_iattr('ubos'),
-  ssbos    => $self->get_iattr('ssbos'),
-
-  samplers => $self->get_cattr('samplers'),
+  vx    => $self->stout_of('vx'),
+  px    => $self->stout_of('px'),
 
 }};
 
@@ -857,10 +882,14 @@ sub stout($self) { return {
 
 sub fregen($class,$path) {
 
-  my $prog = orc($path);
-  my $ice  = $class->parse($prog,-r=>3);
+  my $prog  = orc($path);
+  my $ice   = $class->parse($prog,-r=>3);
 
-  return $ice->stout();
+  my $name  = shpath($path);
+  my $scope = dirof($name);
+     $name  = nxbasef($name);
+
+  return $ice->stout($scope,$name);
 
 };
 
@@ -870,14 +899,60 @@ sub fregen($class,$path) {
 
 sub fparse($class,$path) {
 
-  my $stout=Vault::cached(
+  # get file meta
+  $path=abs_path($path);
+  my $stout=Vault::fcached(
     $path,\&fregen,$class,$path
 
   );
 
+  # ^dependency checks
+  $class->depchk($stout,'vx');
+  $class->depchk($stout,'px');
+
   return $stout;
 
 };
+
+# ---   *   ---   *   ---
+# fetches data from includes
+
+sub depchk($class,$stout,$mode) {
+
+  my $ref=$stout->{$mode}->{extern};
+
+  for my $src(@$ref) {
+    my $xstout=$class->fparse($src);
+
+    $class->umerge($stout,$xstout,$mode);
+
+  };
+
+};
+
+# ---   *   ---   *   ---
+# ^joins two structs
+
+sub umerge($class,$dst,$src,$mode) {
+
+  my $attrs=$src->{$mode};
+
+  for my $key(keys %$attrs) {
+
+    next if $key eq 'local';
+
+    my $ref=$dst->{$mode}->{$key};
+    unshift @$ref,@{$attrs->{$key}};
+
+  };
+
+};
+
+# ---   *   ---   *   ---
+# test
+
+Grammar::SinGL->fparse('./font/src/lycon.sg');
+Grammar::SinGL->fparse('./font/src/lycon_sh.sg');
 
 # ---   *   ---   *   ---
 1; # ret
