@@ -886,6 +886,8 @@ sub fregen($class,$path) {
   my $ice   = $class->parse($prog,-r=>3);
 
   my $name  = shpath($path);
+     $name  =~ s[/src/][/];
+
   my $scope = dirof($name);
      $name  = nxbasef($name);
 
@@ -906,11 +908,8 @@ sub fparse($class,$path) {
 
   );
 
-  # ^dependency checks
-  $class->depchk($stout,'vx');
-  $class->depchk($stout,'px');
-
-  return $stout;
+  # give flattened copy
+  return $class->flatten($stout);
 
 };
 
@@ -919,21 +918,28 @@ sub fparse($class,$path) {
 
 sub depchk($class,$stout,$mode) {
 
-  my $ref=$stout->{$mode}->{extern};
+  my $ref   = $stout->{$mode}->{extern};
+  my @names = ();
 
   for my $src(@$ref) {
+
     my $xstout=$class->fparse($src);
 
-    $class->umerge($stout,$xstout,$mode);
+    $class->merge($stout,$xstout,$mode);
+
+    push @names,
+      $xstout->{name}=>$xstout->{scope};
 
   };
+
+  $stout->{$mode}->{extern_s}=\@names;
 
 };
 
 # ---   *   ---   *   ---
 # ^joins two structs
 
-sub umerge($class,$dst,$src,$mode) {
+sub merge($class,$dst,$src,$mode) {
 
   my $attrs=$src->{$mode};
 
@@ -949,10 +955,75 @@ sub umerge($class,$dst,$src,$mode) {
 };
 
 # ---   *   ---   *   ---
+# gives attributes without
+# vert/frag separator
+
+sub flatten($class,$stout) {
+
+  my $cpy = Vault::deepcpy($stout);
+
+  # dependency checks
+  $class->depchk($cpy,'vx');
+  $class->depchk($cpy,'px');
+
+  my $vx  = $cpy->{vx};
+  my $px  = $cpy->{px};
+
+  my $tab = {
+
+    local    => {},
+    extern   => {},
+    extern_s => {},
+
+  };
+
+  for my $key(keys %$vx) {
+
+    if($key=~ m[^( local|extern (_s)? )$]x) {
+      $tab->{$1}->{vx}=$vx->{$key};
+      next;
+
+    };
+
+    $cpy->{$key}=$vx->{$key};
+
+  };
+
+  for my $key(keys %$px) {
+
+    if($key=~ m[^( local|extern (_s)? )$]x) {
+      $tab->{$1}->{px}=$px->{$key};
+      next;
+
+    };
+
+    push @{$cpy->{$key}},@{$px->{$key}};
+
+  };
+
+  delete $cpy->{vx};
+  delete $cpy->{px};
+
+  $cpy->{local}    = $tab->{local};
+  $cpy->{extern}   = $tab->{extern};
+  $cpy->{extern_s} = $tab->{extern_s};
+
+  return $cpy;
+
+};
+
+# ---   *   ---   *   ---
 # test
 
 Grammar::SinGL->fparse('./font/src/lycon.sg');
-Grammar::SinGL->fparse('./font/src/lycon_sh.sg');
+
+
+Emit::SinGL->hpp(
+
+Grammar::SinGL->fparse('./font/src/lycon_sh.sg')
+
+);
+
 
 # ---   *   ---   *   ---
 1; # ret

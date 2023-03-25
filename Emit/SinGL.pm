@@ -32,6 +32,8 @@ package Emit::SinGL;
   use Arstd::Array;
   use Tree::Grammar;
 
+  use Shb7::Path;
+
   use Vault;
 
   use lib $ENV{'ARPATH'}.'/lib/';
@@ -43,7 +45,7 @@ package Emit::SinGL;
 # ---   *   ---   *   ---
 # info
 
-  our $VERSION = v0.00.1;#b
+  our $VERSION = v0.00.2;#b
   our $AUTHOR  = 'IBN-3DILA';
 
 # ---   *   ---   *   ---
@@ -77,6 +79,23 @@ package Emit::SinGL;
 sub hpp($class,$stout) {
 
   $stout=Vault::fchk($stout);
+  my $scope=$class->get_src_scope($stout);
+
+  my %O=(
+
+    author     => 'FORGOT_TO_IMPLEMENT',
+
+    add_guards => 1,
+    define     => [],
+
+    include    => [
+      $class->get_deps_list($stout)
+
+    ],
+
+  );
+
+  say Emit::C->boiler_open($stout->{name},%O);
 
   my $struc_blk=
     $class->get_struc($stout,'ubos')
@@ -90,15 +109,20 @@ sub hpp($class,$stout) {
 
   my $params_blk=$class->get_params($stout);
 
+  say "namespace $scope {\n";
   say $decls_blk;
   say $params_blk;
   say $struc_blk;
+
+  say "\n}; // $scope\n";
+
+  say Emit::C->boiler_close($stout->{name},%O);
 
 };
 
 sub get_params($class,$stout) {
 
-  my $name = $stout->{sh_name};
+  my $name = $stout->{name};
 
   my $gvx  = $class->get_GENIUS($stout,'vx');
   my $gpx  = $class->get_GENIUS($stout,'px');
@@ -167,14 +191,13 @@ sub get_GENIUS($class,$stout,$mode) {
   my $src_name=
     $class->get_src_name($stout,$mode);
 
-  my $name = "g_$stout->{sh_name}_${mode}";
+  my $name = "g_$stout->{name}_${mode}";
   my $pad  = q[    ];
 
   my @ar   = (
 
     "shader\::version_${mode}",
-
-    ('NI_extern_src_list'),
+    $class->get_extern_src($stout,$mode),
     "$src_name"
 
   );
@@ -223,7 +246,17 @@ sub get_src($class,$stout,$mode) {
 # ---   *   ---   *   ---
 
 sub get_src_name($class,$stout,$mode) {
-  return "$stout->{sh_name}_${mode}_src";
+  return "$stout->{name}_${mode}_src";
+
+};
+
+sub get_src_scope($class,$stout) {
+
+  my $scope=$stout->{scope};
+  $scope=~ s[/][::]sxmg;
+  $scope="shader\::$scope";
+
+  return $scope;
 
 };
 
@@ -268,6 +301,82 @@ sub get_struc($class,$stout,$mode) {
 
 SKIP:
   return $out;
+
+};
+
+# ---   *   ---   *   ---
+# make list of external sources
+
+sub get_extern_src($class,$stout,$mode) {
+
+  my @out    = ();
+  my $ar     = $stout->{extern_s}->{$mode};
+
+  my @keys   = array_keys($ar);
+  my @values = array_values($ar);
+
+  while(@keys && @values) {
+
+    my $key=shift @keys;
+    my $val=shift @values;
+
+    last if ! $key;
+
+    my $xstout={
+      scope => $val,
+      name  => $key,
+
+    };
+
+    $xstout->{scope}=
+      $class->get_src_scope($xstout);
+
+    $xstout->{name}=
+      $class->get_src_name($xstout,$mode);
+
+    push @out,
+
+      $xstout->{scope}
+
+    . '::'
+    . $xstout->{name}
+
+    ;
+
+  };
+
+  return @out;
+
+};
+
+# ---   *   ---   *   ---
+# gives includes list
+
+sub get_deps_list($class,$stout) {
+
+  my @out   = ();
+  my $flist = $stout->{extern};
+
+  push @out,
+    @{$flist->{vx}},
+    @{$flist->{px}}
+
+  ;
+
+  map {
+    $ARG=~ s[/src/][/];
+    $ARG=~ s[\.sg$][.hpp];
+
+  } @out;
+
+  return (
+
+    '<glm::vec4>',
+    '"sin/shader/Params.hpp"',
+
+    map {q["] . shpath($ARG) . q["] } @out
+
+  );
 
 };
 
