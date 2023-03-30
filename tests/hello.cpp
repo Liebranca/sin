@@ -4,16 +4,12 @@
   #include <glm/mat4x4.hpp>
 
   #include "chasm/Window.hpp"
-
-  #include "shader/Texture.hpp"
   #include "shader/Frame.hpp"
 
   #include "mesh/Camera.hpp"
 
   #include "mesh/Frame.hpp"
   #include "mesh/Solid.hpp_sg"
-
-  #include "bitter/ff/DAF.hpp"
 
 // ---   *   ---   *   ---
 
@@ -37,24 +33,13 @@ int main(void) {
 
   p_frame.use(p);
 
-  std::string path=
-    "/home/lyeb/Desktop/spritebake/sheet.daf";
-
-  DAF daf(path,Bin::READ);
-  daf.unpack();
-
   Meshes m_frame;
   m_frame.use();
 
-  Texture tex(path+"e0");
-  tex.use();
+  std::string path=
+    "/home/lyeb/Desktop/spritebake/sheet.daf";
 
-  Sprite dummy(
-    m_frame.make_sprite(path+"e1")
-
-  );
-
-  daf.close();
+  Sprite dummy=m_frame.make_sprite(path);
 
 // ---   *   ---   *   ---
 

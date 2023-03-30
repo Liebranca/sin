@@ -43,6 +43,18 @@ public:
   // bind
   void use(void);
 
+  // transfer ownership
+  inline void from(Texture& other) {
+
+    m_loc       = other.m_loc;
+    m_slot      = other.m_slot;
+    m_img_sz    = other.m_img_sz;
+    m_tab       = other.m_tab;
+
+    other.m_loc = 0;
+
+  };
+
 };
 
 // ---   *   ---   *   ---

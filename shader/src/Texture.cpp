@@ -132,7 +132,6 @@ Texture::~Texture(void) {
 void Texture::use(void) {
 
   glActiveTexture(GL_TEXTURE0+m_slot);
-
   glBindTexture(
     GL_TEXTURE_2D_ARRAY,
     m_loc

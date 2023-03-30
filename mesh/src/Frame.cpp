@@ -16,7 +16,11 @@
   #include <GL/glew.h>
 
   #include "bitter/kvrnel/Bytes.hpp"
+  #include "bitter/ff/DAF.hpp"
+  #include "bitter/ff/CRK.hpp"
+
   #include "mesh/Frame.hpp"
+  #include "shader/Texture.hpp"
 
 // ---   *   ---   *   ---
 
@@ -210,22 +214,46 @@ uint32_t Meshes::nit(CRK::Prim& p) {
 
 // ---   *   ---   *   ---
 
-std::vector<uint32_t> Meshes::make_sprite(
-  std::string fpath
+Sprite Meshes::make_sprite(
+  std::string& path
 
 ) {
 
-  std::vector<uint32_t> out;
+  Sprite out;
 
-  CRK crk(fpath);
+  DAF daf(path,Bin::READ);
+  daf.unpack();
+
+  CRK crk(path+"e1");
   crk.unpack();
 
-  auto& me=crk.data();
+//  ANS ans(path+"e2");
+
+//  auto& anims = ans.data();
+  auto& me    = crk.data();
 
   for(auto& p : me) {
-    out.push_back(this->nit(p));
+    out.add_frame(this->nit(p));
 
   };
+
+  Sprite::Anim anim={
+    .beg   = 0,
+    .end   = 10,
+
+    .flags = 0x00
+
+  };
+
+
+//  for(auto& anim : anims) {
+    out.add_anim(anim);
+
+//  };
+
+  Texture tex(path+"e0");
+  out.set_sheet(tex);
+  out.set_anim(0);
 
   return out;
 

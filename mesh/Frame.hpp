@@ -19,7 +19,7 @@ class Meshes {
 
 public:
 
-  VERSION   "v0.00.4b";
+  VERSION   "v0.00.5b";
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -73,8 +73,9 @@ public:
   // make mesh
   uint32_t nit(CRK::Prim& p);
 
-  std::vector<uint32_t> make_sprite(
-    std::string fpath
+  // load sprite sheet from file
+  Sprite make_sprite(
+    std::string& path
 
   );
 
@@ -86,7 +87,6 @@ public:
 
   // draw specific mesh
   inline void draw(uint32_t idex) {
-
     m_mesh[idex].draw();
 
   };
