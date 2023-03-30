@@ -17,10 +17,10 @@
 
   #include "bitter/kvrnel/Bytes.hpp"
   #include "bitter/ff/DAF.hpp"
-  #include "bitter/ff/CRK.hpp"
+  #include "bitter/ff/ANS.hpp"
 
-  #include "mesh/Frame.hpp"
   #include "shader/Texture.hpp"
+  #include "mesh/Frame.hpp"
 
 // ---   *   ---   *   ---
 
@@ -227,9 +227,9 @@ Sprite Meshes::make_sprite(
   CRK crk(path+"e1");
   crk.unpack();
 
-//  ANS ans(path+"e2");
+  ANS ans(path+"e2");
 
-//  auto& anims = ans.data();
+  auto& anims = ans.data();
   auto& me    = crk.data();
 
   for(auto& p : me) {
@@ -237,19 +237,10 @@ Sprite Meshes::make_sprite(
 
   };
 
-  Sprite::Anim anim={
-    .beg   = 0,
-    .end   = 10,
-
-    .flags = 0x00
-
-  };
-
-
-//  for(auto& anim : anims) {
+  for(auto& anim : anims) {
     out.add_anim(anim);
 
-//  };
+  };
 
   Texture tex(path+"e0");
   out.set_sheet(tex);
