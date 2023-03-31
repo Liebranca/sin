@@ -16,7 +16,7 @@ class Sprite {
 
 public:
 
-  VERSION     "v0.00.4b";
+  VERSION     "v0.00.5b";
   AUTHOR      "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -30,8 +30,9 @@ private:
   ANS::Anim* m_canim  = NULL;
 
   Frames     m_frames;
-  ANS::Anims m_anims;
   Texture    m_sheet;
+
+  ANS        m_data;
 
 // ---   *   ---   *   ---
 // guts
@@ -46,7 +47,13 @@ public:
   ~Sprite(void) {};
 
   inline void set_anim(uint16_t idex) {
-    m_canim  = &m_anims[idex];
+    m_canim  = m_data.get(idex);
+    m_cframe = m_canim->beg;
+
+  };
+
+  inline void set_anim(std::string tag) {
+    m_canim  = m_data.get(tag);
     m_cframe = m_canim->beg;
 
   };
@@ -65,35 +72,20 @@ public:
 
   };
 
-  inline void add_anim(ANS::Anim& anim) {
-    m_anims.push_back(anim);
-
-  };
-
   inline void set_sheet(Texture& tex) {
     m_sheet.from(tex);
 
   };
 
-// ---   *   ---   *   ---
-
-  // run current animation
-  inline uint32_t play(void) {
-
-    uint32_t out=m_cframe++;
-
-    // cap current frame
-    if(m_cframe == m_canim->end) {
-      m_cframe=m_canim->beg;
-
-    };
-
-    m_sheet.use();
-
-    // ret mesh idex
-    return out;
+  inline void set_meta(std::string path) {
+    m_data=ANS(path);
 
   };
+
+// ---   *   ---   *   ---
+// run anims
+
+  uint32_t play(void);
 
 };
 

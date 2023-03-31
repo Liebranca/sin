@@ -224,27 +224,20 @@ Sprite Meshes::make_sprite(
   DAF daf(path,Bin::READ);
   daf.unpack();
 
+  Texture tex(path+"e0");
+  out.set_sheet(tex);
+
   CRK crk(path+"e1");
   crk.unpack();
 
-  ANS ans(path+"e2");
-
-  auto& anims = ans.data();
-  auto& me    = crk.data();
-
+  auto& me=crk.data();
   for(auto& p : me) {
     out.add_frame(this->nit(p));
 
   };
 
-  for(auto& anim : anims) {
-    out.add_anim(anim);
-
-  };
-
-  Texture tex(path+"e0");
-  out.set_sheet(tex);
-  out.set_anim(0);
+  out.set_meta(path+"e2");
+  out.set_anim("run");
 
   return out;
 
