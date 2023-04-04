@@ -24,6 +24,7 @@ $:VERT;>
 
   uniform mat4 Model;
   uniform mat4 View;
+  uniform mat4 Projection;
 
   layout (std430) buffer _Tile_Indices {
     uint buff[4096];
@@ -163,7 +164,7 @@ vec4 extract_xyz(void) {
 // ---   *   ---   *   ---
 
 vec4 apply_transform(vec4 co) {
-  return (Model*co)*View;
+  return Projection * View * Model * co;
 
 };
 

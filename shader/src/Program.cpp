@@ -24,6 +24,23 @@
   #include "shader/Program.hpp"
 
 // ---   *   ---   *   ---
+// variations on uploading data
+
+void Program::set_uniform(
+  uint32_t   idex,
+  glm::mat4& data
+
+) {
+
+  glUniformMatrix4fv(
+    this->get_uniform(idex),
+    1,GL_FALSE,&data[0][0]
+
+  );
+
+};
+
+// ---   *   ---   *   ---
 // errchk boiler
 
 int Program::get_err(

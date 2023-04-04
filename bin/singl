@@ -165,13 +165,7 @@ while(@Pending) {
 # ---   *   ---   *   ---
 # spit it
 
-  $code=~ s[
-
-    \#ifdef \s+ __cplusplus
-    [^\#]+
-    \#endif
-
-  ][]sxmg;
+  Emit::C->cpptrim(\$code);
 
   if($M->{echo} eq $NULL) {
     owc($dst,$code);

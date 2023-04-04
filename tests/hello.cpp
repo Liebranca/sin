@@ -3,13 +3,81 @@
 
   #include <glm/mat4x4.hpp>
 
-  #include "chasm/Window.hpp"
+  #include "chasm/Chasm.hpp"
   #include "shader/Frame.hpp"
 
   #include "mesh/Camera.hpp"
 
   #include "mesh/Frame.hpp"
   #include "mesh/Solid.hpp_sg"
+
+// ---   *   ---   *   ---
+// GBL
+
+  Camera* EYE=NULL;
+
+// ---   *   ---   *   ---
+// helpers
+
+  struct Draw_Cmd {
+
+    Meshes*  frame;
+
+    Program* program;
+    Sprite*  sprite;
+
+    T3D*     xform;
+
+  };
+
+  typedef std::vector<Draw_Cmd> Draw_Batch;
+
+// ---   *   ---   *   ---
+// chasm signal for draw step
+
+int draw(void* data) {
+
+  static uint32_t i=0;
+  Draw_Batch* bat=(Draw_Batch*) data;
+
+  for(auto& o : *bat) {
+
+    auto frame   = o.frame;
+
+    auto program = o.program;
+    auto sprite  = o.sprite;
+    auto xform   = o.xform;
+
+    auto mat0    = xform->get_model();
+    auto mat1    = EYE->get_view();
+
+    program->set_uniform(0,mat0);
+    program->set_uniform(1,mat1);
+    program->set_uniform(2,EYE->get_proj());
+
+    frame->draw(sprite->play());
+
+  };
+
+  if(i==6) {
+    if(EYE->is_ortho()) {
+      EYE->use_persp();
+
+    } else {
+      EYE->use_ortho();
+
+    };
+
+    i=0;
+
+  } else {
+    i++;
+
+  };
+
+  return 1;
+
+};
 
 // ---   *   ---   *   ---
 
@@ -21,12 +89,14 @@ int main(void) {
     .height=480,
 
     .fullscreen=false,
-    .fps=6
+    .fps=8
 
   };
 
-  Win win(win_desc);
-  win.set_ambient_color(6);
+  Chasm.nit(win_desc);
+
+  Chasm.draw=&draw;
+  Chasm.win.set_ambient_color(6);
 
   Programs p_frame;
   Program* p=p_frame.nit(&shader::mesh::Solid);
@@ -43,50 +113,40 @@ int main(void) {
 
 // ---   *   ---   *   ---
 
-  T3D transform;
+  T3D xform;
 
   Camera::Lens lens={
     .width  = 640,
     .height = 480,
 
-    .scale  = 0.0005f,
-    .near   = 0.001f,
+    .scale  = 0.01f,
+    .fov    = 45.0f,
+
+    .near   = 0.1f,
     .far    = 100.0f
 
   };
 
   Camera cam({0,0,8},lens);
-  cam.use_ortho();
+  cam.use_persp();
+
+  EYE=&cam;
 
   glm::vec3 vel({0.1,0.0,0.0});
 
-// ---   *   ---   *   ---
+  Draw_Cmd ffs={
 
-  int panic=59;
-  while(panic--) {
+    .frame   = &m_frame,
+    .program = p,
 
-    glUniformMatrix4fv(
-      p->get_uniform(0),
-
-      1,GL_FALSE,
-
-      &transform.get_model()[0][0]
-
-    );
-
-    glUniformMatrix4fv(
-      p->get_uniform(1),
-
-      1,GL_FALSE,
-
-      &cam.get_view()[0][0]
-
-    );
-
-    win.refresh(0);
-    m_frame.draw(dummy.play());
+    .sprite  = &dummy,
+    .xform   = &xform
 
   };
+
+  Draw_Batch draw_buff {ffs};
+
+  CHASM_RUN((void*) &draw_buff,NULL);
 
   return 0;
 

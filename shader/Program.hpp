@@ -5,6 +5,7 @@
 // deps
 
   #include <vector>
+  #include <glm/mat4x4.hpp>
 
   #include "bitter/kvrnel/Style.hpp"
   #include "shader/Constants.hpp"
@@ -17,7 +18,7 @@ class Program {
 
 public:
 
-  VERSION   "v0.00.2b";
+  VERSION   "v0.00.3b";
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -86,19 +87,28 @@ private:
 
 public:
 
-  // initialize
+  // cstruc
   int nit(
     uint32_t idex,
     const shader::Params* params
 
   );
 
-  // ^destroy
+  // ^dstruc
   void del(void);
 
-  // compiler trash
+  // ctrash
   Program(void) {;};
   ~Program(void) {this->del();};
+
+// ---   *   ---   *   ---
+// variations on uploading data
+
+  void set_uniform(
+    uint32_t   idex,
+    glm::mat4& data
+
+  );
 
 // ---   *   ---   *   ---
 // getters

@@ -24,7 +24,7 @@ class Camera {
 
 public:
 
-  VERSION   "v2.00.1";
+  VERSION   "v2.00.2";
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -36,6 +36,7 @@ public:
     float height;
 
     float scale;
+    float fov;
 
     float near;
     float far;
@@ -44,16 +45,17 @@ public:
 
     glm::mat4 ortho(void) {
 
-      width *= 0.5f;
-      width *= scale;
+      float w=width;
+      float h=height;
 
-      height *= 0.5f;
-      height *= -scale;
+      w *= 0.5f;
+      w *= scale;
+
+      h *= 0.5f;
+      h *= -scale;
 
       return glm::ortho(
-        -width,width,
-        -height,height,
-
+        -w,w,-h,h,
         near,far
 
       );
@@ -61,10 +63,16 @@ public:
     };
 
     glm::mat4 persp(void) {
-      return glm::perspective(
-        glm::radians(scale),
 
-        width/height,
+      float w=width;
+      float h=height;
+
+      w *= scale;
+      h *= -scale;
+
+      return glm::perspective(
+
+        glm::radians(-fov),w/h,
         near,far
 
       );
@@ -86,12 +94,19 @@ public:
 // ---   *   ---   *   ---
 
   inline glm::mat4
-  get_view(void) const {
+  get_view(void) {
+
+    glm::vec3 origin({0,0,0});
 
     return glm::lookAt(
       m_pos,m_pos+m_fwd,Y_AXIS
 
-    )*m_proj;
+    );
+
+  };
+
+  inline glm::mat4& get_proj(void) {
+    return m_proj;
 
   };
 
@@ -136,6 +151,11 @@ public:
   inline void use_persp(void) {
     m_ortho = false;
     m_proj  = m_lens.persp();
+
+  };
+
+  inline bool is_ortho(void) {
+    return m_ortho;
 
   };
 
