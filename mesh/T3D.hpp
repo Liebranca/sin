@@ -23,41 +23,70 @@ class T3D {
 
 public:
 
-  VERSION   "v2.00.1";
+  VERSION   "v2.00.2";
   AUTHOR    "IBN-3DILA";
+
+// ---   *   ---   *   ---
+// helpers
+
+private:
+
+  // spares recalculation of
+  // model matrix
+  struct Model_Cache {
+    glm::mat4 mat;
+
+    union {
+
+      struct {
+        uint8_t igpar: 1;
+        uint8_t needs_update: 1;
+
+      };
+
+      uint8_t flags;
+
+    };
+
+  };
 
 // ---   *   ---   *   ---
 // attrs
 
-  glm::vec3 position;
-  glm::quat orientation;
-  glm::vec3 scaling;
-  glm::vec2 dirn;
+  Model_Cache m_cache;
 
-  float fwd  = 0.0f;
-  float tick = 0.0f;
+  T3D*        m_parent;
 
-  T3D* parent;
+  glm::vec3   m_position;
+  glm::quat   m_orientation;
+  glm::vec3   m_scaling;
+
+  glm::vec2   m_dirn;
+
+  float       m_fwd  = 0.0f;
+  float       m_tick = 0.0f;
+
+public:
 
 // ---   *   ---   *   ---
 // iface
 
   T3D(
-    glm::vec4 pos={0,0,0,1},
-    glm::quat rot={1,0,0,0},
-    glm::vec3 scale={1,1,1}
+    glm::vec4 pos   = {0,0,0,1},
+    glm::quat rot   = {1,0,0,0},
+    glm::vec3 scale = {1,1,1}
 
   ):
 
   // holy initializers batman
-  position(pos),
-  orientation(rot),
-  scaling(scale) {
+  m_position(pos),
+  m_orientation(rot),
+  m_scaling(scale) {
 
-    dirn={1,1};
-    parent=NULL;
+    m_dirn   = {1,1};
+    m_parent = NULL;
 
-    rotate(rot);
+    this->rotate(rot);
 
   };
 
@@ -65,15 +94,20 @@ public:
 
   ~T3D(void) {};
 
-  glm::mat4 get_model(bool ignoreParent=false);
+  glm::mat4  calc_model(bool igpar);
+  glm::mat4& get_model(bool igpar=false);
 
-  inline glm::mat3 get_normal(glm::mat4& model) {
-    return glm::inverseTranspose(model);
+  inline glm::mat3 get_normal(void) {
+    return glm::inverseTranspose(
+      this->get_model()
+
+    );
 
   };
 
   inline void set_parent(T3D* par) {
-    this->parent=par;
+    m_parent=par;
+    m_cache.needs_update=1;
 
   }
 
@@ -88,8 +122,9 @@ public:
 
   void rotate(glm::quat delta);
 
-  inline void move(glm::vec3& pos) {
-    position+=pos;
+  inline void move(glm::vec3 pos) {
+    m_position+=pos;
+    m_cache.needs_update=1;
 
   };
 

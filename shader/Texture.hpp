@@ -33,11 +33,13 @@ private:
 
 public:
 
-  // compiler trash
+  // ctrash
   Texture(void) {};
 
-  // make/destroy
-  Texture(std::string fpath);
+  // cstruc
+  void nit(std::string fpath);
+
+  // dstruc
   ~Texture(void);
 
   // bind

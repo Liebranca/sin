@@ -83,27 +83,30 @@ public:
 
 // ---   *   ---   *   ---
 
+  // cstruch
   Camera(
     const glm::vec3& pos,
     Camera::Lens&    lens
 
   );
 
+  // ctrash
+  Camera(void) {};
   ~Camera(void);
 
 // ---   *   ---   *   ---
 
-  inline glm::mat4
-  get_view(void) {
-
-    glm::vec3 origin({0,0,0});
-
+  // regenerate view matrix
+  inline glm::mat4 calc_view(void) {
     return glm::lookAt(
       m_pos,m_pos+m_fwd,Y_AXIS
 
     );
 
   };
+
+  // ^fetches
+  glm::mat4& get_view(void);
 
   inline glm::mat4& get_proj(void) {
     return m_proj;
@@ -143,14 +146,20 @@ public:
 //  int frustumIsect(viewFrustum* other);
 
   inline void use_ortho(void) {
-    m_ortho = true;
-    m_proj  = m_lens.ortho();
+
+    m_update = true;
+
+    m_ortho  = true;
+    m_proj   = m_lens.ortho();
 
   };
 
   inline void use_persp(void) {
-    m_ortho = false;
-    m_proj  = m_lens.persp();
+
+    m_update = true;
+
+    m_ortho  = false;
+    m_proj   = m_lens.persp();
 
   };
 
@@ -242,6 +251,7 @@ public:
 //  };
 
 // ---   *   ---   *   ---
+// attrs
 
 private:
 
@@ -250,6 +260,7 @@ private:
   glm::vec3    m_up;
   glm::vec3    m_altpos;
 
+  glm::mat4    m_view;
   glm::mat4    m_proj;
 
   float        m_pitch  = 0.0f;

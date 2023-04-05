@@ -16,20 +16,15 @@
   #include "shader/Frame.hpp"
 
 // ---   *   ---   *   ---
-// construc
+// cstruc
 
 Programs::Programs(void) {
-  m_stack.reserve(NUM_PROGRAMS);
-
-  for(uint32_t i=0;i<NUM_PROGRAMS;i++) {
-    m_stack.push_back(i);
-
-  };
+  m_slots.reserve(NUM_PROGRAMS);
 
 };
 
 // ---   *   ---   *   ---
-// ^destroy
+// ^dstruc
 
 Programs::~Programs(void) {
 
@@ -43,23 +38,23 @@ Programs::~Programs(void) {
 // ---   *   ---   *   ---
 // initialize new shader
 
-Program* Programs::nit(
+uint32_t Programs::nit(
   const shader::Params* params
 
 ) {
 
-  uint32_t idex=m_stack[m_stack.size()-1];
-  m_stack.pop_back();
+  uint32_t idex=m_slots.size();
+  m_slots.push_back(Program());
 
   int state=m_slots[idex].nit(idex,params);
 
-  if(state!=AR_DONE) {
+  if(state != AR_DONE) {
     fprintf(stderr,"Terminated\n");
     exit(1);
 
   };
 
-  return &m_slots[idex];
+  return idex;
 
 };
 
@@ -71,7 +66,7 @@ void Programs::del(Program* p) {
   uint32_t idex=p->get_idex();
   m_slots[idex].del();
 
-  m_stack.push_back(idex);
+  m_slots.erase(m_slots.begin()+idex);
 
 };
 
@@ -80,8 +75,7 @@ void Programs::del(Program* p) {
 
 void Programs::use(Program* p) {
 
-  if(p!=m_current) {
-
+  if(p != m_current) {
     m_current=p;
     glUseProgram(p->get_loc());
 

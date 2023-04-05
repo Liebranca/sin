@@ -24,7 +24,9 @@
 
 // ---   *   ---   *   ---
 
-Meshes::Meshes(void) {
+void Meshes::nit(uint32_t pidex) {
+
+  m_pidex=pidex;
 
   // gl alloc
   glGenVertexArrays(1,&m_vao);
@@ -124,13 +126,15 @@ Meshes::Meshes(void) {
 
   );
 
+  m_nitted=true;
+
 // ---   *   ---   *   ---
 // get mem
 
-  m_tiles=std::unique_ptr<uint32_t>(
-    new uint32_t[Meshes::BUFF_SZ]
-
-  );
+//  m_tiles=std::unique_ptr<uint32_t>(
+//    new uint32_t[Meshes::BUFF_SZ]
+//
+//  );
 
 };
 
@@ -138,15 +142,19 @@ Meshes::Meshes(void) {
 // destroy
 
 Meshes::~Meshes(void) {
-  glDeleteBuffers(NUM_BUFFS,&m_buff[0]);
-  glDeleteVertexArrays(1,&m_vao);
+
+  if(m_nitted) {
+    glDeleteBuffers(NUM_BUFFS,&m_buff[0]);
+    glDeleteVertexArrays(1,&m_vao);
+
+  };
 
 };
 
 // ---   *   ---   *   ---
 // pushes geometry to gl buffer
 
-uint32_t Meshes::nit(CRK::Prim& p) {
+uint32_t Meshes::new_mesh(CRK::Prim& p) {
 
   void*    verts   = p.verts.data();
   void*    indices = p.indices.data();
@@ -213,31 +221,50 @@ uint32_t Meshes::nit(CRK::Prim& p) {
 };
 
 // ---   *   ---   *   ---
+// load sprite sheet from file
 
-Sprite Meshes::make_sprite(
+uint32_t Meshes::new_sprite(
   std::string& path
 
 ) {
 
-  Sprite out;
+  uint32_t out=m_anims.size();
 
   DAF daf(path,Bin::READ);
   daf.unpack();
 
-  Texture tex(path+"e0");
-  out.set_sheet(tex);
+  m_textures.push_back(Texture());
+  m_textures.back().nit(path+"e0");
 
   CRK crk(path+"e1");
   crk.unpack();
 
-  auto& me=crk.data();
+  m_anims.push_back(Sprite::Poses());
+
+  auto& poses = m_anims.back();
+  auto& me    = crk.data();
+
   for(auto& p : me) {
-    out.add_frame(this->nit(p));
+    poses.push_back(this->new_mesh(p));
 
   };
 
-  out.set_meta(path+"e2");
-  out.set_anim("run");
+  m_anim_meta.push_back(ANS());
+  m_anim_meta.back().nit(path+"e2");
+
+  return out;
+
+};
+
+// ---   *   ---   *   ---
+// ^copy
+
+Sprite Meshes::ice_sprite(uint32_t src) {
+
+  Sprite out;
+
+  out.set_src(src);
+  out.set_anim("idle");
 
   return out;
 
@@ -245,25 +272,25 @@ Sprite Meshes::make_sprite(
 
 // ---   *   ---   *   ---
 
-void Meshes::update_tiles(void) {
-
-  glBindBuffer(
-    GL_SHADER_STORAGE_BUFFER,
-    m_buff[TILE_SSBO]
-
-  );
-
-  glBufferSubData(
-    GL_SHADER_STORAGE_BUFFER,0,
-
-    Meshes::BUFF_SZ
-  * sizeof(uint32_t),
-
-    m_tiles.get()
-
-  );
-
-};
+//void Meshes::update_tiles(void) {
+//
+//  glBindBuffer(
+//    GL_SHADER_STORAGE_BUFFER,
+//    m_buff[TILE_SSBO]
+//
+//  );
+//
+//  glBufferSubData(
+//    GL_SHADER_STORAGE_BUFFER,0,
+//
+//    Meshes::BUFF_SZ
+//  * sizeof(uint32_t),
+//
+//    m_tiles.get()
+//
+//  );
+//
+//};
 
 // ---   *   ---   *   ---
 

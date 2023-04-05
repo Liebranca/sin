@@ -19,7 +19,7 @@ class Meshes {
 
 public:
 
-  VERSION   "v0.00.5b";
+  VERSION   "v0.00.7b";
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -46,6 +46,9 @@ private:
 
   };
 
+  typedef std::vector<Texture> Textures;
+  typedef std::vector<ANS>     Anim_Meta;
+
 // ---   *   ---   *   ---
 // attrs
 
@@ -58,26 +61,40 @@ private:
   uint16_t m_icount = 0;
 
   uint32_t m_top    = 0;
+  uint32_t m_pidex  = 0;
 
-  std::unique_ptr<uint32_t> m_tiles;
+  // anti-cpp trap ;>
+  bool     m_nitted = false;
+
+//  std::unique_ptr<uint32_t> m_tiles;
+
+  Textures      m_textures;
+  Anim_Meta     m_anim_meta;
+  Sprite::Anims m_anims;
 
 // ---   *   ---   *   ---
 // interface
 
 public:
 
-  // nit stackslot
-  Meshes(void);
+  // ctrash
+  Meshes(void) {};
   ~Meshes(void);
 
+  // cstruc
+  void nit(uint32_t pidex=0);
+
   // make mesh
-  uint32_t nit(CRK::Prim& p);
+  uint32_t new_mesh(CRK::Prim& p);
 
   // load sprite sheet from file
-  Sprite make_sprite(
+  uint32_t new_sprite(
     std::string& path
 
   );
+
+  // ^copy
+  Sprite ice_sprite(uint32_t src);
 
   // bind buffers
   inline void use(void) {
@@ -91,14 +108,36 @@ public:
 
   };
 
-  // access tile buffer
-  inline uint32_t& get_tile(
-    uint64_t idex
+//  // access tile buffer
+//  inline uint32_t& get_tile(
+//    uint64_t idex
+//
+//  ) {return m_tiles.get()[idex];};
+//
+//  // ^send it to GL
+//  void update_tiles(void);
 
-  ) {return m_tiles.get()[idex];};
+  // getters
+  inline uint32_t get_pidex(void) {
+    return m_pidex;
 
-  // ^send it to GL
-  void update_tiles(void);
+  };
+
+  inline Textures& get_textures(void) {
+    return m_textures;
+
+  };
+
+  inline Anim_Meta& get_anim_meta(void) {
+    return m_anim_meta;
+
+  };
+
+  inline Sprite::Anims& get_anims(void) {
+    return m_anims;
+
+  };
+
 
 };
 

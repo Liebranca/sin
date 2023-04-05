@@ -25,14 +25,8 @@ public:
 
 private:
 
-  // instance counter
-  uint32_t  m_instances;
-
   // memory pool
-  Program   m_slots[NUM_PROGRAMS];
-
-  // index stack
-  std::vector<uint32_t> m_stack;
+  std::vector<Program> m_slots;
 
   // current program
   Program*  m_current;
@@ -46,7 +40,7 @@ public:
   ~Programs(void);
 
   // get new
-  Program* nit(const shader::Params* params);
+  uint32_t nit(const shader::Params* params);
 
   // ^get existing
   inline Program* get(uint32_t idex) {
@@ -56,6 +50,10 @@ public:
 
   // ^let go
   void del(Program* p);
+  inline void del(uint32_t p) {
+    this->del(this->get(p));
+
+  };
 
   // set current
   void use(Program* p);

@@ -18,9 +18,9 @@
   #include "bitter/ff/JOJ.hpp"
 
 // ---   *   ---   *   ---
-// make
+// cstruc
 
-Texture::Texture(std::string fpath) {
+void Texture::nit(std::string fpath) {
 
   JOJ src(fpath);
   src.unpack();
@@ -115,7 +115,7 @@ Texture::Texture(std::string fpath) {
 };
 
 // ---   *   ---   *   ---
-// ^destroy
+// ^dstruc
 
 Texture::~Texture(void) {
 

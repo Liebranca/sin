@@ -18,31 +18,47 @@
   #include "mesh/T3D.hpp"
 
 // ---   *   ---   *   ---
+// recalculates model matrix
 
-glm::mat4 T3D::get_model(bool ignoreParent) {
+glm::mat4 T3D::calc_model(bool igpar) {
 
-  glm::mat4 parentMatrix;
+  glm::mat4 parmat;
 
-  glm::mat4 wPosMatrix=glm::translate(position);
-  glm::mat4 wRotMatrix=glm::mat4_cast(
-    glm::normalize(orientation)
+  glm::mat4 wpos=glm::translate(m_position);
+  glm::mat4 wrot=glm::mat4_cast(
+    glm::normalize(m_orientation)
 
   );
 
-  glm::mat4 wScaleMatrix=glm::scale(scaling);
+  glm::mat4 wscale=glm::scale(m_scaling);
 
-  parentMatrix=(parent==NULL || ignoreParent)
+  parmat=(m_parent==NULL || igpar)
     ? IDENTITY
-    : parent->get_model()
+    : m_parent->get_model()
     ;
 
-  return (
+  return wpos * wrot * wscale;
 
-    wPosMatrix
-  * wRotMatrix
-  * wScaleMatrix
+};
 
-  );
+// ---   *   ---   *   ---
+// ^fetches or recalculates
+
+glm::mat4& T3D::get_model(bool igpar) {
+
+  if(
+
+     m_cache.igpar != igpar
+  || m_cache.needs_update
+
+  ) {
+
+    m_cache.mat=this->calc_model(igpar);
+    m_cache.needs_update=0;
+
+  };
+
+  return m_cache.mat;
 
 };
 
@@ -100,15 +116,15 @@ bool T3D::face_to(
 
 void T3D::rotate(glm::quat delta) {
 
-  this->orientation=glm::normalize(
-    glm::cross(orientation, delta)
+  m_orientation=glm::normalize(
+    glm::cross(m_orientation,delta)
 
   );
 
-  fwd=
+  m_fwd=
 
-    orientation.y
-  * orientation.w
+    m_orientation.y
+  * m_orientation.w
 
   * 2
   ;
@@ -116,21 +132,23 @@ void T3D::rotate(glm::quat delta) {
 // ---   *   ---   *   ---
 // clamp like a mother
 
-  if(fabs(orientation.w) < 0.5) {
-    dirn.y=-1;
+  if(fabs(m_orientation.w) < 0.5) {
+    m_dirn.y=-1;
 
   } else {
-    dirn.y=1;
+    m_dirn.y=1;
 
   };
 
-  if (fabs(orientation.y) > 0.75) {
-    dirn.x=-1;
+  if (fabs(m_orientation.y) > 0.75) {
+    m_dirn.x=-1;
 
   } else {
-    dirn.x=1;
+    m_dirn.x=1;
 
   };
+
+  m_cache.needs_update=1;
 
 };
 

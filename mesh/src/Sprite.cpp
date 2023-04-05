@@ -19,15 +19,20 @@
 
 uint32_t Sprite::play(void) {
 
-  uint32_t out=m_cframe++;
+  uint32_t out=m_cpose++;
+
+  // get ctx
+  auto& meta  = fetch_meta(m_src);
+  auto& sheet = fetch_sheet(m_src);
+  auto& anim  = meta.get(m_canim);
 
   // cap current frame
-  if(m_cframe == m_canim->end) {
-    m_cframe=m_canim->beg;
+  if(m_cpose == anim.end) {
+    m_cpose=anim.beg;
 
   };
 
-  m_sheet.use();
+  sheet.use();
 
   // ret mesh idex
   return out;

@@ -373,13 +373,21 @@ sub get_extern_src($class,$stout,$mode) {
 sub get_deps_list($class,$stout) {
 
   my @out   = ();
+  my @deps  = ();
   my $flist = $stout->{extern};
 
-  push @out,
+  push @deps,
     @{$flist->{v}},
     @{$flist->{f}}
 
   ;
+
+  my %no_dup=();
+  for my $dep(@deps) {
+    push @out,$dep if ! exists $no_dup{$dep};
+    $no_dup{$dep}=1;
+
+  };
 
   map {
     $ARG=~ s[/src/][/];

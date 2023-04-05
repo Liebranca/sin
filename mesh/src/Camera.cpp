@@ -22,6 +22,21 @@
   #include "mesh/Camera.hpp"
 
 // ---   *   ---   *   ---
+// fetch or regenerate view matrix
+
+glm::mat4& Camera::get_view(void) {
+
+  if(m_update) {
+    m_view   = this->calc_view();
+    m_update = false;
+
+  };
+
+  return m_view;
+
+};
+
+// ---   *   ---   *   ---
 
 Camera::Camera(
   const glm::vec3& pos,

@@ -4,8 +4,10 @@
 // ---   *   ---   *   ---
 // deps
 
+  #include <cstdint>
+  #include <vector>
+
   #include "shader/Constants.hpp"
-  #include <stdint.h>
 
 // ---   *   ---   *   ---
 // shader creation helper
@@ -41,6 +43,8 @@ namespace shader {
     const uint64_t  flags;
 
   } Params;
+
+  typedef std::vector<const Params*> List;
 
 };
 

@@ -16,26 +16,28 @@ class Sprite {
 
 public:
 
-  VERSION     "v0.00.5b";
+  VERSION     "v0.00.7b";
   AUTHOR      "IBN-3DILA";
+
+  typedef std::vector<uint32_t> Poses;
+  typedef std::vector<Poses>    Anims;
+
+// ---   *   ---   *   ---
+// defd by SIN
+
+  static ANS&     fetch_meta(uint32_t idex);
+  static Texture& fetch_sheet(uint32_t idex);
+  static Poses&   fetch_poses(uint32_t idex);
 
 // ---   *   ---   *   ---
 // attrs
 
 private:
 
-  typedef std::vector<uint32_t> Frames;
+  uint32_t m_cpose = 0;
+  uint32_t m_canim = 0;
 
-  uint32_t   m_cframe = 0;
-  ANS::Anim* m_canim  = NULL;
-
-  Frames     m_frames;
-  Texture    m_sheet;
-
-  ANS        m_data;
-
-// ---   *   ---   *   ---
-// guts
+  uint32_t m_src   = 0;
 
 // ---   *   ---   *   ---
 // iface
@@ -46,39 +48,38 @@ public:
   Sprite(void) {};
   ~Sprite(void) {};
 
+  // nit from existing
+  inline void copy(Sprite& other) {
+    m_cpose = other.m_cpose;
+    m_canim = other.m_canim;
+    m_src   = other.m_src;
+
+  };
+
   inline void set_anim(uint16_t idex) {
-    m_canim  = m_data.get(idex);
-    m_cframe = m_canim->beg;
+
+    auto& meta = fetch_meta(m_src);
+    auto& anim = meta.get(idex);
+
+    m_canim    = idex;
+    m_cpose    = anim.beg;
 
   };
 
   inline void set_anim(std::string tag) {
-    m_canim  = m_data.get(tag);
-    m_cframe = m_canim->beg;
+
+    auto& meta = fetch_meta(m_src);
+    auto  idex = uint32_t(meta.iof(tag));
+    auto& anim = meta.get(idex);
+
+    m_canim    = idex;
+    m_cpose    = anim.beg;
 
   };
 
-  inline uint32_t operator[](uint64_t i) {
-    i-=i*(i>=m_frames.size());
-    return m_frames[i];
-
-  };
-
-// ---   *   ---   *   ---
-// used by frame to cstruc
-
-  inline void add_frame(uint32_t idex) {
-    m_frames.push_back(idex);
-
-  };
-
-  inline void set_sheet(Texture& tex) {
-    m_sheet.from(tex);
-
-  };
-
-  inline void set_meta(std::string path) {
-    m_data=ANS(path);
+  // offset for fetch methods
+  inline void set_src(uint32_t idex) {
+    m_src=idex;
 
   };
 

@@ -60,7 +60,6 @@ public:
   };
 
   inline void draw(void) {
-
     glDrawElements(
 
       GL_TRIANGLES,
