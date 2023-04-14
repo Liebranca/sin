@@ -1,6 +1,7 @@
 // ---   *   ---   *   ---
 // deps
 
+  #include <pthread.h>
   #include <glm/mat4x4.hpp>
 
   #include "chasm/Chasm.hpp"
@@ -14,36 +15,46 @@
   typedef std::vector<uint32_t> Nodes;
 
 // ---   *   ---   *   ---
-// lame fwd decl
+// lame fwd decls
 
   int draw(void* data);
+  int logic(void* data);
 
 // ---   *   ---   *   ---
 // chasm stuff
 
 void spawn_window(void) {
 
-  Win::Desc win_desc={
-    .title="HELLO.CPP",
-    .width=640,
-    .height=480,
+  auto& Chasm=CHASM::ice();
 
-    .fullscreen=false,
-    .fps=8
+  Win::Desc win_desc={
+
+    .title      = "HELLO.CPP",
+
+    .width      = 640,
+    .height     = 480,
+
+    .fullscreen = false,
+    .fps        = 30
 
   };
 
   Chasm.nit(win_desc);
-
-  Chasm.draw=&draw;
   Chasm.win.set_ambient_color(6);
+
+  Chasm.draw  = &draw;
+  Chasm.logic = &logic;
 
 };
 
 // ---   *   ---   *   ---
 // selfex
 
-void camera_settings(bool ortho=true) {
+void camera_settings(
+  uint32_t bind_idex,
+  bool     ortho=true
+
+) {
 
   auto& Sin=SIN::ice();
 
@@ -51,7 +62,7 @@ void camera_settings(bool ortho=true) {
     .width  = 640,
     .height = 480,
 
-    .scale  = 0.01f,
+    .scale  = 0.0055f,
     .fov    = 45.0f,
 
     .near   = 0.1f,
@@ -59,7 +70,7 @@ void camera_settings(bool ortho=true) {
 
   };
 
-  Sin.nit_camera({0,0,8},lens,ortho);
+  Sin.nit_camera({0,0,20},lens,bind_idex,ortho);
 
 };
 
@@ -99,13 +110,47 @@ void load_resources(void) {
 
 int draw(void* data) {
 
-  auto& Sin=SIN::ice();
-  auto  bat=(Nodes*) data;
+  auto& Sin = SIN::ice();
+  auto  bat = (Nodes*) data;
 
   for(auto& idex : *bat) {
     Sin.nodes[idex].draw();
 
   };
+
+  return 0;
+
+};
+
+// ---   *   ---   *   ---
+// ^selfex
+
+int logic(void* data) {
+
+//  static int i=0;
+//  cxr32 vel=0.05f;
+//
+//  auto& Sin = SIN::ice();
+//  auto& nd  = Sin.nodes[0];
+//
+//  float xdir=(i<128) ? -(vel*2.1) : (vel*2.1);
+//  float ydir=vel*1.125;
+//
+//  nd.move({xdir,ydir,0});
+//
+//  i++;
+//
+//  if(i==0x7F) {
+//    nd.rot({1,0,180,0});
+//    nd.move({0,-(ydir*0x80),0});
+//
+//  } else if(i==0xFF) {
+//    nd.rot({1,0,-180,0});
+//    nd.move({0,-(ydir*0x80),0});
+//
+//  };
+//
+//  i&=0xFF;
 
   return 1;
 
@@ -120,21 +165,55 @@ int main(void) {
   load_shaders();
   load_resources();
 
-  camera_settings();
+  auto& Chasm = CHASM::ice();
+  auto& Sin   = SIN::ice();
 
-  T3D xform({1,0,0,1});
+  camera_settings(Sin.program->get_ubo(0));
 
-  auto& Sin=SIN::ice();
-
+  Nodes draw_buff;
+//  T3D xform({6,-3.5f,0,1});
   Sin.new_node(0,Node::SPRITE);
-  Sin.new_node(0,Node::SPRITE,xform);
 
-  Nodes draw_buff {0,1};
+  draw_buff.push_back(0);
 
   CHASM_RUN((void*) &draw_buff,NULL);
 
   return 0;
 
 };
+
+// ---   *   ---   *   ---
+
+//  uint32_t limit = 1;
+//  uint32_t i     = 0;
+//
+//  float co[3]={
+//
+//    -6.5f,
+//    -3.5f,
+//
+//    0.0f,
+//
+//  };
+//
+//  for(int y=0;y<limit;y++) {
+//
+//    for(int x=0;x<limit;x++) {
+//
+//      T3D xform({co[0],co[1],co[2],1});
+//      Sin.new_node(0,Node::SPRITE,xform);
+//
+//      draw_buff.push_back(i++);
+//
+//      co[0] += 0.25f;
+//
+//    };
+//
+//    co[0]  = -6.5f;
+//
+//    co[1] += 0.25f;
+//    co[2] += 0.1f;
+//
+//  };
 
 // ---   *   ---   *   ---

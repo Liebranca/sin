@@ -37,6 +37,7 @@ glm::mat4 T3D::calc_model(bool igpar) {
     : m_parent->get_model()
     ;
 
+  // TODO: separately frac xforms!
   return wpos * wrot * wscale;
 
 };

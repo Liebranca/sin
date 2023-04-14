@@ -12,6 +12,7 @@
 // ---   *   ---   *   ---
 // deps
 
+  #include "bitter/kvrnel/Dice.hpp"
   #include "mesh/Sprite.hpp"
 
 // ---   *   ---   *   ---
@@ -19,7 +20,9 @@
 
 uint32_t Sprite::play(void) {
 
-  uint32_t out=m_cpose++;
+  // advance pose
+  uint32_t out=m_cpose;
+  this->calc_time();
 
   // get ctx
   auto& meta  = fetch_meta(m_src);
@@ -36,6 +39,49 @@ uint32_t Sprite::play(void) {
 
   // ret mesh idex
   return out;
+
+};
+
+// ---   *   ---   *   ---
+// advances current pose each
+// N ticks of animation time
+
+void Sprite::calc_time(void) {
+
+  m_ctime  += FTIME;
+  bool adv  = m_ctime >= 1.0f;
+
+  m_ctime  *= ! adv;
+  m_cpose  += adv;
+
+};
+
+// ---   *   ---   *   ---
+
+void Sprite::set_anim(uint16_t idex) {
+
+  auto& meta = fetch_meta(m_src);
+  auto& anim = meta.get(idex);
+
+  m_canim    = idex;
+  m_cpose    = anim.beg;
+
+  auto r     = Dice::roll(1,8);
+  m_ctime    = float(r) * FTIME;
+
+};
+
+void Sprite::set_anim(std::string tag) {
+
+  auto& meta = fetch_meta(m_src);
+  auto  idex = uint32_t(meta.iof(tag));
+  auto& anim = meta.get(idex);
+
+  m_canim    = idex;
+  m_cpose    = anim.beg;
+
+  auto r     = Dice::roll(1,8);
+  m_ctime    = float(r) * FTIME;
 
 };
 

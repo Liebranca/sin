@@ -18,7 +18,7 @@ class SIN {
 
 public:
 
-  VERSION   "v0.00.2b";
+  VERSION   "v0.00.3b";
   AUTHOR    "IBN-3DILA";
 
   cx8 PROGRAM0 = 0x00;
@@ -39,7 +39,7 @@ public:
 
   Program* program;
   Meshes*  batch;
-  uint32_t batch_id;
+  uint32_t batch_id=-1;
 
   Nodes    nodes;
   Sprites  sprites;
@@ -47,11 +47,11 @@ public:
 // ---   *   ---   *   ---
 // iface
 
-  static inline SIN& ice(void) {
-    static SIN ice;
-    return ice;
+  // ctrash
+  SIN(void) {};
+  ~SIN(void) {};
 
-  };
+  SINGLETON(SIN);
 
   // create new mesh batch
   uint32_t new_batch(uint8_t pidex);
@@ -72,7 +72,9 @@ public:
     const glm::vec3& pos,
     Camera::Lens&    lens,
 
-    bool ortho=true
+    uint32_t         bind_idex,
+
+    bool             ortho=true
 
   );
 
@@ -83,14 +85,6 @@ public:
     T3D      xform=T3D()
 
   );
-
-  // ctrash
-  SIN(void) {};
-  ~SIN(void) {};
-
-  // this is what idiocy looks like
-  SIN(SIN const&)             = delete;
-  void operator=(SIN const&)  = delete;
 
 };
 

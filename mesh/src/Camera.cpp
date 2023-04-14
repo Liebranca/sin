@@ -19,6 +19,7 @@
 //  #include "lymath/ZJC_GOPS.h"
 //  #include "../Chasm/wind/chMANG.h"
 
+  #include <GL/glew.h>
   #include "mesh/Camera.hpp"
 
 // ---   *   ---   *   ---
@@ -30,6 +31,8 @@ glm::mat4& Camera::get_view(void) {
     m_view   = this->calc_view();
     m_update = false;
 
+    this->update_ubo(1);
+
   };
 
   return m_view;
@@ -37,19 +40,80 @@ glm::mat4& Camera::get_view(void) {
 };
 
 // ---   *   ---   *   ---
+// for uploading mats to shader
 
-Camera::Camera(
+void Camera::nit_ubo(uint32_t idex) {
+
+  glGenBuffers(1,&m_ubo);
+  glBindBuffer(GL_UNIFORM_BUFFER,m_ubo);
+
+  glBufferData(
+    GL_UNIFORM_BUFFER,
+
+    sizeof(glm::mat4)*2,
+    NULL,
+
+    GL_DYNAMIC_DRAW
+
+  );
+
+  glBindBufferBase(
+    GL_UNIFORM_BUFFER,
+
+    idex,
+    m_ubo
+
+  );
+
+};
+
+// ---   *   ---   *   ---
+// ^send
+
+void Camera::update_ubo(bool which) {
+
+  uint64_t offset=(which)
+    ? sizeof(glm::mat4)
+    : 0
+    ;
+
+  auto& data=(which)
+    ? m_view
+    : m_proj
+    ;
+
+  glBindBuffer(GL_UNIFORM_BUFFER,m_ubo);
+  glBufferSubData(
+    GL_UNIFORM_BUFFER,
+
+    offset,
+    sizeof(data),
+
+    (void*) &data[0][0]
+
+  );
+
+};
+
+// ---   *   ---   *   ---
+// cstruc
+
+void Camera::nit(
   const glm::vec3& pos,
-  Camera::Lens&    lens
+  Camera::Lens&    lens,
+
+  uint32_t         bind_idex
 
 ) {
 
-  m_pos  = pos;
+  m_pos    = pos;
 
-  m_fwd  = glm::vec3(0,0,-1);
-  m_up   = Y_AXIS;
+  m_fwd    = glm::vec3(0,0,-1);
+  m_up     = Y_AXIS;
 
-  m_lens = lens;
+  m_lens   = lens;
+
+  this->nit_ubo(bind_idex);
 
 // ---   *   ---   *   ---
 // gaoler...
@@ -76,6 +140,12 @@ Camera::Camera(
 // ---   *   ---   *   ---
 
 Camera::~Camera(void) {
+
+  if(m_ubo) {
+    glDeleteBuffers(1,&m_ubo);
+
+  };
+
 //  WARD_EVIL_MFREE(nearcells); delete frustum;
 
 };

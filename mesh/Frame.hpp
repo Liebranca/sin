@@ -19,8 +19,10 @@ class Meshes {
 
 public:
 
-  VERSION   "v0.00.7b";
+  VERSION   "v0.00.8b";
   AUTHOR    "IBN-3DILA";
+
+  typedef std::vector<uint32_t> iArray;
 
 // ---   *   ---   *   ---
 // consts
@@ -39,8 +41,6 @@ private:
 
     VBO,
     IBO,
-
-    TILE_SSBO,
 
     NUM_BUFFS
 
@@ -102,7 +102,6 @@ public:
 
   };
 
-  // draw specific mesh
   inline void draw(uint32_t idex) {
     m_mesh[idex].draw();
 

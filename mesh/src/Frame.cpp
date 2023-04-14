@@ -33,8 +33,12 @@ void Meshes::nit(uint32_t pidex) {
   glGenBuffers(NUM_BUFFS,&m_buff[0]);
   glBindVertexArray(m_vao);
 
-  // nit data
-  glBindBuffer(GL_ARRAY_BUFFER,m_buff[VBO]);
+  // get vertex mem
+  glBindBuffer(
+    GL_ARRAY_BUFFER,
+    m_buff[VBO]
+
+  );
 
   glBufferData(
     GL_ARRAY_BUFFER,
@@ -57,30 +61,7 @@ void Meshes::nit(uint32_t pidex) {
 
   );
 
-// ---   *   ---   *   ---
-
-//  glGenBuffers(1,&m_ubo);
-//  glBindBuffer(GL_UNIFORM_BUFFER,m_ubo);
-//
-//  glBufferData(
-//    GL_UNIFORM_BUFFER,
-//
-//    sizeof(mat4),
-//    NULL,
-//
-//    GL_DYNAMIC_DRAW
-//
-//  );
-//
-//  glBindBufferBase(
-//    GL_UNIFORM_BUFFER,
-//    1,m_ubo
-//
-//  );
-
-// ---   *   ---   *   ---
-// indices
-
+  // get idex mem
   glBindBuffer(
     GL_ELEMENT_ARRAY_BUFFER,
     m_buff[IBO]
@@ -101,30 +82,30 @@ void Meshes::nit(uint32_t pidex) {
 // ---   *   ---   *   ---
 // tilefetch buffer
 
-  glBindBuffer(
-    GL_SHADER_STORAGE_BUFFER,
-    m_buff[TILE_SSBO]
-
-  );
-
-  glBufferData(
-    GL_SHADER_STORAGE_BUFFER,
-
-    Meshes::BUFF_SZ
-  * sizeof(uint32_t),
-
-    NULL,
-    GL_DYNAMIC_DRAW
-
-  );
-
-  glBindBufferBase(
-    GL_SHADER_STORAGE_BUFFER,
-    0,
-
-    m_buff[TILE_SSBO]
-
-  );
+//  glBindBuffer(
+//    GL_SHADER_STORAGE_BUFFER,
+//    m_buff[TILE_SSBO]
+//
+//  );
+//
+//  glBufferData(
+//    GL_SHADER_STORAGE_BUFFER,
+//
+//    Meshes::BUFF_SZ
+//  * sizeof(uint32_t),
+//
+//    NULL,
+//    GL_DYNAMIC_DRAW
+//
+//  );
+//
+//  glBindBufferBase(
+//    GL_SHADER_STORAGE_BUFFER,
+//    0,
+//
+//    m_buff[TILE_SSBO]
+//
+//  );
 
   m_nitted=true;
 
@@ -152,7 +133,7 @@ Meshes::~Meshes(void) {
 };
 
 // ---   *   ---   *   ---
-// pushes geometry to gl buffer
+// copy raw verts to client storage
 
 uint32_t Meshes::new_mesh(CRK::Prim& p) {
 
@@ -174,8 +155,8 @@ uint32_t Meshes::new_mesh(CRK::Prim& p) {
   );
 
 // ---   *   ---   *   ---
+// verts
 
-  // verts
   glBindBuffer(GL_ARRAY_BUFFER,m_buff[VBO]);
   glBufferSubData(
     GL_ARRAY_BUFFER,
@@ -264,7 +245,7 @@ Sprite Meshes::ice_sprite(uint32_t src) {
   Sprite out;
 
   out.set_src(src);
-  out.set_anim("idle");
+  out.set_anim("run");
 
   return out;
 

@@ -18,7 +18,7 @@ class Program {
 
 public:
 
-  VERSION   "v0.00.3b";
+  VERSION   "v0.00.4b";
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -125,6 +125,11 @@ public:
 
   inline uint32_t get_uniform(uint32_t idex) {
     return m_uniforms[idex];
+
+  };
+
+  inline uint32_t get_ubo(uint32_t idex) {
+    return m_ubos[idex];
 
   };
 

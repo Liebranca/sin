@@ -14,28 +14,25 @@
 
 $:VERT;>
 
-  VERSION   v0.00.3b;
+  VERSION   v0.00.4b;
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
 // inputs
 
   in uvec4 Vertex;
-
   uniform mat4 Model;
-  uniform mat4 View;
-  uniform mat4 Projection;
 
-  layout (std430) buffer _Tile_Indices {
-    uint buff[4096];
+  layout (std140) uniform _Camera {
+    mat4 Projection;
+    mat4 View;
 
-  } Tile_Indices;
+  } Camera;
 
 // ---   *   ---   *   ---
 // outputs
 
   out vec2 Tex_Coords;
-  flat out uint Tile_Index;
 
 // ---   *   ---   *   ---
 // ROM
@@ -134,8 +131,6 @@ float unfrac_u8(uint b) {
 
 vec2 extract_tex(void) {
 
-  Tile_Index=Vertex[2]&0xFFFF;
-
   return vec2(
 
     unfrac_u8(Vertex[1]>>16),
@@ -164,7 +159,15 @@ vec4 extract_xyz(void) {
 // ---   *   ---   *   ---
 
 vec4 apply_transform(vec4 co) {
-  return Projection * View * Model * co;
+
+  return
+
+    Camera.Projection
+  * Camera.View
+
+  * Model
+  * co
+  ;
 
 };
 

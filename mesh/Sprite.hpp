@@ -34,10 +34,21 @@ public:
 
 private:
 
+  float    m_ctime = 0.0f;
+
   uint32_t m_cpose = 0;
   uint32_t m_canim = 0;
 
   uint32_t m_src   = 0;
+
+// ---   *   ---   *   ---
+// guts
+
+  cxr32 FTIME=1.0f/4;
+
+  // advances current pose each
+  // N ticks of animation time
+  void calc_time(void);
 
 // ---   *   ---   *   ---
 // iface
@@ -56,26 +67,9 @@ public:
 
   };
 
-  inline void set_anim(uint16_t idex) {
-
-    auto& meta = fetch_meta(m_src);
-    auto& anim = meta.get(idex);
-
-    m_canim    = idex;
-    m_cpose    = anim.beg;
-
-  };
-
-  inline void set_anim(std::string tag) {
-
-    auto& meta = fetch_meta(m_src);
-    auto  idex = uint32_t(meta.iof(tag));
-    auto& anim = meta.get(idex);
-
-    m_canim    = idex;
-    m_cpose    = anim.beg;
-
-  };
+  // swap out current animation
+  void set_anim(uint16_t idex);
+  void set_anim(std::string tag);
 
   // offset for fetch methods
   inline void set_src(uint32_t idex) {

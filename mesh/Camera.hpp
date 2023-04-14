@@ -24,7 +24,7 @@ class Camera {
 
 public:
 
-  VERSION   "v2.00.2";
+  VERSION   "v2.00.3";
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -83,10 +83,12 @@ public:
 
 // ---   *   ---   *   ---
 
-  // cstruch
-  Camera(
+  // cstruc
+  void nit(
     const glm::vec3& pos,
-    Camera::Lens&    lens
+    Camera::Lens&    lens,
+
+    uint32_t         bind_idex
 
   );
 
@@ -152,6 +154,8 @@ public:
     m_ortho  = true;
     m_proj   = m_lens.ortho();
 
+    this->update_ubo(0);
+
   };
 
   inline void use_persp(void) {
@@ -160,6 +164,8 @@ public:
 
     m_ortho  = false;
     m_proj   = m_lens.persp();
+
+    this->update_ubo(0);
 
   };
 
@@ -265,11 +271,20 @@ private:
 
   float        m_pitch  = 0.0f;
   float        m_yaw    = 0.0f;
-
+;
   bool         m_update = true;
   bool         m_ortho  = false;
 
+  uint32_t     m_ubo    = 0;
+
   Camera::Lens m_lens;
+
+// ---   *   ---   *   ---
+// guts
+
+  // for VP to shader
+  void nit_ubo(uint32_t loc);
+  void update_ubo(bool which);
 
 // ---   *   ---   *   ---
 // I need Gaoler for this stuff...
