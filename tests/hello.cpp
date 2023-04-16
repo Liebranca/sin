@@ -113,6 +113,10 @@ int draw(void* data) {
   auto& Sin = SIN::ice();
   auto  bat = (Nodes*) data;
 
+  // trigger camera update
+  Sin.cam.get_view();
+
+  // walk objects
   for(auto& idex : *bat) {
     Sin.nodes[idex].draw();
 

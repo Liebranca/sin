@@ -12,13 +12,6 @@
 // ---   *   ---   *   ---
 // deps
 
-//  #include "DA_WorldManager.h"
-//  #include "DA_Occluder.h"
-//
-//  #include "lyutils/ZJC_Evil.h"
-//  #include "lymath/ZJC_GOPS.h"
-//  #include "../Chasm/wind/chMANG.h"
-
   #include <GL/glew.h>
   #include "mesh/Camera.hpp"
 
@@ -31,6 +24,7 @@ glm::mat4& Camera::get_view(void) {
     m_view   = this->calc_view();
     m_update = false;
 
+    this->update_frustum();
     this->update_ubo(1);
 
   };
@@ -115,25 +109,16 @@ void Camera::nit(
 
   this->nit_ubo(bind_idex);
 
-// ---   *   ---   *   ---
-// gaoler...
-//
-//  frustum       = new viewFrustum(
-//    glm::vec2(width, height),
-//    fov,
-//
-//    0,SIN_ORTHOSCALE,
-//
-//    zNear,zFar
-//
-//  );
-//
-//  DA_grid_findpos(curcell.worldpos, fpos);
-//  DA_grid_findabspos(
-//    curcell.gridpos,
-//    curcell.worldpos
-//
-//  );
+  m_frustum.set(
+
+    lens.width,
+    lens.height,
+
+    lens.fov,
+    lens.near,
+    lens.far
+
+  );
 
 }
 
@@ -146,18 +131,11 @@ Camera::~Camera(void) {
 
   };
 
-//  WARD_EVIL_MFREE(nearcells); delete frustum;
-
 };
 
 // ---   *   ---   *   ---
 // gaoler...
-//
-//void Camera::updateFrustum(void) {
-//  frustum->buildPlanes(m_pos,m_fwd,m_up);
-//
-//}
-//
+
 //void Camera::onAreaChange(void) {
 //
 //  WARD_EVIL_MFREE(nearcells);
@@ -243,40 +221,6 @@ Camera::~Camera(void) {
 //    DA_grid_setInFrustum(nearcells[i].gridpos, 0);
 //
 //  };
-//
-//};
-//
-//bool Camera::cageInFrustum(COLBOX* box) {
-//  return frustum->boxIsect(box);
-//
-//};
-//
-//int Camera::sphInFrustum(COLSPHERE* sph) {
-//  return frustum->sphereIsect(sph);
-//
-//};
-//
-//bool Camera::pointsInFrustum(
-//  glm::vec3* points,
-//  uint32_t   num_points
-//
-//) {
-//
-//  return frustum->pointsInside(points,num_points);
-//
-//};
-//
-//bool Camera::pointInFrustum(
-//  glm::vec3& point
-//
-//) {
-//
-//  return frustum->pointInside(point);
-//
-//};
-//
-//int Camera::frustumIsect(viewFrustum* other) {
-//  return frustum->frustumIsect(other);
 //
 //};
 

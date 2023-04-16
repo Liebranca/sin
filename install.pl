@@ -20,7 +20,7 @@ Avt::set_config(
   build=>'ar:sin',
 
   incl=>[qw(bitter)],
-  libs=>[qw(chasm)],
+  libs=>[qw(chasm gaoler)],
 
   post_build=>q{
 

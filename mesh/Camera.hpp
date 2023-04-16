@@ -12,10 +12,7 @@
   #include "bitter/kvrnel/Style.hpp"
   #include "mesh/T3D.hpp"
 
-//#include "SIN_Constants.h"
-//#include "GAOL_Frustum.h"
-//
-//#include "../DA_CommonTypes.h"
+  #include "gaoler/Frustum.hpp"
 
 // ---   *   ---   *   ---
 // info
@@ -24,7 +21,7 @@ class Camera {
 
 public:
 
-  VERSION   "v2.00.3";
+  VERSION   "v2.00.4";
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -120,10 +117,15 @@ public:
 
   };
 
+  // build prism from current view
+  inline void update_frustum(void) {
+    m_frustum.calc_box(m_pos,m_fwd,m_up);
+
+  };
+
 // ---   *   ---   *   ---
 // GAOLER...
-//
-//  void updateFrustum(void);
+
 //  void onAreaChange(void);
 //
 //  void cellCulling(
@@ -135,17 +137,47 @@ public:
 //  );
 //
 //  void resetCulling(void);
-//
-//  int  sphInFrustum(COLSPHERE* sph);
-//  bool pointsInFrustum(
-//    glm::vec3* points,
-//    uint32_t num_points
-//
-//  );
-//
-//  bool pointInFrustum(glm::vec3& point);
-//  bool cageInFrustum(COLBOX* box);
-//  int frustumIsect(viewFrustum* other);
+
+  // frustum wrappers
+  // used for visibility checks
+  inline int sphere_in_frustum(
+    Gaol::Sphere& sphere
+
+  ) {
+
+    return m_frustum.isect_sphere(sphere);
+
+  };
+
+  inline bool point_in_frustum(
+    glm::vec3& p
+
+  ) {
+
+    return m_frustum.isect_point(p);
+
+  };
+
+  inline bool points_in_frustum(
+    Gaol::Points& pts
+
+  ) {
+
+    return m_frustum.isect_points(pts);
+
+  };
+
+  inline bool box_in_frustum(Gaol::Box& box) {
+    return m_frustum.isect_box(box);
+
+  };
+
+  inline int isect_frustum(Gaol::Frustum& other) {
+    return m_frustum.isect_frustum(other);
+
+  };
+
+// ---   *   ---   *   ---
 
   inline void use_ortho(void) {
 
@@ -205,31 +237,13 @@ public:
 
   };
 
-// ---   *   ---   *   ---
-
   inline glm::vec3 get_fwd_cast(
     float dist=3.5f
 
   ) {return m_pos+(m_fwd*dist);};
 
-  inline void snapTo(glm::vec3& newpos) {
-    m_altpos=m_pos;
-    m_pos=newpos;
-
-  };
-
-  inline void undoSnap(void) {
-    m_pos=m_altpos;
-
-  };
-
-  inline bool& getUpdate(void) {
-    return m_update;
-
-  };
-
-  inline void endUpdate(void) {
-    m_update=false;
+  inline Gaol::Frustum& get_frustum(void) {
+    return m_frustum;
 
   };
 
@@ -250,34 +264,30 @@ public:
 //    return m_nearcells;
 //
 //  };
-//
-//  viewFrustum* getFrustum(void) {
-//    return m_frustum;
-//
-//  };
 
 // ---   *   ---   *   ---
 // attrs
 
 private:
 
-  glm::vec3    m_pos;
-  glm::vec3    m_fwd;
-  glm::vec3    m_up;
-  glm::vec3    m_altpos;
+  glm::vec3     m_pos;
+  glm::vec3     m_fwd;
+  glm::vec3     m_up;
+  glm::vec3     m_altpos;
 
-  glm::mat4    m_view;
-  glm::mat4    m_proj;
+  glm::mat4     m_view;
+  glm::mat4     m_proj;
 
-  float        m_pitch  = 0.0f;
-  float        m_yaw    = 0.0f;
-;
-  bool         m_update = true;
-  bool         m_ortho  = false;
+  float         m_pitch  = 0.0f;
+  float         m_yaw    = 0.0f;
 
-  uint32_t     m_ubo    = 0;
+  bool          m_update = true;
+  bool          m_ortho  = false;
 
-  Camera::Lens m_lens;
+  uint32_t      m_ubo    = 0;
+
+  Camera::Lens  m_lens;
+  Gaol::Frustum m_frustum;
 
 // ---   *   ---   *   ---
 // guts
@@ -285,15 +295,6 @@ private:
   // for VP to shader
   void nit_ubo(uint32_t loc);
   void update_ubo(bool which);
-
-// ---   *   ---   *   ---
-// I need Gaoler for this stuff...
-//
-//  viewFrustum* m_frustum;
-
-//  DAGCI        m_curcell         = { 0 };
-//  DAGCI*       m_nearcells       = 0;
-//  uint32_t     m_prevframe_cells = 0;
 
 };
 
