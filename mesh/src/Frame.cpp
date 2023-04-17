@@ -133,9 +133,39 @@ Meshes::~Meshes(void) {
 };
 
 // ---   *   ---   *   ---
-// copy raw verts to client storage
+// wrap around the boiler for
+// gl-subdata into m_buff[idex]
 
-uint32_t Meshes::new_mesh(CRK::Prim& p) {
+void Meshes::upload(
+
+  uint64_t idex,
+
+  uint64_t offset,
+  uint64_t sz,
+
+  void*    data
+
+) {
+
+  // TODO: make this a const array fetch
+  uint32_t type=(idex==VBO)
+    ? GL_ARRAY_BUFFER
+    : GL_ELEMENT_ARRAY_BUFFER
+    ;
+
+  glBindBuffer(type,m_buff[idex]);
+  glBufferSubData(type,offset,sz,data);
+
+};
+
+// ---   *   ---   *   ---
+// upload CRK verts to buffers
+
+uint32_t Meshes::new_mesh(
+  CRK::Prim& p,
+  uint32_t   mode
+
+) {
 
   void*    verts   = p.verts.data();
   void*    indices = p.indices.data();
@@ -146,56 +176,26 @@ uint32_t Meshes::new_mesh(CRK::Prim& p) {
   // fill out struct
   m_mesh[m_top]=Mesh(
 
-    m_top,
     vcount,
     icount,
 
-    m_icount*sizeof(uint16_t)
+    mode,
 
-  );
-
-// ---   *   ---   *   ---
-// verts
-
-  glBindBuffer(GL_ARRAY_BUFFER,m_buff[VBO]);
-  glBufferSubData(
-    GL_ARRAY_BUFFER,
-
-    m_vcount
-  * sizeof(CRK::Vertex),
-
-    vcount
-  * sizeof(CRK::Vertex),
-
-    verts
-
-  );
-
-  m_vcount+=vcount;
-
-// ---   *   ---   *   ---
-// indices
-
-  glBindBuffer(
-    GL_ELEMENT_ARRAY_BUFFER,
-    m_buff[IBO]
-
-  );
-
-  glBufferSubData(
-    GL_ELEMENT_ARRAY_BUFFER,
-
+    m_vcount,
     m_icount
-  * sizeof(uint16_t),
-
-    icount
-  * sizeof(uint16_t),
-
-    indices
 
   );
 
-  m_icount+=icount;
+  // send data to glbuffs
+  this->upload_verts(
+    vcount,sizeof(CRK::Vertex),verts
+
+  );
+
+  this->upload_indices(
+    icount,sizeof(uint16_t),indices
+
+  );
 
   return m_top++;
 
@@ -226,6 +226,7 @@ uint32_t Meshes::new_sprite(
   auto& me    = crk.data();
 
   for(auto& p : me) {
+    p.gen_qa_indices();
     poses.push_back(this->new_mesh(p));
 
   };

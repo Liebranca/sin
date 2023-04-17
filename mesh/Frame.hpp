@@ -5,6 +5,7 @@
 // deps
 
   #include <memory>
+  #include <glm/glm.hpp>
 
   #include "bitter/kvrnel/Style.hpp"
   #include "bitter/ff/CRK.hpp"
@@ -22,7 +23,8 @@ public:
   VERSION   "v0.00.8b";
   AUTHOR    "IBN-3DILA";
 
-  typedef std::vector<uint32_t> iArray;
+  typedef std::vector<uint16_t> u16_vec;
+  typedef std::vector<glm::vec3> Points;
 
 // ---   *   ---   *   ---
 // consts
@@ -77,15 +79,62 @@ private:
 
 public:
 
+  // cstruc
+  void nit(uint32_t pidex=0);
+
   // ctrash
   Meshes(void) {};
   ~Meshes(void);
 
-  // cstruc
-  void nit(uint32_t pidex=0);
+  // wrap around the boiler for
+  // gl-subdata into m_buff[idex]
+  void upload(
 
-  // make mesh
-  uint32_t new_mesh(CRK::Prim& p);
+    uint64_t idex,
+
+    uint64_t offset,
+    uint64_t sz,
+
+    void*    data
+
+  );
+
+  // ^ice for vertex buffer
+  inline void upload_verts(
+
+    uint64_t cnt,
+    uint64_t sz,
+
+    void*    data
+
+  ) {
+
+    this->upload(VBO,m_vcount*sz,cnt*sz,data);
+    m_vcount+=cnt;
+
+  };
+
+  // ^ice for index buffer
+  inline void upload_indices(
+
+    uint64_t cnt,
+    uint64_t sz,
+
+    void*    data
+
+  ) {
+
+    this->upload(IBO,m_icount*sz,cnt*sz,data);
+    m_icount+=cnt;
+
+  };
+
+  // upload CRK verts to buffers
+  uint32_t new_mesh(
+    CRK::Prim& p,
+    uint32_t   mode=GL_TRIANGLES
+
+  );
 
   // load sprite sheet from file
   uint32_t new_sprite(
@@ -136,7 +185,6 @@ public:
     return m_anims;
 
   };
-
 
 };
 

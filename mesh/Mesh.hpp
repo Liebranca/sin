@@ -18,7 +18,7 @@ class Mesh {
 
 public:
 
-  VERSION   "v0.00.4b";
+  VERSION   "v0.00.5b";
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -26,9 +26,10 @@ public:
 
 private:
 
-  uint16_t m_id;
   uint16_t m_vcount;
   uint16_t m_icount;
+  uint16_t m_mode;
+  uint16_t m_base;
 
   uint64_t m_offset;
 
@@ -42,31 +43,36 @@ public:
 
   // nit
   Mesh(
-    uint16_t id,
+
     uint16_t vcount,
     uint16_t icount,
 
-    uint64_t offset
+    uint16_t mode,
+
+    uint16_t base,
+    uint16_t offset
 
   ) {
 
-    m_id     = id;
-
     m_vcount = vcount;
     m_icount = icount;
+    m_mode   = mode;
+    m_base   = base;
 
-    m_offset = offset;
+    m_offset = offset * sizeof(uint16_t);
 
   };
 
   inline void draw(void) {
-    glDrawElements(
+    glDrawElementsBaseVertex(
 
-      GL_TRIANGLES,
+      m_mode,
       m_icount,
 
       GL_UNSIGNED_SHORT,
-      (void*) m_offset
+      (void*) m_offset,
+
+      m_base
 
     );
 
