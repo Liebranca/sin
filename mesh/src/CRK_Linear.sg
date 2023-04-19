@@ -1,0 +1,45 @@
+// ---   *   ---   *   ---
+// CRK LINEAR
+// Uncomplicated vertex encoding
+//
+// LIBRE SOFTWARE
+// Licensed under GNU GPL3
+// be a bro and inherit
+//
+// CONTRIBUTORS
+// lyeb,
+
+// ---   *   ---   *   ---
+// info
+
+$:VERT;>
+
+  VERSION   v0.00.5b;
+  AUTHOR    "IBN-3DILA";
+
+// ---   *   ---   *   ---
+// deps
+
+  #include <mesh/Arstd>
+
+// ---   *   ---   *   ---
+
+vec4 extract_xyz(void) {
+
+  return vec4(
+
+    unfrac_i8(Vertex[0]),
+    unfrac_i8(Vertex[0]>>8),
+    unfrac_i8(Vertex[0]>>16),
+
+    1
+
+  );
+
+};
+
+// ---   *   ---   *   ---
+
+$:FRAG;>
+
+// ---   *   ---   *   ---

@@ -382,9 +382,9 @@ sub get_deps_list($class,$stout) {
 
   ;
 
-  my %no_dup=();
+  my %no_dup=map {$ARG=>0} @deps;
   for my $dep(@deps) {
-    push @out,$dep if ! exists $no_dup{$dep};
+    push @out,$dep if ! $no_dup{$dep};
     $no_dup{$dep}=1;
 
   };

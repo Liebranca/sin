@@ -947,16 +947,24 @@ sub fparse($class,$path,$name=undef) {
 
 sub depchk($class,$stout,$mode) {
 
-  my $ref   = $stout->{$mode}->{extern};
-  my @names = ();
+  my $deptab = {};
 
-  for my $src(@$ref) {
+  my @ref    = @{$stout->{$mode}->{extern}};
+  my @names  = ();
+
+  while(@ref) {
+
+    my $src=shift @ref;
+    next if $deptab->{$src};
+
+    $deptab->{$src}=1;
 
     my $xstout=$class->fparse($src);
 
-    $class->merge($stout,$xstout,$mode);
+    unshift @ref,
+      $class->merge($stout,$xstout,$mode);
 
-    push @names,
+    unshift @names,
       $xstout->{name}=>$xstout->{scope};
 
   };
@@ -980,6 +988,8 @@ sub merge($class,$dst,$src,$mode) {
     unshift @$ref,@{$attrs->{$key}};
 
   };
+
+  return @{$src->{$mode}->{extern}};
 
 };
 

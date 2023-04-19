@@ -33,8 +33,13 @@ Avt::set_config(
 
       q[-o],"mesh",
 
-      "mesh/src/Vertex.sg",
-      "mesh/src/Solid.sg",
+      "mesh/src/Frac.sg",
+      "mesh/src/Arstd.sg",
+
+      "mesh/src/CRK_Linear.sg",
+      "mesh/src/CRK_Angular.sg",
+
+      "mesh/src/JOJ_Sprite.sg",
 
     );
 

@@ -1,0 +1,60 @@
+// ---   *   ---   *   ---
+// CRK ANGULAR
+// Slightly more complex
+// vertex encoding
+//
+// LIBRE SOFTWARE
+// Licensed under GNU GPL3
+// be a bro and inherit
+//
+// CONTRIBUTORS
+// lyeb,
+
+// ---   *   ---   *   ---
+// info
+
+$:VERT;>
+
+  VERSION   v0.00.1b;
+  AUTHOR    "IBN-3DILA";
+
+// ---   *   ---   *   ---
+// deps
+
+  #include <mesh/Arstd>
+
+// ---   *   ---   *   ---
+// see: bitter/kvrnel/Seph
+// also: bitter/ff/CRK
+
+vec3 crk_pseph(uint b) {
+
+  float zen  = unfrac_i8_angle(b);
+  float azi  = unfrac_i8_angle(b >> 8);
+
+  float szen = sin(zen);
+
+  return vec3(
+
+    szen * sin(azi),
+    cos(zen),
+    szen * cos(azi)
+
+  );
+
+};
+
+vec4 extract_xyz(void) {
+
+  float r=unfrac_i8_6(Vertex[0]);
+  vec3  n=crk_pseph(Vertex[0] >> 8);
+
+  return vec4(n*r,1);
+
+};
+
+// ---   *   ---   *   ---
+
+$:FRAG;>
+
+// ---   *   ---   *   ---

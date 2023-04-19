@@ -23,9 +23,6 @@ public:
   VERSION   "v0.00.8b";
   AUTHOR    "IBN-3DILA";
 
-  typedef std::vector<uint16_t> u16_vec;
-  typedef std::vector<glm::vec3> Points;
-
 // ---   *   ---   *   ---
 // consts
 

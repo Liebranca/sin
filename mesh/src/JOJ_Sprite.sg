@@ -1,6 +1,7 @@
 // ---   *   ---   *   ---
-// SOLID
-// Basic color shader
+// JOJ SPRITE
+// Renders JOJ-compressed
+// image sequences
 //
 // LIBRE SOFTWARE
 // Licensed under GNU GPL3
@@ -14,22 +15,21 @@
 
 $:VERT;>
 
-  VERSION   v0.00.2b;
+  VERSION   v0.00.4b;
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
 // deps
 
-  #include <version>
-  #include <mesh/Vertex>
+  #include <mesh/CRK_Linear>
 
 // ---   *   ---   *   ---
 
 void main(void) {
 
   vec4 co     = extract_xyz();
-  gl_Position = apply_transform(co);
 
+  gl_Position = apply_transform(co);
   Tex_Coords  = extract_tex();
 
 };
@@ -39,8 +39,7 @@ void main(void) {
 
 $:FRAG;>
 
-  #include <version>
-  #include <mesh/Vertex>
+  #include <mesh/CRK_Linear>
 
 // ---   *   ---   *   ---
 // inputs

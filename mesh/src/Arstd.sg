@@ -1,0 +1,76 @@
+// ---   *   ---   *   ---
+// ARSTD
+// Stuff you always want
+//
+// LIBRE SOFTWARE
+// Licensed under GNU GPL3
+// be a bro and inherit
+//
+// CONTRIBUTORS
+// lyeb,
+
+// ---   *   ---   *   ---
+// info
+
+$:VERT;>
+
+  VERSION   v0.00.1b;
+  AUTHOR    "IBN-3DILA";
+
+// ---   *   ---   *   ---
+// deps
+
+  #include <mesh/Frac>
+
+// ---   *   ---   *   ---
+// inputs
+
+  in uvec4 Vertex;
+  uniform mat4 Model;
+
+  layout (std140) uniform _Camera {
+    mat4 Projection;
+    mat4 View;
+
+  } Camera;
+
+// ---   *   ---   *   ---
+// outputs
+
+  out vec2 Tex_Coords;
+
+// ---   *   ---   *   ---
+// does default MVP mambo
+
+vec4 apply_transform(vec4 co) {
+
+  return
+
+    Camera.Projection
+  * Camera.View
+
+  * Model
+  * co
+  ;
+
+};
+
+// ---   *   ---   *   ---
+// fetches compressed UVs
+
+vec2 extract_tex(void) {
+
+  return vec2(
+
+    unfrac_u8(Vertex[1]>>16),
+    unfrac_u8(Vertex[1]>>24)
+
+  );
+
+};
+
+// ---   *   ---   *   ---
+
+$:FRAG;>
+
+// ---   *   ---   *   ---

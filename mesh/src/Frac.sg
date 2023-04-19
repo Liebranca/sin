@@ -1,0 +1,207 @@
+// ---   *   ---   *   ---
+// FRAC
+// Float unpacker
+//
+// LIBRE SOFTWARE
+// Licensed under GNU GPL3
+// be a bro and inherit
+//
+// CONTRIBUTORS
+// lyeb,
+
+// ---   *   ---   *   ---
+// info
+
+$:VERT;>
+
+  VERSION   v1.00.0;
+  AUTHOR    "IBN-3DILA";
+
+// ---   *   ---   *   ---
+// ROM
+
+  const uint FRAC_MAXV[16]={
+    0x0001,0x0003,0x0007,0x000F,
+    0x001F,0x003F,0x007F,0x00FF,
+
+    0x01FF,0x03FF,0x07FF,0x0FFF,
+    0x1FFF,0x3FFF,0x7FFF,0xFFFF,
+
+  };
+
+  const float FRAC_STEP[16]={
+
+    1.0f/0x00002,1.0f/0x00004,
+    1.0f/0x00008,1.0f/0x00010,
+    1.0f/0x00020,1.0f/0x00040,
+    1.0f/0x00080,1.0f/0x00100
+
+    1.0f/0x00200,1.0f/0x00400,
+    1.0f/0x00800,1.0f/0x01000,
+    1.0f/0x02000,1.0f/0x04000,
+    1.0f/0x08000,1.0f/0x10000
+
+  };
+
+// ---   *   ---   *   ---
+// ^angular variant
+
+  const float PI=3.14159265f;
+  const float FRAC_ANGLE[16]={
+
+    PI/0x00002,PI/0x00004,
+    PI/0x00008,PI/0x00010,
+    PI/0x00020,PI/0x00040,
+    PI/0x00080,PI/0x00100
+
+    PI/0x00200,PI/0x00400,
+    PI/0x00800,PI/0x01000,
+    PI/0x02000,PI/0x04000,
+    PI/0x08000,PI/0x10000
+
+  };
+
+// ---   *   ---   *   ---
+// imagine these are enums ;>
+
+  const uint FRAC_1BIT     = 0;
+  const uint FRAC_2BIT     = 1;
+  const uint FRAC_3BIT     = 2;
+  const uint FRAC_4BIT     = 3;
+  const uint FRAC_5BIT     = 4;
+  const uint FRAC_6BIT     = 5;
+  const uint FRAC_7BIT     = 6;
+  const uint FRAC_8BIT     = 7;
+
+  const uint FRAC_9BIT     = 8;
+  const uint FRAC_10BIT    = 9;
+  const uint FRAC_11BIT    = 10;
+  const uint FRAC_12BIT    = 11;
+  const uint FRAC_13BIT    = 12;
+  const uint FRAC_14BIT    = 13;
+  const uint FRAC_15BIT    = 14;
+  const uint FRAC_16BIT    = 15;
+
+  const bool FRAC_SIGNED   = false;
+  const bool FRAC_UNSIGNED = true;
+
+// ---   *   ---   *   ---
+// see: bitter/kvrnel/Bytes.hpp
+
+float unfrac(
+
+  uint  b,
+  float step,
+
+  uint  nbits,
+  bool  unsig
+
+) {
+
+  uint max = FRAC_MAXV[nbits];
+  uint mid = 1 << nbits;
+
+  b &= max;
+
+  b += 1   * uint(b==max);
+  b -= mid * uint(! unsig);
+
+  return float(int(b))*step;
+
+};
+
+// ---   *   ---   *   ---
+// 8/8 signed linear
+
+float unfrac_i8(uint b) {
+
+  return unfrac(
+
+    b,
+
+    FRAC_STEP[FRAC_8BIT],
+    FRAC_8BIT,
+
+    FRAC_SIGNED
+
+  );
+
+};
+
+// ---   *   ---   *   ---
+// 8/8 unsigned linear
+
+float unfrac_u8(uint b) {
+
+  return unfrac(
+
+    b,
+
+    FRAC_STEP[FRAC_8BIT],
+    FRAC_8BIT,
+
+    FRAC_UNSIGNED
+
+  );
+
+};
+
+// ---   *   ---   *   ---
+// 6/8 unsigned linear
+
+float unfrac_u8_6(uint b) {
+
+  return unfrac(
+
+    b,
+
+    FRAC_STEP[FRAC_6BIT],
+    FRAC_8BIT,
+
+    FRAC_UNSIGNED
+
+  );
+
+};
+
+// ---   *   ---   *   ---
+// 3/4 signed angular
+
+float unfrac_i4_angle(uint b) {
+
+  return unfrac(
+
+    b,
+
+    FRAC_ANGLE[FRAC_3BIT],
+    FRAC_4BIT,
+
+    FRAC_SIGNED
+
+  );
+
+};
+
+// ---   *   ---   *   ---
+// 7/8 signed angular
+
+float unfrac_i8_angle(uint b) {
+
+  return unfrac(
+
+    b,
+
+    FRAC_ANGLE[FRAC_7BIT],
+    FRAC_8BIT,
+
+    FRAC_SIGNED
+
+  );
+
+};
+
+// ---   *   ---   *   ---
+
+$:FRAG;>
+
+// ---   *   ---   *   ---
