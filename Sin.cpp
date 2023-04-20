@@ -199,11 +199,14 @@ void Node::sprite_draw(Node* node) {
   // TODO: sort all of this out of here ;>
   auto& data   = node->draw_data();
   auto& model  = node->xform().get_model();
+  auto& nmat   = node->xform().get_nmat();
   auto  meshid = data.mesh;
 
   Sin.use_batch(data.batch);
 
   Sin.program->set_uniform(0,model);
+  Sin.program->set_uniform(1,nmat);
+
   Sin.batch->draw(Sin.sprites[meshid].play());
 
 };
@@ -218,11 +221,14 @@ void Node::static_draw(Node* node) {
   // TODO: sort all of this out of here ;>
   auto& data   = node->draw_data();
   auto& model  = node->xform().get_model();
+  auto& nmat   = node->xform().get_nmat();
   auto  meshid = data.mesh;
 
   Sin.use_batch(data.batch);
 
   Sin.program->set_uniform(0,model);
+  Sin.program->set_uniform(1,nmat);
+
   Sin.batch->draw(Sin.statics[meshid]);
 
 };

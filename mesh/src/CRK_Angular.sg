@@ -44,12 +44,39 @@ vec3 crk_pseph(uint b) {
 
 };
 
+// ---   *   ---   *   ---
+// ^same, unit vectors
+
+vec3 crk_nseph(uint b) {
+
+  float zen  = unfrac_i4_angle(b&0xF);
+  float azi  = unfrac_i4_angle((b >> 4)&0xF);
+
+  float szen = sin(zen);
+
+  return vec3(
+
+    szen * sin(azi),
+    cos(zen),
+    szen * cos(azi)
+
+  );
+
+};
+
+// ---   *   ---   *   ---
+
 vec4 extract_xyz(void) {
 
   float r=unfrac_u8_6(Vertex[0]);
   vec3  n=crk_pseph(Vertex[0] >> 8);
 
   return vec4(n*r,1);
+
+};
+
+vec3 extract_n(void) {
+  return crk_nseph(Vertex[0] >> 24);
 
 };
 

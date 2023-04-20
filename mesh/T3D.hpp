@@ -23,7 +23,7 @@ class T3D {
 
 public:
 
-  VERSION   "v2.00.2";
+  VERSION   "v2.00.3";
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -34,7 +34,9 @@ private:
   // spares recalculation of
   // model matrix
   struct Model_Cache {
-    glm::mat4 mat;
+
+    glm::mat4 model;
+    glm::mat3 nmat;
 
     union {
 
@@ -97,11 +99,8 @@ public:
   glm::mat4  calc_model(bool igpar);
   glm::mat4& get_model(bool igpar=false);
 
-  inline glm::mat3 get_normal(void) {
-    return glm::inverseTranspose(
-      this->get_model()
-
-    );
+  inline glm::mat3& get_nmat(void) {
+    return m_cache.nmat;
 
   };
 

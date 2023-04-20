@@ -40,6 +40,20 @@ void Program::set_uniform(
 
 };
 
+void Program::set_uniform(
+  uint32_t   idex,
+  glm::mat3& data
+
+) {
+
+  glUniformMatrix3fv(
+    this->get_uniform(idex),
+    1,GL_FALSE,&data[0][0]
+
+  );
+
+};
+
 // ---   *   ---   *   ---
 // errchk boiler
 

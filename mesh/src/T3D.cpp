@@ -54,12 +54,16 @@ glm::mat4& T3D::get_model(bool igpar) {
 
   ) {
 
-    m_cache.mat=this->calc_model(igpar);
+    m_cache.model = this->calc_model(igpar);
+    m_cache.nmat  = glm::inverseTranspose(
+      m_cache.model
+    );
+
     m_cache.needs_update=0;
 
   };
 
-  return m_cache.mat;
+  return m_cache.model;
 
 };
 

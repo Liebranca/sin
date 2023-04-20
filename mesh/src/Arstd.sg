@@ -14,7 +14,7 @@
 
 $:VERT;>
 
-  VERSION   v0.00.1b;
+  VERSION   v0.00.2b;
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -26,7 +26,9 @@ $:VERT;>
 // inputs
 
   in uvec4 Vertex;
+
   uniform mat4 Model;
+  uniform mat3 Nmat;
 
   layout (std140) uniform _Camera {
     mat4 Projection;
@@ -52,6 +54,14 @@ vec4 apply_transform(vec4 co) {
   * Model
   * co
   ;
+
+};
+
+// ---   *   ---   *   ---
+// ^normals
+
+vec3 apply_nmat(vec3 n) {
+  return Nmat * n;
 
 };
 

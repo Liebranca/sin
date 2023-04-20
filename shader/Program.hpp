@@ -18,7 +18,7 @@ class Program {
 
 public:
 
-  VERSION   "v0.00.4b";
+  VERSION   "v0.00.5b";
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -107,6 +107,12 @@ public:
   void set_uniform(
     uint32_t   idex,
     glm::mat4& data
+
+  );
+
+  void set_uniform(
+    uint32_t   idex,
+    glm::mat3& data
 
   );
 
