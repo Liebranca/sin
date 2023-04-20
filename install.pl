@@ -40,6 +40,7 @@ Avt::set_config(
       "mesh/src/CRK_Angular.sg",
 
       "mesh/src/JOJ_Sprite.sg",
+      "mesh/src/M3D.sg",
 
     );
 

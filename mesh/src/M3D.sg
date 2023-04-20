@@ -1,0 +1,66 @@
+// ---   *   ---   *   ---
+// MESH 3D
+// Selfex
+//
+// LIBRE SOFTWARE
+// Licensed under GNU GPL3
+// be a bro and inherit
+//
+// CONTRIBUTORS
+// lyeb,
+
+// ---   *   ---   *   ---
+// info
+
+$:VERT;>
+
+  VERSION   v0.00.1b;
+  AUTHOR    "IBN-3DILA";
+
+// ---   *   ---   *   ---
+// deps
+
+  #include <mesh/CRK_Angular>
+
+// ---   *   ---   *   ---
+
+void main(void) {
+
+  vec4 co     = extract_xyz();
+
+  gl_Position = apply_transform(co);
+  Tex_Coords  = extract_tex();
+
+};
+
+// ---   *   ---   *   ---
+// deps
+
+$:FRAG;>
+
+  #include <mesh/CRK_Angular>
+
+// ---   *   ---   *   ---
+// inputs
+
+  uniform sampler2DArray Surface;
+
+// ---   *   ---   *   ---
+// outputs
+
+  out vec4 Frag_Color;
+
+// ---   *   ---   *   ---
+
+void main(void) {
+
+//  Frag_Color=texture(
+//    Surface,vec3(Tex_Coords,0)
+//
+//  );
+
+  Frag_Color=vec4(0,0,1,1);
+
+};
+
+// ---   *   ---   *   ---

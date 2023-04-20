@@ -159,13 +159,12 @@ uint32_t SIN::new_node(
 
   } else {
 
-    fprintf(
-      stderr,
-      "STATIC MESHES NOT IMPLEMENTED\n"
+    mesh=statics.size();
+
+    statics.push_back(
+      batch->ice_static(meshid)
 
     );
-
-    exit(1);
 
   };
 
@@ -214,13 +213,17 @@ void Node::sprite_draw(Node* node) {
 
 void Node::static_draw(Node* node) {
 
-  fprintf(
-    stderr,
-    "DRAWING STATICS NOT IMPLEMENTED\n"
+  auto& Sin    = SIN::ice();
 
-  );
+  // TODO: sort all of this out of here ;>
+  auto& data   = node->draw_data();
+  auto& model  = node->xform().get_model();
+  auto  meshid = data.mesh;
 
-  exit(1);
+  Sin.use_batch(data.batch);
+
+  Sin.program->set_uniform(0,model);
+  Sin.batch->draw(Sin.statics[meshid]);
 
 };
 

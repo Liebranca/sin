@@ -20,7 +20,7 @@ class Meshes {
 
 public:
 
-  VERSION   "v0.00.8b";
+  VERSION   "v0.00.9b";
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -45,8 +45,9 @@ private:
 
   };
 
-  typedef std::vector<Texture> Textures;
-  typedef std::vector<ANS>     Anim_Meta;
+  typedef std::vector<uint32_t> Statics;
+  typedef std::vector<Texture>  Textures;
+  typedef std::vector<ANS>      Anim_Meta;
 
 // ---   *   ---   *   ---
 // attrs
@@ -70,6 +71,10 @@ private:
   Textures      m_textures;
   Anim_Meta     m_anim_meta;
   Sprite::Anims m_anims;
+
+  // indirection to m_mesh
+  // solely for convenience
+  Statics       m_statics;
 
 // ---   *   ---   *   ---
 // interface
@@ -141,6 +146,12 @@ public:
 
   // ^copy
   Sprite ice_sprite(uint32_t src);
+
+  // make static from raw primitive array
+  uint32_t new_static(CRK::Prim& me);
+
+  // ^copy
+  uint32_t ice_static(uint32_t idex);
 
   // bind buffers
   inline void use(void) {

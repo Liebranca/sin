@@ -253,6 +253,28 @@ Sprite Meshes::ice_sprite(uint32_t src) {
 };
 
 // ---   *   ---   *   ---
+// make static from raw primitive
+
+uint32_t Meshes::new_static(CRK::Prim& me) {
+
+  uint32_t out=m_statics.size();
+
+  m_statics.push_back(
+    this->new_mesh(me)
+
+  );
+
+  return out;
+
+};
+
+// ^fetch
+uint32_t Meshes::ice_static(uint32_t idex) {
+  return m_statics[idex];
+
+};
+
+// ---   *   ---   *   ---
 
 //void Meshes::update_tiles(void) {
 //

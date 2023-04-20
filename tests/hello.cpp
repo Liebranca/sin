@@ -4,10 +4,12 @@
   #include <pthread.h>
   #include <glm/mat4x4.hpp>
 
+  #include "gaoler/Box.hpp"
   #include "chasm/Chasm.hpp"
   #include "Sin.hpp"
 
-  #include "mesh/Solid.hpp_sg"
+  #include "mesh/JOJ_Sprite.hpp_sg"
+  #include "mesh/M3D.hpp_sg"
 
 // ---   *   ---   *   ---
 // helpers
@@ -70,7 +72,7 @@ void camera_settings(
 
   };
 
-  Sin.nit_camera({0,0,20},lens,bind_idex,ortho);
+  Sin.nit_camera({0,0,10},lens,bind_idex,ortho);
 
 };
 
@@ -82,7 +84,8 @@ void load_shaders(void) {
   auto& Sin=SIN::ice();
 
   shader::List programs {
-    &shader::mesh::Solid
+    &shader::mesh::JOJ_Sprite,
+    &shader::mesh::M3D,
 
   };
 
@@ -102,6 +105,19 @@ void load_resources(void) {
 
   Sin.new_batch(SIN::PROGRAM0);
   Sin.batch->new_sprite(path);
+
+  Sin.new_node(0,Node::SPRITE);
+
+  CRK::Prim cube;
+  Gaol::Box cube_bld;
+
+  cube_bld.set({0,-0.5,0},0.5f,1.0f,0.5f);
+  cube_bld.to_mesh(cube);
+
+  Sin.new_batch(SIN::PROGRAM1);
+  Sin.batch->new_static(cube);
+
+  Sin.new_node(0,Node::STATIC);
 
 };
 
@@ -131,30 +147,10 @@ int draw(void* data) {
 
 int logic(void* data) {
 
-//  static int i=0;
-//  cxr32 vel=0.05f;
-//
-//  auto& Sin = SIN::ice();
-//  auto& nd  = Sin.nodes[0];
-//
-//  float xdir=(i<128) ? -(vel*2.1) : (vel*2.1);
-//  float ydir=vel*1.125;
-//
-//  nd.move({xdir,ydir,0});
-//
-//  i++;
-//
-//  if(i==0x7F) {
-//    nd.rot({1,0,180,0});
-//    nd.move({0,-(ydir*0x80),0});
-//
-//  } else if(i==0xFF) {
-//    nd.rot({1,0,-180,0});
-//    nd.move({0,-(ydir*0x80),0});
-//
-//  };
-//
-//  i&=0xFF;
+  auto& Sin = SIN::ice();
+  auto& nd  = Sin.nodes[1];
+
+  nd.rot({1,glm::radians(0.25f),glm::radians(1.0f),0});
 
   return 1;
 
@@ -172,14 +168,9 @@ int main(void) {
   auto& Chasm = CHASM::ice();
   auto& Sin   = SIN::ice();
 
-  camera_settings(Sin.program->get_ubo(0));
+  camera_settings(Sin.program->get_ubo(0),false);
 
-  Nodes draw_buff;
-//  T3D xform({6,-3.5f,0,1});
-  Sin.new_node(0,Node::SPRITE);
-
-  draw_buff.push_back(0);
-
+  Nodes draw_buff {1};
   CHASM_RUN((void*) &draw_buff,NULL);
 
   return 0;

@@ -39,7 +39,10 @@ vec4 extract_xyz(void) {
 };
 
 // ---   *   ---   *   ---
+// deps
 
 $:FRAG;>
+
+  #include <mesh/Arstd>
 
 // ---   *   ---   *   ---

@@ -18,10 +18,11 @@ class SIN {
 
 public:
 
-  VERSION   "v0.00.3b";
+  VERSION   "v0.00.4b";
   AUTHOR    "IBN-3DILA";
 
   cx8 PROGRAM0 = 0x00;
+  cx8 PROGRAM1 = 0x01;
 
 // ---   *   ---   *   ---
 // helpers
@@ -29,6 +30,7 @@ public:
   typedef std::vector<Meshes> Batches;
   typedef std::vector<Sprite> Sprites;
   typedef std::vector<Node>   Nodes;
+  typedef std::vector<uint32_t> Statics;
 
 // ---   *   ---   *   ---
 // attrs
@@ -43,6 +45,7 @@ public:
 
   Nodes    nodes;
   Sprites  sprites;
+  Statics  statics;
 
 // ---   *   ---   *   ---
 // iface

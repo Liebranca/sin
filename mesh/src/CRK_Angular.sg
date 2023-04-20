@@ -15,7 +15,7 @@
 
 $:VERT;>
 
-  VERSION   v0.00.1b;
+  VERSION   v0.00.2b;
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -29,8 +29,8 @@ $:VERT;>
 
 vec3 crk_pseph(uint b) {
 
-  float zen  = unfrac_i8_angle(b);
-  float azi  = unfrac_i8_angle(b >> 8);
+  float zen  = unfrac_i8_angle(b&0xFF);
+  float azi  = unfrac_i8_angle((b >> 8)&0xFF);
 
   float szen = sin(zen);
 
@@ -46,7 +46,7 @@ vec3 crk_pseph(uint b) {
 
 vec4 extract_xyz(void) {
 
-  float r=unfrac_i8_6(Vertex[0]);
+  float r=unfrac_u8_6(Vertex[0]);
   vec3  n=crk_pseph(Vertex[0] >> 8);
 
   return vec4(n*r,1);
@@ -54,7 +54,10 @@ vec4 extract_xyz(void) {
 };
 
 // ---   *   ---   *   ---
+// deps
 
 $:FRAG;>
+
+  #include <mesh/Arstd>
 
 // ---   *   ---   *   ---
