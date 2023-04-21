@@ -54,6 +54,20 @@ void Program::set_uniform(
 
 };
 
+void Program::set_uniform(
+  uint32_t idex,
+  uint32_t data
+
+) {
+
+  glUniform1uiv(
+    this->get_uniform(idex),
+    1,&data
+
+  );
+
+};
+
 // ---   *   ---   *   ---
 // errchk boiler
 

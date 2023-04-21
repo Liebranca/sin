@@ -20,8 +20,32 @@ class Meshes {
 
 public:
 
-  VERSION   "v0.00.9b";
+  VERSION   "v0.01.0b";
   AUTHOR    "IBN-3DILA";
+
+// ---   *   ---   *   ---
+// helpers
+
+  // maximum matrices loaded onto
+  // draw queue ssbo
+  cx8 QUEUE_SZ=128;
+
+  // ^matrices per queue
+  struct Draw_Queue_Mats {
+    glm::mat4 model[QUEUE_SZ];
+    glm::mat4 nmat[QUEUE_SZ];
+
+  };
+
+  // ^mats AND mesh ptrs
+  struct Draw_Queue {
+
+    Draw_Queue_Mats mats;
+
+    uint32_t meshid[QUEUE_SZ];
+    uint32_t cnt;
+
+  };
 
 // ---   *   ---   *   ---
 // consts
@@ -65,8 +89,6 @@ private:
 
   // anti-cpp trap ;>
   bool     m_nitted = false;
-
-//  std::unique_ptr<uint32_t> m_tiles;
 
   Textures      m_textures;
   Anim_Meta     m_anim_meta;
@@ -163,15 +185,6 @@ public:
     m_mesh[idex].draw();
 
   };
-
-//  // access tile buffer
-//  inline uint32_t& get_tile(
-//    uint64_t idex
-//
-//  ) {return m_tiles.get()[idex];};
-//
-//  // ^send it to GL
-//  void update_tiles(void);
 
   // getters
   inline uint32_t get_pidex(void) {

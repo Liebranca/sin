@@ -15,6 +15,8 @@
   #include <glm/gtx/transform.hpp>
   #include <glm/gtc/quaternion.hpp>
 
+  #include "bitter/kvrnel/Seph.hpp"
+
   #include "mesh/T3D.hpp"
 
 // ---   *   ---   *   ---

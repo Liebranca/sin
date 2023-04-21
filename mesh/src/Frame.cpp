@@ -79,43 +79,7 @@ void Meshes::nit(uint32_t pidex) {
 
   );
 
-// ---   *   ---   *   ---
-// tilefetch buffer
-
-//  glBindBuffer(
-//    GL_SHADER_STORAGE_BUFFER,
-//    m_buff[TILE_SSBO]
-//
-//  );
-//
-//  glBufferData(
-//    GL_SHADER_STORAGE_BUFFER,
-//
-//    Meshes::BUFF_SZ
-//  * sizeof(uint32_t),
-//
-//    NULL,
-//    GL_DYNAMIC_DRAW
-//
-//  );
-//
-//  glBindBufferBase(
-//    GL_SHADER_STORAGE_BUFFER,
-//    0,
-//
-//    m_buff[TILE_SSBO]
-//
-//  );
-
   m_nitted=true;
-
-// ---   *   ---   *   ---
-// get mem
-
-//  m_tiles=std::unique_ptr<uint32_t>(
-//    new uint32_t[Meshes::BUFF_SZ]
-//
-//  );
 
 };
 
@@ -273,41 +237,5 @@ uint32_t Meshes::ice_static(uint32_t idex) {
   return m_statics[idex];
 
 };
-
-// ---   *   ---   *   ---
-
-//void Meshes::update_tiles(void) {
-//
-//  glBindBuffer(
-//    GL_SHADER_STORAGE_BUFFER,
-//    m_buff[TILE_SSBO]
-//
-//  );
-//
-//  glBufferSubData(
-//    GL_SHADER_STORAGE_BUFFER,0,
-//
-//    Meshes::BUFF_SZ
-//  * sizeof(uint32_t),
-//
-//    m_tiles.get()
-//
-//  );
-//
-//};
-
-// ---   *   ---   *   ---
-
-//void Meshes::update_matrices(void) {
-//
-//  glBindBuffer(GL_UNIFORM_BUFFER,m_ubo);
-//  glBufferSubData(
-//    GL_UNIFORM_BUFFER,0,
-//    sizeof(m_mats),
-//    (void*) &m_mats
-//
-//  );
-//
-//};
 
 // ---   *   ---   *   ---

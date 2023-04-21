@@ -27,9 +27,9 @@ public:
 // ---   *   ---   *   ---
 // helpers
 
-  typedef std::vector<Meshes> Batches;
-  typedef std::vector<Sprite> Sprites;
-  typedef std::vector<Node>   Nodes;
+  typedef std::vector<Meshes>   Batches;
+  typedef std::vector<Sprite>   Sprites;
+  typedef std::vector<Node>     Nodes;
   typedef std::vector<uint32_t> Statics;
 
 // ---   *   ---   *   ---
@@ -48,11 +48,48 @@ public:
   Statics  statics;
 
 // ---   *   ---   *   ---
+// guts
+
+private:
+
+  typedef std::vector <
+    Meshes::Draw_Queue
+
+  > Draw_Queues;
+
+  struct Queue {
+    Draw_Queues draw_data;
+
+    uint32_t    top = 0;
+    uint32_t    i   = 0;
+
+  };
+
+  typedef std::vector<Queue> Queues;
+
+  Queues   m_queues;
+
+  // for gl buffers
+  enum {
+    MATRIX_SSBO,
+    NUM_BUFFS
+
+  };
+
+  uint32_t m_buff[NUM_BUFFS];
+
+  // ^makes and undoes
+  void nit_buffs(void);
+  void del_buffs(void);
+
+// ---   *   ---   *   ---
 // iface
 
+public:
+
   // ctrash
-  SIN(void) {};
-  ~SIN(void) {};
+  SIN(void);
+  ~SIN(void);
 
   SINGLETON(SIN);
 
@@ -86,6 +123,26 @@ public:
     uint8_t  type,
 
     T3D      xform=T3D()
+
+  );
+
+  // put draw commands "on hold"
+  void enqueue(
+
+    uint32_t   batid,
+    uint32_t   meshid,
+
+    glm::mat4& model,
+    glm::mat3& nmat
+
+  );
+
+  // ^exec
+  void draw_enqueued(void);
+
+  // updates ssbo with matrix block
+  void upload_mats(
+    Meshes::Draw_Queue_Mats& mats
 
   );
 

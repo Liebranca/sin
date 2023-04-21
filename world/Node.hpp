@@ -88,8 +88,8 @@ public:
   // convenience wrappers
   inline void draw(void) {m_draw_fn(this);};
 
-  inline void move(glm::vec3 pos) {
-    m_xform.move(pos);
+  inline void move(glm::vec3 vel) {
+    m_xform.move(vel);
 
   };
 

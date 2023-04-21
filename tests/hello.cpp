@@ -138,6 +138,8 @@ int draw(void* data) {
 
   };
 
+  Sin.draw_enqueued();
+
   return 0;
 
 };
@@ -147,10 +149,18 @@ int draw(void* data) {
 
 int logic(void* data) {
 
+  static float xvel=0.05f;
+
   auto& Sin = SIN::ice();
   auto& nd  = Sin.nodes[1];
 
-  nd.rot({1,glm::radians(0.25f),glm::radians(1.0f),0});
+  auto& pos = nd.xform().position();
+
+  float xz  = glm::radians(0.25f);
+  xvel=(fabs(pos.x) > 2) ? -xvel : xvel;
+
+  nd.rot({1,xz,glm::radians(1.0f),-xz});
+  nd.move({xvel,0,0});
 
   return 1;
 

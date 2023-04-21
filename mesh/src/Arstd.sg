@@ -27,8 +27,7 @@ $:VERT;>
 
   in uvec4 Vertex;
 
-  uniform mat4 Model;
-  uniform mat3 Nmat;
+  uniform uint vDraw_ID;
 
   layout (std140) uniform _Camera {
     mat4 Projection;
@@ -36,10 +35,17 @@ $:VERT;>
 
   } Camera;
 
+  layout (std430) buffer _Xform {
+    mat4 model[128];
+    mat4 nmat[128];
+
+  } Xform;
+
 // ---   *   ---   *   ---
 // outputs
 
   out vec2 Tex_Coords;
+  flat out uint fDraw_ID;
 
 // ---   *   ---   *   ---
 // does default MVP mambo
@@ -51,7 +57,7 @@ vec4 apply_transform(vec4 co) {
     Camera.Projection
   * Camera.View
 
-  * Model
+  * Xform.model[vDraw_ID]
   * co
   ;
 
@@ -61,7 +67,7 @@ vec4 apply_transform(vec4 co) {
 // ^normals
 
 vec3 apply_nmat(vec3 n) {
-  return Nmat * n;
+  return mat3(Xform.nmat[vDraw_ID]) * n;
 
 };
 

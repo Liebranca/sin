@@ -23,7 +23,7 @@ class T3D {
 
 public:
 
-  VERSION   "v2.00.3";
+  VERSION   "v2.00.4";
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -121,9 +121,15 @@ public:
 
   void rotate(glm::quat delta);
 
-  inline void move(glm::vec3 pos) {
-    m_position+=pos;
+  inline void move(glm::vec3 vel) {
+    m_position+=vel;
     m_cache.needs_update=1;
+
+  };
+
+  // careful: does not trigger update
+  inline glm::vec3& position(void) {
+    return m_position;
 
   };
 

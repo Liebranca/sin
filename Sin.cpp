@@ -16,12 +16,6 @@
   #include "Sin.hpp"
 
 // ---   *   ---   *   ---
-// lame fwd
-
-  void prich_fmodel(glm::mat4& model);
-  void prich_imodel(glm::mat4& model);
-
-// ---   *   ---   *   ---
 // decld at mesh/Sprite
 
 Sprite::Poses& Sprite::fetch_poses(
@@ -65,6 +59,7 @@ uint32_t SIN::new_batch(uint8_t pidex) {
   meshes.back().nit(pidex);
 
   this->use_batch(out);
+  m_queues.push_back(Queue());
 
   return out;
 
@@ -194,20 +189,18 @@ uint32_t SIN::new_node(
 
 void Node::sprite_draw(Node* node) {
 
-  auto& Sin    = SIN::ice();
+  auto& Sin  = SIN::ice();
+  auto& data = node->draw_data();
 
-  // TODO: sort all of this out of here ;>
-  auto& data   = node->draw_data();
-  auto& model  = node->xform().get_model();
-  auto& nmat   = node->xform().get_nmat();
-  auto  meshid = data.mesh;
+  Sin.enqueue(
 
-  Sin.use_batch(data.batch);
+    data.batch,
+    Sin.sprites[data.mesh].play(),
 
-  Sin.program->set_uniform(0,model);
-  Sin.program->set_uniform(1,nmat);
+    node->xform().get_model(),
+    node->xform().get_nmat()
 
-  Sin.batch->draw(Sin.sprites[meshid].play());
+  );
 
 };
 
@@ -216,84 +209,195 @@ void Node::sprite_draw(Node* node) {
 
 void Node::static_draw(Node* node) {
 
-  auto& Sin    = SIN::ice();
+  auto& Sin  = SIN::ice();
+  auto& data = node->draw_data();
 
-  // TODO: sort all of this out of here ;>
-  auto& data   = node->draw_data();
-  auto& model  = node->xform().get_model();
-  auto& nmat   = node->xform().get_nmat();
-  auto  meshid = data.mesh;
+  Sin.enqueue(
 
-  Sin.use_batch(data.batch);
+    data.batch,
+    Sin.statics[data.mesh],
 
-  Sin.program->set_uniform(0,model);
-  Sin.program->set_uniform(1,nmat);
-
-  Sin.batch->draw(Sin.statics[meshid]);
-
-};
-
-// ---   *   ---   *   ---
-// debug stuff
-
-void prich_fmodel(glm::mat4& model) {
-
-  printf(
-
-    "[%.3f %.3f %.3f %.3f]\n"
-    "[%.3f %.3f %.3f %.3f]\n"
-    "[%.3f %.3f %.3f %.3f]\n"
-    "[%.3f %.3f %.3f %.3f]\n"
-
-    "\n\n",
-
-    model[0][0],model[0][1],model[0][2],model[0][3],
-    model[1][0],model[1][1],model[1][2],model[1][3],
-    model[2][0],model[2][1],model[2][2],model[2][3],
-    model[3][0],model[3][1],model[3][2],model[3][3]
+    node->xform().get_model(),
+    node->xform().get_nmat()
 
   );
 
 };
 
 // ---   *   ---   *   ---
-// ^frac'd
+// put draw commands "on hold"
 
-void prich_imodel(glm::mat4& model) {
+void SIN::enqueue(
 
-  int16_t um[4][4];
-  float  fum[4][4];
+  uint32_t   batid,
+  uint32_t   meshid,
 
-  Frac::Rounding_Mode=Frac::CORD;
+  glm::mat4& model,
+  glm::mat3& nmat
 
-  for(int y=0;y<4;y++) {
-  for(int x=0;x<4;x++) {
+) {
 
-    um[y][x]=frac<int16_t>(
+  // get queue for this batch
+  auto& q=m_queues[batid];
+  while(q.draw_data.size() < q.top+1) {
+    q.draw_data.push_back(Meshes::Draw_Queue());
 
-      model[y][x],
+  };
 
-      Frac::STEP[Frac::STEP_5BIT],
-      Frac::BITS[Frac::SIZE_8BIT],
+  // ^get draw data assoc with batch
+  auto& dq   = q.draw_data[q.top];
+  auto& mats = dq.mats;
 
-      Frac::SIGNED
+  // set matrices
+  mats.model[q.i] = model;
+  mats.nmat[q.i]  = nmat;
 
-    );
+  // set mesh ptr
+  dq.meshid[q.i]  = meshid;
 
-    model[y][x]=unfrac<int16_t>(
+  dq.cnt++;
+  q.i++;
 
-      um[y][x],
+  if(q.i == Meshes::QUEUE_SZ) {
 
-      Frac::STEP[Frac::STEP_5BIT],
-      Frac::BITS[Frac::SIZE_8BIT],
+    q.top++;
+    q.i=0;
 
-      Frac::SIGNED
+  };
 
-    );
+};
 
-  }};
+// ---   *   ---   *   ---
+// ^exec
 
-//  prich_fmodel(model);
+void SIN::draw_enqueued(void) {
+
+  uint32_t i=0;
+
+  // one queue for each batch
+  for(auto& q : m_queues) {
+
+    if(! q.draw_data.size()) {
+      i++;continue;
+
+    };
+
+    this->use_batch(i);
+
+    // ^multiple matrix blocks
+    // per batch
+    for(uint32_t j=0;j<q.top+1;j++) {
+
+      auto& dq=q.draw_data[j];
+      this->upload_mats(dq.mats);
+
+      // ^multiple draws per
+      // matrix block
+      for(
+
+        uint32_t draw_id=0;
+
+        draw_id < dq.cnt;
+        draw_id++
+
+      ) {
+
+        // ^single uniform per draw ;>
+        program->set_uniform(0,draw_id);
+        batch->draw(dq.meshid[draw_id]);
+
+      };
+
+      dq.cnt=0;
+
+    };
+
+    // reset counters
+    q.top = 0;
+    q.i   = 0;
+
+    // advance batid
+    i++;
+
+  };
+
+};
+
+// ---   *   ---   *   ---
+// updates ssbo with matrix block
+
+void SIN::upload_mats(
+  Meshes::Draw_Queue_Mats& mats
+
+) {
+
+  glBindBuffer(
+    GL_SHADER_STORAGE_BUFFER,
+    m_buff[MATRIX_SSBO]
+
+  );
+
+  glBufferSubData(
+    GL_SHADER_STORAGE_BUFFER,0,
+
+    sizeof(mats),
+    (void*) &mats
+
+  );
+
+};
+
+// ---   *   ---   *   ---
+// gl boiler
+
+void SIN::nit_buffs(void) {
+
+  glGenBuffers(NUM_BUFFS,&m_buff[0]);
+
+  glBindBuffer(
+    GL_SHADER_STORAGE_BUFFER,
+    m_buff[MATRIX_SSBO]
+
+  );
+
+  glBufferData(
+    GL_SHADER_STORAGE_BUFFER,
+
+    sizeof(Meshes::Draw_Queue_Mats),
+
+    NULL,
+    GL_DYNAMIC_DRAW
+
+  );
+
+  glBindBufferBase(
+    GL_SHADER_STORAGE_BUFFER,
+    0,
+
+    m_buff[MATRIX_SSBO]
+
+  );
+
+};
+
+// ---   *   ---   *   ---
+// ^cleanup
+
+void SIN::del_buffs(void) {
+  glDeleteBuffers(NUM_BUFFS,&m_buff[0]);
+
+};
+
+// ---   *   ---   *   ---
+// ctrash
+
+SIN::SIN(void) {
+  this->nit_buffs();
+
+};
+
+SIN::~SIN(void) {
+  this->del_buffs();
 
 };
 
