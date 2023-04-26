@@ -20,7 +20,7 @@ class Meshes {
 
 public:
 
-  VERSION   "v0.01.0b";
+  VERSION   "v0.01.1b";
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -170,7 +170,11 @@ public:
   Sprite ice_sprite(uint32_t src);
 
   // make static from raw primitive array
-  uint32_t new_static(CRK::Prim& me);
+  uint32_t new_static(
+    CRK::Prim& me,
+    uint32_t   mode=GL_TRIANGLES
+
+  );
 
   // ^copy
   uint32_t ice_static(uint32_t idex);

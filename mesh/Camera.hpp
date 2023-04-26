@@ -167,6 +167,15 @@ public:
 
   };
 
+  inline int bound_in_frustum(
+    Gaol::Bound& b
+
+  ) {
+
+    return m_frustum.isect_bound(b);
+
+  };
+
   inline bool box_in_frustum(Gaol::Box& box) {
     return m_frustum.isect_box(box);
 

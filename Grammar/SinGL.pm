@@ -147,7 +147,7 @@ BEGIN {
     }x,
 
     q[io-key]=>qr{(
-      (?: flat \s+)? in|out
+      (?: flat \s+)? (in|out)
 
     )}x,
 

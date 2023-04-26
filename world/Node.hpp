@@ -5,6 +5,8 @@
 // deps
 
   #include "bitter/kvrnel/Style.hpp"
+  #include "gaoler/Bound.hpp"
+
   #include "mesh/T3D.hpp"
 
 // ---   *   ---   *   ---
@@ -14,7 +16,7 @@ class Node {
 
 public:
 
-  VERSION   "v0.00.2b";
+  VERSION   "v0.00.4b";
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -57,10 +59,17 @@ public:
 
 private:
 
-  Draw_Data m_draw_data;
-  Draw_Fn   m_draw_fn;
+  Draw_Data   m_draw_data;
+  Draw_Fn     m_draw_fn;
 
-  T3D       m_xform;
+  T3D         m_xform;
+
+  Gaol::Bound m_bound;
+
+  glm::vec3   m_linvel = {0,0,0};
+  glm::quat   m_angvel = {1,0,0,0};
+
+  bool        m_still  = true;
 
 // ---   *   ---   *   ---
 // iface
@@ -85,18 +94,69 @@ public:
 
   };
 
+  inline bool is_still(void) {
+    return m_still;
+
+  };
+
+  inline Gaol::Bound& bound(void) {
+    return m_bound;
+
+  };
+
+  // setters
+  inline void set_linvel(glm::vec3& vel) {
+    m_linvel = vel;
+    m_still  = false;
+
+  };
+
+  inline void set_angvel(glm::quat& vel) {
+    m_angvel = vel;
+    m_still  = false;
+
+  };
+
   // convenience wrappers
   inline void draw(void) {m_draw_fn(this);};
 
   inline void move(glm::vec3 vel) {
     m_xform.move(vel);
+    this->calc_bounds();
 
   };
 
   inline void rot(glm::quat delta) {
     m_xform.rotate(delta);
+    this->calc_bounds();
 
   };
+
+  // ^moves accto set velocities
+  inline void fmotion(void) {
+
+    if(m_still) {return;};
+
+    m_xform.move(m_linvel);
+    m_xform.rotate(m_angvel);
+
+    this->calc_bounds();
+
+  };
+
+  inline void halt(void) {
+
+    m_still  = true;
+    m_linvel = {0,0,0};
+    m_angvel = {1,0,0,0};
+
+  };
+
+  // regenerate physbody
+  void calc_bounds(void);
+
+  // ^test against other
+  bool boundschk(Node& other);
 
 };
 

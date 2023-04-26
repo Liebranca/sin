@@ -4,6 +4,8 @@
   #include <pthread.h>
   #include <glm/mat4x4.hpp>
 
+  #include "bitter/kvrnel/Dice.hpp"
+
   #include "gaoler/Box.hpp"
   #include "chasm/Chasm.hpp"
   #include "Sin.hpp"
@@ -15,6 +17,12 @@
 // helpers
 
   typedef std::vector<uint32_t> Nodes;
+
+// ---   *   ---   *   ---
+// GBL
+
+  static int SCR_X=640;
+  static int SCR_Y=480;
 
 // ---   *   ---   *   ---
 // lame fwd decls
@@ -33,8 +41,8 @@ void spawn_window(void) {
 
     .title      = "HELLO.CPP",
 
-    .width      = 640,
-    .height     = 480,
+    .width      = SCR_X,
+    .height     = SCR_Y,
 
     .fullscreen = false,
     .fps        = 30
@@ -61,8 +69,8 @@ void camera_settings(
   auto& Sin=SIN::ice();
 
   Camera::Lens lens={
-    .width  = 640,
-    .height = 480,
+    .width  = float(SCR_X),
+    .height = float(SCR_Y),
 
     .scale  = 0.0055f,
     .fov    = 45.0f,
@@ -115,9 +123,9 @@ void load_resources(void) {
   cube_bld.to_mesh(cube);
 
   Sin.new_batch(SIN::PROGRAM1);
-  Sin.batch->new_static(cube);
 
-  Sin.new_node(0,Node::STATIC);
+  cube.tris_to_lines();
+  Sin.batch->new_static(cube,GL_LINES);
 
 };
 
@@ -149,18 +157,30 @@ int draw(void* data) {
 
 int logic(void* data) {
 
-  static float xvel=0.05f;
+  static glm::vec3 linvel(0.2f,0,0);
+  static glm::quat angvel(1,0,glm::radians(2.5f),0);
 
   auto& Sin = SIN::ice();
-  auto& nd  = Sin.nodes[1];
+  auto& nd1 = Sin.nodes[1];
 
-  auto& pos = nd.xform().position();
+  if(nd1.is_still()) {
+    nd1.set_linvel(linvel);
+    nd1.set_angvel(angvel);
 
-  float xz  = glm::radians(0.25f);
-  xvel=(fabs(pos.x) > 2) ? -xvel : xvel;
+  };
 
-  nd.rot({1,xz,glm::radians(1.0f),-xz});
-  nd.move({xvel,0,0});
+  if(Sin.cam.bound_in_frustum(
+    nd1.bound()
+
+  )) {
+    printf("INSIDE\n");
+
+  } else {
+    printf("NOPE\n");
+
+  };
+
+  nd1.fmotion();
 
   return 1;
 
@@ -180,45 +200,17 @@ int main(void) {
 
   camera_settings(Sin.program->get_ubo(0),false);
 
-  Nodes draw_buff {1};
+  Nodes draw_buff;
+
+  draw_buff.push_back(
+    Sin.new_node(0,Node::STATIC)
+
+  );
+
   CHASM_RUN((void*) &draw_buff,NULL);
 
   return 0;
 
 };
-
-// ---   *   ---   *   ---
-
-//  uint32_t limit = 1;
-//  uint32_t i     = 0;
-//
-//  float co[3]={
-//
-//    -6.5f,
-//    -3.5f,
-//
-//    0.0f,
-//
-//  };
-//
-//  for(int y=0;y<limit;y++) {
-//
-//    for(int x=0;x<limit;x++) {
-//
-//      T3D xform({co[0],co[1],co[2],1});
-//      Sin.new_node(0,Node::SPRITE,xform);
-//
-//      draw_buff.push_back(i++);
-//
-//      co[0] += 0.25f;
-//
-//    };
-//
-//    co[0]  = -6.5f;
-//
-//    co[1] += 0.25f;
-//    co[2] += 0.1f;
-//
-//  };
 
 // ---   *   ---   *   ---

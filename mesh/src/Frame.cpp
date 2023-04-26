@@ -219,12 +219,16 @@ Sprite Meshes::ice_sprite(uint32_t src) {
 // ---   *   ---   *   ---
 // make static from raw primitive
 
-uint32_t Meshes::new_static(CRK::Prim& me) {
+uint32_t Meshes::new_static(
+  CRK::Prim& me,
+  uint32_t   mode
+
+) {
 
   uint32_t out=m_statics.size();
 
   m_statics.push_back(
-    this->new_mesh(me)
+    this->new_mesh(me,mode)
 
   );
 

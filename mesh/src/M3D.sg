@@ -36,6 +36,8 @@ void main(void) {
   gl_Position = apply_transform(co);
   Tex_Coords  = extract_tex();
 
+  fDraw_ID    = vDraw_ID;
+
 };
 
 // ---   *   ---   *   ---
@@ -56,6 +58,11 @@ $:FRAG;>
   out vec4 Frag_Color;
 
   const vec3 Eye=vec3(0,0,1);
+  const vec3 Colors[2]={
+    vec3(0,0,1),
+    vec3(1,0,0)
+
+  };
 
 // ---   *   ---   *   ---
 
@@ -67,8 +74,9 @@ void main(void) {
 //  );
 
   float d=dot(Eye,Normal);
+  int idex=int(fDraw_ID==0);
 
-  vec3 color=vec3(0,0,1)*d;
+  vec3 color=Colors[idex]*d;
   Frag_Color=vec4(color,1);
 
 };

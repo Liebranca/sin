@@ -28,6 +28,45 @@ void Node::nit(Bld& bld) {
     : &static_draw
     ;
 
+  this->calc_bounds();
+
+};
+
+// ---   *   ---   *   ---
+// regenerate physbody
+
+void Node::calc_bounds(void) {
+
+  glm::vec3 dim(0.5f,1,0.5f);
+
+  m_bound.set(
+    m_xform.get_model(),
+    m_xform.position(),
+    dim
+
+  );
+
+};
+
+// ---   *   ---   *   ---
+// ^test against other
+
+bool Node::boundschk(Node& other) {
+
+  auto& s0=m_bound.sphere();
+  auto& s1=other.m_bound.sphere();
+
+  // get coldata
+  auto col=s0.isect_sphere(s1);
+
+  if(col.hit()) {
+    glm::vec3 n=col.normal()*0.05f;
+    this->set_linvel(n);
+
+  };
+
+  return col.hit();
+
 };
 
 // ---   *   ---   *   ---
