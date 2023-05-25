@@ -55,6 +55,20 @@ void Program::set_uniform(
 };
 
 void Program::set_uniform(
+  uint32_t    idex,
+  glm::uvec4& data
+
+) {
+
+  glUniform4uiv(
+    this->get_uniform(idex),
+    1,&data[0]
+
+  );
+
+};
+
+void Program::set_uniform(
   uint32_t idex,
   uint32_t data
 

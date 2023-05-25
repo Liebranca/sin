@@ -16,7 +16,7 @@ class Node {
 
 public:
 
-  VERSION   "v0.00.4b";
+  VERSION   "v0.00.5b";
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -24,8 +24,8 @@ public:
 
   enum {
 
-    SPRITE=0x01,
-    STATIC=0x02
+    ANIMATED = 0x01,
+    STATIC   = 0x02
 
   };
 
@@ -48,11 +48,7 @@ public:
 // ---   *   ---   *   ---
 // defd by SIN
 
-  static void sprite_draw(Node* node);
-  static void static_draw(Node* node);
-
-  // ^ptr shorthand
-  typedef void (*Draw_Fn) (Node* node);
+  static void draw(Node* node);
 
 // ---   *   ---   *   ---
 // attrs
@@ -60,16 +56,16 @@ public:
 private:
 
   Draw_Data   m_draw_data;
-  Draw_Fn     m_draw_fn;
 
   T3D         m_xform;
 
   Gaol::Bound m_bound;
 
-  glm::vec3   m_linvel = {0,0,0};
-  glm::quat   m_angvel = {1,0,0,0};
+  glm::vec3   m_linvel  = {0,0,0};
+  glm::quat   m_angvel  = {1,0,0,0};
 
-  bool        m_still  = true;
+  bool        m_still   = true;
+  bool        m_visible = false;
 
 // ---   *   ---   *   ---
 // iface
@@ -117,9 +113,6 @@ public:
 
   };
 
-  // convenience wrappers
-  inline void draw(void) {m_draw_fn(this);};
-
   inline void move(glm::vec3 vel) {
     m_xform.move(vel);
     this->calc_bounds();
@@ -157,6 +150,18 @@ public:
 
   // ^test against other
   bool boundschk(Node& other);
+
+  // toggle visibility
+  inline void set_visible(bool x) {
+    m_visible=x;
+
+  };
+
+  // ^get
+  inline bool is_visible(void) {
+    return m_visible;
+
+  };
 
 };
 

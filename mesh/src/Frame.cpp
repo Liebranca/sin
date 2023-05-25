@@ -24,7 +24,11 @@
 
 // ---   *   ---   *   ---
 
-void Meshes::nit(uint32_t pidex) {
+void Meshes::nit(
+  uint32_t texsz,
+  uint32_t pidex
+
+) {
 
   m_pidex=pidex;
 
@@ -79,6 +83,7 @@ void Meshes::nit(uint32_t pidex) {
 
   );
 
+  m_texture.nit(texsz);
   m_nitted=true;
 
 };
@@ -168,77 +173,58 @@ uint32_t Meshes::new_mesh(
 // ---   *   ---   *   ---
 // load sprite sheet from file
 
-uint32_t Meshes::new_sprite(
-  std::string& path
+uint32_t Meshes::load_asset(
+
+  std::string fpath_base,
+
+  uint8_t     tex_beg,
+  uint8_t     tex_type
 
 ) {
 
   uint32_t out=m_anims.size();
 
-  DAF daf(path,Bin::READ);
-  daf.unpack();
+  JOJ joj(fpath_base+".joj");
+  CRK crk(fpath_base+".crk");
 
-  m_textures.push_back(Texture());
-  m_textures.back().nit(path+"e0");
-
-  CRK crk(path+"e1");
-  crk.unpack();
-
+  // upload textures to glbuff
+  m_texture.upload(joj,tex_beg,tex_type);
   m_anims.push_back(Sprite::Poses());
 
+  // upload poses to glbuff
   auto& poses = m_anims.back();
   auto& me    = crk.data();
 
   for(auto& p : me) {
-    p.gen_qa_indices();
+
+    if(tex_type==Texture::ATLAS) {
+      p.gen_qa_indices();
+
+    };
+
     poses.push_back(this->new_mesh(p));
 
   };
 
+  // get animation data
   m_anim_meta.push_back(ANS());
-  m_anim_meta.back().nit(path+"e2");
+  m_anim_meta.back().nit(fpath_base+".ans");
 
   return out;
 
 };
 
 // ---   *   ---   *   ---
-// ^copy
+// ^fetch
 
-Sprite Meshes::ice_sprite(uint32_t src) {
+Sprite Meshes::ice_asset(uint32_t src) {
 
   Sprite out;
 
   out.set_src(src);
-  out.set_anim("run");
+  out.set_anim("idle");
 
   return out;
-
-};
-
-// ---   *   ---   *   ---
-// make static from raw primitive
-
-uint32_t Meshes::new_static(
-  CRK::Prim& me,
-  uint32_t   mode
-
-) {
-
-  uint32_t out=m_statics.size();
-
-  m_statics.push_back(
-    this->new_mesh(me,mode)
-
-  );
-
-  return out;
-
-};
-
-// ^fetch
-uint32_t Meshes::ice_static(uint32_t idex) {
-  return m_statics[idex];
 
 };
 

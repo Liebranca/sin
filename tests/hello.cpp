@@ -116,16 +116,10 @@ void load_resources(void) {
 
   Sin.new_node(0,Node::SPRITE);
 
-  CRK::Prim cube;
-  Gaol::Box cube_bld;
-
-  cube_bld.set({0,-0.5,0},0.5f,1.0f,0.5f);
-  cube_bld.to_mesh(cube);
-
   Sin.new_batch(SIN::PROGRAM1);
 
-  cube.tris_to_lines();
-  Sin.batch->new_static(cube,GL_LINES);
+  path="/home/lyeb/Desktop/crkbake/Cube.crk";
+  Sin.batch->load_statics(path);
 
 };
 
@@ -158,27 +152,32 @@ int draw(void* data) {
 int logic(void* data) {
 
   static glm::vec3 linvel(0.2f,0,0);
-  static glm::quat angvel(1,0,glm::radians(2.5f),0);
+  static glm::quat angvel(1,
+    glm::radians(1.25f),
+    glm::radians(0.75f),
+
+    0
+
+  );
 
   auto& Sin = SIN::ice();
   auto& nd1 = Sin.nodes[1];
 
+  auto& pos = nd1.xform().position();
+
   if(nd1.is_still()) {
-    nd1.set_linvel(linvel);
+//    nd1.set_linvel(linvel);
     nd1.set_angvel(angvel);
 
-  };
-
-  if(Sin.cam.bound_in_frustum(
-    nd1.bound()
-
-  )) {
-    printf("INSIDE\n");
-
-  } else {
-    printf("NOPE\n");
+  } else if(pos.x > 10.0f) {
+    pos.x=-10.0f;
 
   };
+
+  nd1.set_visible(
+    Sin.cam.bound_in_frustum(nd1.bound())
+
+  );
 
   nd1.fmotion();
 

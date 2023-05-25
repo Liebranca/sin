@@ -29,8 +29,8 @@ $:VERT;>
 
 vec3 crk_pseph(uint b) {
 
-  float zen  = unfrac_i8_angle(b&0xFF);
-  float azi  = unfrac_i8_angle((b >> 8)&0xFF);
+  float zen  = unfrac_i8_angle(b & 0xFF);
+  float azi  = unfrac_i8_angle((b >> 8) & 0xFF);
 
   float szen = sin(zen);
 
@@ -46,11 +46,17 @@ vec3 crk_pseph(uint b) {
 
 // ---   *   ---   *   ---
 // ^same, unit vectors
+//
+// these used to be smaller...
+// now it's *exactly* the same
+//
+// leaving different func in case
+// we revert back
 
 vec3 crk_nseph(uint b) {
 
-  float zen  = unfrac_i4_angle(b&0xF);
-  float azi  = unfrac_i4_angle((b >> 4)&0xF);
+  float zen  = unfrac_i8_angle(b & 0xFF);
+  float azi  = unfrac_i8_angle((b >> 8) & 0xFF);
 
   float szen = sin(zen);
 
@@ -76,7 +82,7 @@ vec4 extract_xyz(void) {
 };
 
 vec3 extract_n(void) {
-  return crk_nseph(Vertex[0] >> 24);
+  return crk_nseph(Vertex[1] >> 8);
 
 };
 

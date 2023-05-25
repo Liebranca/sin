@@ -26,7 +26,6 @@ uint32_t Sprite::play(void) {
 
   // get ctx
   auto& meta  = fetch_meta(m_src);
-  auto& sheet = fetch_sheet(m_src);
   auto& anim  = meta.get(m_canim);
 
   // cap current frame
@@ -34,8 +33,6 @@ uint32_t Sprite::play(void) {
     m_cpose=anim.beg;
 
   };
-
-  sheet.use();
 
   // ret mesh idex
   return out;

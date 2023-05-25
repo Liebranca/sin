@@ -18,7 +18,7 @@ class SIN {
 
 public:
 
-  VERSION   "v0.00.4b";
+  VERSION   "v0.00.5b";
   AUTHOR    "IBN-3DILA";
 
   cx8 PROGRAM0 = 0x00;
@@ -27,10 +27,9 @@ public:
 // ---   *   ---   *   ---
 // helpers
 
-  typedef std::vector<Meshes>   Batches;
-  typedef std::vector<Sprite>   Sprites;
-  typedef std::vector<Node>     Nodes;
-  typedef std::vector<uint32_t> Statics;
+  typedef std::vector<Meshes> Batches;
+  typedef std::vector<Sprite> Sprites;
+  typedef std::vector<Node>   Nodes;
 
 // ---   *   ---   *   ---
 // attrs
@@ -45,7 +44,6 @@ public:
 
   Nodes    nodes;
   Sprites  sprites;
-  Statics  statics;
 
 // ---   *   ---   *   ---
 // guts
@@ -94,7 +92,11 @@ public:
   SINGLETON(SIN);
 
   // create new mesh batch
-  uint32_t new_batch(uint8_t pidex);
+  uint32_t new_batch(
+    uint32_t texsz=256,
+    uint32_t pidex=0
+
+  );
 
   // ^make current
   void use_batch(uint32_t idex);

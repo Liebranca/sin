@@ -20,7 +20,7 @@ class Meshes {
 
 public:
 
-  VERSION   "v0.01.1b";
+  VERSION   "v0.01.3b";
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -58,7 +58,7 @@ private:
   cx16 BUFF_SZ   = 0x1000 * TRIANGLES;
 
   // ^max instances independent of size
-  cx16 BATCH_SZ  = 256;
+  cx16 BATCH_SZ  = Texture::MAX_DEPTH;
 
   enum {
 
@@ -69,9 +69,7 @@ private:
 
   };
 
-  typedef std::vector<uint32_t> Statics;
-  typedef std::vector<Texture>  Textures;
-  typedef std::vector<ANS>      Anim_Meta;
+  typedef std::vector<ANS> Anim_Meta;
 
 // ---   *   ---   *   ---
 // attrs
@@ -90,25 +88,12 @@ private:
   // anti-cpp trap ;>
   bool     m_nitted = false;
 
-  Textures      m_textures;
+  Texture       m_texture;
   Anim_Meta     m_anim_meta;
   Sprite::Anims m_anims;
 
-  // indirection to m_mesh
-  // solely for convenience
-  Statics       m_statics;
-
 // ---   *   ---   *   ---
-// interface
-
-public:
-
-  // cstruc
-  void nit(uint32_t pidex=0);
-
-  // ctrash
-  Meshes(void) {};
-  ~Meshes(void);
+// guts
 
   // wrap around the boiler for
   // gl-subdata into m_buff[idex]
@@ -160,28 +145,39 @@ public:
 
   );
 
-  // load sprite sheet from file
-  uint32_t new_sprite(
-    std::string& path
+// ---   *   ---   *   ---
+// iface
+
+public:
+
+  // cstruc
+  void nit(
+    uint32_t texsz=256,
+    uint32_t pidex=0
 
   );
 
-  // ^copy
-  Sprite ice_sprite(uint32_t src);
+  // ctrash
+  Meshes(void) {};
+  ~Meshes(void);
 
-  // make static from raw primitive array
-  uint32_t new_static(
-    CRK::Prim& me,
-    uint32_t   mode=GL_TRIANGLES
+  // loads resource from file
+  uint32_t load_asset(
+
+    std::string fpath_base,
+
+    uint8_t     tex_beg,
+    uint8_t     tex_type
 
   );
 
-  // ^copy
-  uint32_t ice_static(uint32_t idex);
+  // ^fetch
+  Sprite ice_asset(uint32_t src);
 
   // bind buffers
   inline void use(void) {
     glBindVertexArray(m_vao);
+    m_texture.use();
 
   };
 
@@ -196,8 +192,8 @@ public:
 
   };
 
-  inline Textures& get_textures(void) {
-    return m_textures;
+  inline uint32_t matof(uint32_t meshid) {
+    return m_texture.matid(meshid);
 
   };
 

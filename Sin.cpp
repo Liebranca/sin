@@ -28,16 +28,6 @@ Sprite::Poses& Sprite::fetch_poses(
 
 };
 
-Texture& Sprite::fetch_sheet(
-  uint32_t idex
-
-) {
-
-  auto& Sin=SIN::ice();
-  return Sin.batch->get_textures()[idex];
-
-};
-
 ANS& Sprite::fetch_meta(
   uint32_t idex
 
@@ -51,12 +41,16 @@ ANS& Sprite::fetch_meta(
 // ---   *   ---   *   ---
 // create new mesh batch
 
-uint32_t SIN::new_batch(uint8_t pidex) {
+uint32_t SIN::new_batch(
+  uint32_t texsz,
+  uint32_t pidex
+
+) {
 
   uint32_t out=meshes.size();
 
   meshes.push_back(Meshes());
-  meshes.back().nit(pidex);
+  meshes.back().nit(pidex,texsz);
 
   this->use_batch(out);
   m_queues.push_back(Queue());
@@ -143,25 +137,11 @@ uint32_t SIN::new_node(
   uint32_t out  = nodes.size();
   uint32_t mesh = 0;
 
-  if(type == Node::SPRITE) {
+  mesh=sprites.size();
+  sprites.push_back(
+    batch->ice_asset(meshid)
 
-    mesh=sprites.size();
-
-    sprites.push_back(
-      batch->ice_sprite(meshid)
-
-    );
-
-  } else {
-
-    mesh=statics.size();
-
-    statics.push_back(
-      batch->ice_static(meshid)
-
-    );
-
-  };
+  );
 
   Node::Bld bld={
 
@@ -187,35 +167,20 @@ uint32_t SIN::new_node(
 // ---   *   ---   *   ---
 // decld at world/Node
 
-void Node::sprite_draw(Node* node) {
+void Node::draw(Node* node) {
 
-  auto& Sin  = SIN::ice();
-  auto& data = node->draw_data();
+  auto& Sin    = SIN::ice();
+  auto& data   = node->draw_data();
 
-  Sin.enqueue(
-
-    data.batch,
-    Sin.sprites[data.mesh].play(),
-
-    node->xform().get_model(),
-    node->xform().get_nmat()
-
-  );
-
-};
-
-// ---   *   ---   *   ---
-// ^idem
-
-void Node::static_draw(Node* node) {
-
-  auto& Sin  = SIN::ice();
-  auto& data = node->draw_data();
+  auto  meshid = (data.type==Node::ANIMATED)
+    ? Sin.sprites[data.mesh].play()
+    : Sin.sprites[data.mesh].get_cpose()
+    ;
 
   Sin.enqueue(
 
     data.batch,
-    Sin.statics[data.mesh],
+    meshid,
 
     node->xform().get_model(),
     node->xform().get_nmat()
@@ -295,16 +260,29 @@ void SIN::draw_enqueued(void) {
       // matrix block
       for(
 
-        uint32_t draw_id=0;
+        uint32_t drawid=0;
 
-        draw_id < dq.cnt;
-        draw_id++
+        drawid < dq.cnt;
+        drawid++
 
       ) {
 
+        // get material index for mesh
+        uint32_t meshid = dq.meshid[drawid];
+        uint32_t matid  = batch->matof(meshid);
+
         // ^single uniform per draw ;>
-        program->set_uniform(0,draw_id);
-        batch->draw(dq.meshid[draw_id]);
+        glm::uvec4 obdata={
+          drawid,
+          matid,
+          0,
+          0
+
+        };
+
+        // upload
+        program->set_uniform(0,obdata);
+        batch->draw(meshid);
 
       };
 

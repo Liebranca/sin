@@ -13,54 +13,34 @@
 // deps
 
   #include <GL/glew.h>
-
   #include "shader/Texture.hpp"
-  #include "bitter/ff/JOJ.hpp"
 
 // ---   *   ---   *   ---
 // cstruc
 
-void Texture::nit(std::string fpath) {
+void Texture::nit(
+  uint64_t sz,
+  uint64_t slot
 
-  JOJ src(fpath);
-  src.unpack();
+) {
 
-  auto pixels = src.to_buff(0,JOJ::UNPACK_ATLAS);
-  m_img_sz    = src.get_atlas_sz();
-
-// ---   *   ---   *   ---
+  m_img_sz=sz;
 
   glGenTextures(1,&m_loc);
-  glActiveTexture(GL_TEXTURE0);
+  this->use();
 
-  glBindTexture(
-    GL_TEXTURE_2D_ARRAY,
-    m_loc
-
-  );
-
+  // alloc
   glTexStorage3D(
     GL_TEXTURE_2D_ARRAY,
+    MAX_MIP,GL_RGBA8,
 
-    4,GL_RGBA8,
+    m_img_sz,m_img_sz,
 
-    m_img_sz,m_img_sz,1
-
-  );
-
-  glTexSubImage3D(
-    GL_TEXTURE_2D_ARRAY,
-    0,0,0,0,
-
-    m_img_sz,m_img_sz,1,
-    GL_RGBA,
-
-    GL_FLOAT,&pixels[0]
+    MAX_DEPTH
 
   );
 
-// ---   *   ---   *   ---
-
+  // ^long list of settings
   glTexParameteri(
     GL_TEXTURE_2D_ARRAY,
 
@@ -109,9 +89,6 @@ void Texture::nit(std::string fpath) {
 
   );
 
-  glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
-  glBindTexture(GL_TEXTURE_2D_ARRAY,0);
-
 };
 
 // ---   *   ---   *   ---
@@ -128,6 +105,119 @@ Texture::~Texture(void) {
 };
 
 // ---   *   ---   *   ---
+// puts data into buff
+
+void Texture::upload(
+
+  JOJ&     joj,
+
+  uint32_t start,
+  uint8_t  mode
+
+) {
+
+  uint8_t joj_mode;
+  uint8_t step;
+
+  // unpack all maps in file
+  if(mode==LAYERS) {
+    joj_mode = JOJ::UNPACK_LAYERS;
+    step     = 3;
+
+  // ^atlas for spritesheets
+  } else {
+    joj_mode = JOJ::UNPACK_ATLAS;
+    step     = 1;
+
+  };
+
+  auto pixels=joj.to_buff(0,joj_mode);
+
+  Range r={
+    .beg=start,
+    .end=start+step
+
+  };
+
+  glTexSubImage3D(
+
+    GL_TEXTURE_2D_ARRAY,0,
+
+    0,0,
+
+    r.beg,
+
+    m_img_sz,m_img_sz,MAX_DEPTH,
+
+    GL_RGBA,GL_FLOAT,
+
+    &pixels[0]
+
+  );
+
+  // book-keeping
+  if(m_top == r.beg) {
+    m_materials.push_back(r);
+
+  };
+
+  m_top=(r.end > m_top)
+    ? r.end
+    : m_top
+    ;
+
+  m_umark.push_back(r);
+
+};
+
+// ---   *   ---   *   ---
+// get N layers will fit
+// without overwrite
+
+uint32_t Texture::can_push(uint32_t n) {
+
+  uint32_t beg = m_top;
+  uint32_t rei = 0;
+
+  bool     re  = false;
+
+  // first try top of stack
+  if((beg+n) < MAX_DEPTH) {
+    return beg;
+
+  };
+
+  // ^else try reusing
+  // orphaned space
+  for(auto& r : m_rmark) {
+    if(r.end == r.beg+n) {
+      re=true;
+      break;
+
+    };
+
+    rei++;
+
+  };
+
+  // ^match found
+  if(re) {
+    auto& r=m_rmark[rei];
+    beg=r.beg;
+
+    m_rmark.erase(m_rmark.begin()+rei);
+
+    return beg;
+
+  };
+
+  // signal new texture needed
+  return OVERWRITE;
+
+};
+
+// ---   *   ---   *   ---
+// bind
 
 void Texture::use(void) {
 

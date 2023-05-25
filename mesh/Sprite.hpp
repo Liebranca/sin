@@ -16,7 +16,7 @@ class Sprite {
 
 public:
 
-  VERSION     "v0.00.7b";
+  VERSION     "v0.00.8b";
   AUTHOR      "IBN-3DILA";
 
   typedef std::vector<uint32_t> Poses;
@@ -26,7 +26,6 @@ public:
 // defd by SIN
 
   static ANS&     fetch_meta(uint32_t idex);
-  static Texture& fetch_sheet(uint32_t idex);
   static Poses&   fetch_poses(uint32_t idex);
 
 // ---   *   ---   *   ---
@@ -34,12 +33,11 @@ public:
 
 private:
 
-  float    m_ctime = 0.0f;
+  float    m_ctime   = 0.0f;
 
-  uint32_t m_cpose = 0;
-  uint32_t m_canim = 0;
-
-  uint32_t m_src   = 0;
+  uint32_t m_cpose   = 0;
+  uint32_t m_canim   = 0;
+  uint32_t m_src     = 0;
 
 // ---   *   ---   *   ---
 // guts
@@ -77,10 +75,14 @@ public:
 
   };
 
-// ---   *   ---   *   ---
-// run anims
-
+  // run anims
   uint32_t play(void);
+
+  // get current pose
+  inline uint32_t get_cpose(void) {
+    return m_cpose;
+
+  };
 
 };
 
