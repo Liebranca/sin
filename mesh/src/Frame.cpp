@@ -229,3 +229,73 @@ Sprite Meshes::ice_asset(uint32_t src) {
 };
 
 // ---   *   ---   *   ---
+// create editable mesh
+
+uint32_t Meshes::new_edit(void) {
+
+  uint32_t out=m_anims.size();
+
+  m_texture.new_matid(out);
+  m_anims.push_back(Sprite::Poses());
+
+  // upload poses to glbuff
+  auto& poses = m_anims.back();
+  auto  me    = this->defcube();
+
+  for(auto& p : me) {
+    poses.push_back(this->new_mesh(p));
+
+  };
+
+  // generate anim data ice
+  m_anim_meta.push_back(ANS());
+  m_anim_meta.back().enit();
+
+  return out;
+
+};
+
+// ---   *   ---   *   ---
+// generates default shape
+// for edit meshes
+
+CRK::Mesh Meshes::defcube(void) {
+
+  CRK::Prim front;
+  front.verts.resize(4);
+  front.indices.resize(6);
+
+  glm::vec3 p0={ 1,-1,0};
+  glm::vec3 p1={-1,-1,0};
+  glm::vec3 p2={-1, 1,0};
+  glm::vec3 p3={ 1, 1,0};
+
+  front.verts[0].set_xyz(p0);
+  front.verts[1].set_xyz(p1);
+  front.verts[2].set_xyz(p2);
+  front.verts[3].set_xyz(p3);
+
+  glm::vec3 n={0,0,1};
+  front.verts[0].set_n(n);
+  front.verts[1].set_n(n);
+  front.verts[2].set_n(n);
+  front.verts[3].set_n(n);
+
+  front.indices[0]=0;
+  front.indices[1]=1;
+  front.indices[2]=2;
+
+  front.indices[3]=0;
+  front.indices[4]=2;
+  front.indices[5]=3;
+
+  CRK::Mesh out {
+    front
+
+  };
+
+  return out;
+
+};
+
+// ---   *   ---   *   ---

@@ -167,10 +167,10 @@ uint32_t SIN::new_node(
 // ---   *   ---   *   ---
 // decld at world/Node
 
-void Node::draw(Node* node) {
+void Node::draw(void) {
 
   auto& Sin    = SIN::ice();
-  auto& data   = node->draw_data();
+  auto& data   = this->draw_data();
 
   auto  meshid = (data.type==Node::ANIMATED)
     ? Sin.sprites[data.mesh].play()
@@ -182,8 +182,8 @@ void Node::draw(Node* node) {
     data.batch,
     meshid,
 
-    node->xform().get_model(),
-    node->xform().get_nmat()
+    this->xform().get_model(),
+    this->xform().get_nmat()
 
   );
 

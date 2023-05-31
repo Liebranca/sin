@@ -48,7 +48,7 @@ public:
 // ---   *   ---   *   ---
 // defd by SIN
 
-  static void draw(Node* node);
+  void draw(void);
 
 // ---   *   ---   *   ---
 // attrs

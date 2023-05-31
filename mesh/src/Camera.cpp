@@ -100,12 +100,8 @@ void Camera::nit(
 
 ) {
 
-  m_pos    = pos;
-
-  m_fwd    = glm::vec3(0,0,-1);
-  m_up     = Y_AXIS;
-
-  m_lens   = lens;
+  m_lens=lens;
+  this->get_pos()=pos;
 
   this->nit_ubo(bind_idex);
 
@@ -233,40 +229,47 @@ void Camera::move(
 ) {
 
   m_update           = true;
-  glm::vec3 displace = { 0,0,0 };
+//  glm::vec3 displace = { 0,0,0 };
+//
+//  if(local) {
+//
+//    auto& fwd = this->get_fwd();
+//    auto& up  = this->get_up();
+//
+//    float xfac=fabs(up.x);
+//    if(fwd.x<0) {xfac*=-1;};
+//
+//    float zfac=fabs(up.z);
+//    if(fwd.z<0) {zfac*=-1;};
+//
+//    glm::vec3 noup={
+//      fwd.x+xfac,
+//      0,
+//      fwd.z+zfac
+//
+//    };
+//
+//    if(mvec[2]) {displace+=noup*mvec[2];};
+//
+//    if(mvec[0]) {
+//      displace-=
+//        glm::cross(noup,Y_AXIS)
+//      * mvec[0]
+//
+//      ;
+//
+//    };
+//
+//    displace.y=mvec.y;
+//
+//  } else {displace=mvec;};
+//
+//// ---   *   ---   *   ---
 
-  if(local) {
-    float xfac=fabs(m_up.x);
-    if(m_fwd.x<0) {xfac*=-1;};
+  float sign=(local) ? -1 : 1;
+  mvec=this->get_hax() * 0.01f * sign;
 
-    float zfac=fabs(m_up.z);
-    if(m_fwd.z<0) {zfac*=-1;};
-
-    glm::vec3 noup={
-      m_fwd.x+xfac,
-      0,
-      m_fwd.z+zfac
-
-    };
-
-    if(mvec[2]) {displace+=noup*mvec[2];};
-
-    if(mvec[0]) {
-      displace-=
-        glm::cross(noup,Y_AXIS)
-      * mvec[0]
-
-      ;
-
-    };
-
-    displace.y=mvec.y;
-
-  } else {displace=mvec;};
-
-// ---   *   ---   *   ---
-
-  m_pos+=displace;
+  m_xform.move(mvec);
 
 // gaoler...
 //  float fpos[3]={pos.x, pos.y, pos.z};
@@ -282,44 +285,12 @@ void Camera::move(
 
 // ---   *   ---   *   ---
 
-void Camera::rotate(glm::vec3& rvec) {
+void Camera::rotate(glm::quat& rvec) {
+
+  m_xform.rotate(rvec);
+  m_xform.calc_facing();
 
   m_update=true;
-
-  m_pitch+=rvec.y;
-  m_yaw+=rvec.x;
-
-// ---   *   ---   *   ---
-// clamp like a mother
-//
-// I deadass got these magic numbers
-// entirely through trial and error
-
-  if(m_pitch<-1.49f) {
-    m_pitch=-1.49f;
-
-  } else if(m_pitch>1.49f) {
-    m_pitch=1.49f;
-
-  };
-
-// ---   *   ---   *   ---
-// it just works...
-
-  glm::vec3 hAxis = glm::normalize(
-    glm::cross(Y_AXIS,m_fwd)
-
-  );
-
-  m_fwd.x         = sin(m_yaw)*cos(m_pitch);
-  m_fwd.z         = cos(m_yaw)*cos(m_pitch);
-  m_fwd.y         = sin(m_pitch);
-
-  m_fwd           = glm::normalize(m_fwd);
-  m_up            = glm::normalize(
-    glm::cross(m_fwd,hAxis)
-
-  );
 
 };
 

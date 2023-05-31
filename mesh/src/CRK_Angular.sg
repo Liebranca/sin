@@ -15,7 +15,7 @@
 
 $:VERT;>
 
-  VERSION   v0.00.2b;
+  VERSION   v0.00.3b;
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -82,7 +82,7 @@ vec4 extract_xyz(void) {
 };
 
 vec3 extract_n(void) {
-  return crk_nseph(Vertex[1] >> 8);
+  return crk_nseph(Vertex[1] >> 16);
 
 };
 

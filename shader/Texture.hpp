@@ -116,6 +116,19 @@ public:
 
   };
 
+  // ^force push an entry
+  void new_matid(uint32_t idex) {
+
+    Range r={
+      .beg=idex,
+      .end=idex+3,
+
+    };
+
+    m_materials.push_back(r);
+
+  };
+
 };
 
 // ---   *   ---   *   ---

@@ -14,7 +14,7 @@
 
 $:VERT;>
 
-  VERSION   v0.00.2b;
+  VERSION   v0.00.3b;
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -26,8 +26,7 @@ $:VERT;>
 // inputs
 
   in uvec4 Vertex;
-
-  uniform uint vDraw_ID;
+  uniform uvec4 Draw_Data;
 
   layout (std140) uniform _Camera {
     mat4 Projection;
@@ -44,8 +43,10 @@ $:VERT;>
 // ---   *   ---   *   ---
 // outputs
 
-  out vec2 Tex_Coords;
+  out vec3 Tex_Coords;
+
   flat out uint fDraw_ID;
+  flat out uint fSurf_ID;
 
 // ---   *   ---   *   ---
 // does default MVP mambo
@@ -57,7 +58,7 @@ vec4 apply_transform(vec4 co) {
     Camera.Projection
   * Camera.View
 
-  * Xform.model[vDraw_ID]
+  * Xform.model[Draw_Data[0]]
   * co
   ;
 
@@ -67,19 +68,21 @@ vec4 apply_transform(vec4 co) {
 // ^normals
 
 vec3 apply_nmat(vec3 n) {
-  return mat3(Xform.nmat[vDraw_ID]) * n;
+  return mat3(Xform.nmat[Draw_Data[0]]) * n;
 
 };
 
 // ---   *   ---   *   ---
 // fetches compressed UVs
 
-vec2 extract_tex(void) {
+vec3 extract_tex(void) {
 
-  return vec2(
+  return vec3(
 
     unfrac_u8(Vertex[0] >> 24),
-    unfrac_u8(Vertex[1] >>  0)
+    unfrac_u8(Vertex[1] >>  0),
+
+    Draw_Data[1]
 
   );
 

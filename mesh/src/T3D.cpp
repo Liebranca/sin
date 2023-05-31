@@ -128,34 +128,30 @@ void T3D::rotate(glm::quat delta) {
 
   );
 
-  m_fwd=
+  m_cache.needs_update=1;
 
-    m_orientation.y
-  * m_orientation.w
-
-  * 2
-  ;
+};
 
 // ---   *   ---   *   ---
-// clamp like a mother
+// ^update facing vectors
+// accto orientation
 
-  if(fabs(m_orientation.w) < 0.5) {
-    m_dirn.y=-1;
+void T3D::calc_facing(void) {
 
-  } else {
-    m_dirn.y=1;
+  m_fwd=glm::normalize(
+    Z_AXIS * m_orientation
 
-  };
+  );
 
-  if (fabs(m_orientation.y) > 0.75) {
-    m_dirn.x=-1;
+  m_hax=glm::normalize(
+    glm::cross(Y_AXIS,m_fwd)
 
-  } else {
-    m_dirn.x=1;
+  );
 
-  };
+  m_up=glm::normalize(
+    glm::cross(m_fwd,m_hax)
 
-  m_cache.needs_update=1;
+  );
 
 };
 

@@ -14,7 +14,10 @@
 // consts
 
   CX glm::mat4 IDENTITY(1);
-  CX glm::vec3 Y_AXIS(0,1,0);
+
+  CX glm::vec3 X_AXIS( 1, 0, 0);
+  CX glm::vec3 Y_AXIS( 0, 1, 0);
+  CX glm::vec3 Z_AXIS( 0, 0,-1);
 
 // ---   *   ---   *   ---
 // info
@@ -23,7 +26,7 @@ class T3D {
 
 public:
 
-  VERSION   "v2.00.4";
+  VERSION   "v2.00.5";
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -63,10 +66,9 @@ private:
   glm::quat   m_orientation;
   glm::vec3   m_scaling;
 
-  glm::vec2   m_dirn;
-
-  float       m_fwd  = 0.0f;
-  float       m_tick = 0.0f;
+  glm::vec3   m_fwd = Z_AXIS;
+  glm::vec3   m_up  = Y_AXIS;
+  glm::vec3   m_hax = X_AXIS;
 
 public:
 
@@ -85,9 +87,7 @@ public:
   m_orientation(rot),
   m_scaling(scale) {
 
-    m_dirn   = {1,1};
-    m_parent = NULL;
-
+    m_parent=NULL;
     this->rotate(rot);
 
   };
@@ -119,7 +119,12 @@ public:
 
   );
 
+  // selfex
   void rotate(glm::quat delta);
+
+  // update facing vectors
+  // accto orientation
+  void calc_facing(void);
 
   inline void move(glm::vec3 vel) {
     m_position+=vel;
@@ -127,9 +132,31 @@ public:
 
   };
 
-  // careful: does not trigger update
+  // getters
+  // careful: these do not trigger update
   inline glm::vec3& position(void) {
     return m_position;
+
+  };
+
+  inline glm::quat& orientation(void) {
+    return m_orientation;
+
+  };
+
+  // get facing vectors
+  inline glm::vec3& fwd(void) {
+    return m_fwd;
+
+  };
+
+  inline glm::vec3& up(void) {
+    return m_up;
+
+  };
+
+  inline glm::vec3& hax(void) {
+    return m_hax;
 
   };
 

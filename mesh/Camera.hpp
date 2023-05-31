@@ -21,7 +21,7 @@ class Camera {
 
 public:
 
-  VERSION   "v2.00.4";
+  VERSION   "v2.00.5";
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -98,7 +98,13 @@ public:
   // regenerate view matrix
   inline glm::mat4 calc_view(void) {
     return glm::lookAt(
-      m_pos,m_pos+m_fwd,Y_AXIS
+
+      this->get_pos(),
+
+      this->get_pos()
+    + this->get_fwd(),
+
+      Y_AXIS
 
     );
 
@@ -113,13 +119,25 @@ public:
   };
 
   inline glm::vec3 get_eye(void) {
-    return glm::normalize(m_pos+m_fwd);
+
+    return glm::normalize(
+      this->get_pos()
+    + this->get_fwd()
+
+    );
 
   };
 
   // build prism from current view
   inline void update_frustum(void) {
-    m_frustum.calc_box(m_pos,m_fwd,m_up);
+    m_frustum.calc_box(
+
+      this->get_pos(),
+
+      this->get_fwd(),
+      this->get_up()
+
+    );
 
   };
 
@@ -216,7 +234,7 @@ public:
   };
 
   void move(glm::vec3& mvec,bool local=false);
-  void rotate(glm::vec3& rvec);
+  void rotate(glm::quat& rvec);
 
 // ---   *   ---   *   ---
 // getters
@@ -226,30 +244,30 @@ public:
 
   };
 
-  inline float get_pitch(void) {
-    return m_pitch;
-
-  };
-
   inline glm::vec3& get_fwd(void) {
-    return m_fwd;
+    return m_xform.fwd();
 
   };
 
   inline glm::vec3& get_pos(void) {
-    return m_pos;
+    return m_xform.position();
 
   };
 
   inline glm::vec3& get_up(void) {
-    return m_up;
+    return m_xform.up();
+
+  };
+
+  inline glm::vec3& get_hax(void) {
+    return m_xform.hax();
 
   };
 
   inline glm::vec3 get_fwd_cast(
     float dist=3.5f
 
-  ) {return m_pos+(m_fwd*dist);};
+  ) {return get_pos()+(get_fwd()*dist);};
 
   inline Gaol::Frustum& get_frustum(void) {
     return m_frustum;
@@ -279,16 +297,10 @@ public:
 
 private:
 
-  glm::vec3     m_pos;
-  glm::vec3     m_fwd;
-  glm::vec3     m_up;
-  glm::vec3     m_altpos;
+  T3D           m_xform;
 
   glm::mat4     m_view;
   glm::mat4     m_proj;
-
-  float         m_pitch  = 0.0f;
-  float         m_yaw    = 0.0f;
 
   bool          m_update = true;
   bool          m_ortho  = false;

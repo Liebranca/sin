@@ -20,7 +20,7 @@ class Meshes {
 
 public:
 
-  VERSION   "v0.01.3b";
+  VERSION   "v0.01.4b";
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -145,6 +145,8 @@ private:
 
   );
 
+  CRK::Mesh defcube(void);
+
 // ---   *   ---   *   ---
 // iface
 
@@ -173,6 +175,9 @@ public:
 
   // ^fetch
   Sprite ice_asset(uint32_t src);
+
+  // create editable mesh
+  uint32_t new_edit(void);
 
   // bind buffers
   inline void use(void) {
