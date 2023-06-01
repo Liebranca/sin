@@ -41,6 +41,8 @@ void Node::calc_bounds(void) {
 
   );
 
+  m_updated.bounds=false;
+
 };
 
 // ---   *   ---   *   ---

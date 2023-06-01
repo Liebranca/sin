@@ -17,7 +17,7 @@
 
   #include "bitter/kvrnel/Seph.hpp"
 
-  #include "mesh/T3D.hpp"
+  #include "world/T3D.hpp"
 
 // ---   *   ---   *   ---
 // recalculates model matrix
@@ -124,7 +124,7 @@ bool T3D::face_to(
 void T3D::rotate(glm::quat delta) {
 
   m_orientation=glm::normalize(
-    glm::cross(m_orientation,delta)
+    m_orientation*delta
 
   );
 

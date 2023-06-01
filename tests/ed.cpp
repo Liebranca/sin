@@ -18,6 +18,46 @@
 
   typedef std::vector<uint32_t> Nodes;
 
+//// ---   *   ---   *   ---
+//// lame fwd decls
+//
+//  void step_left(void);
+//  void step_right(void);
+//
+//// ---   *   ---   *   ---
+//// ROM
+//
+//BEG_KEYSET(ED)
+//
+//  {escape,{
+//
+//    NULL,
+//    NULL,
+//
+//    &chasm_exit
+//
+//  }},
+//
+//  {left,{
+//
+//    &step_left,
+//    &step_left,
+//
+//    NULL
+//
+//  }},
+//
+//  {right,{
+//
+//    &step_right,
+//    &step_right,
+//
+//    NULL
+//
+//  }}
+//
+//END_KEYSET;
+
 // ---   *   ---   *   ---
 // GBL
 
@@ -33,6 +73,12 @@
 // ---   *   ---   *   ---
 // chasm stuff
 
+inline Clock& get_clock(void) {
+  auto& Chasm=CHASM::ice();
+  return Chasm.win.clock();
+
+};
+
 void spawn_window(void) {
 
   auto& Chasm=CHASM::ice();
@@ -44,7 +90,7 @@ void spawn_window(void) {
     .width      = SCR_X,
     .height     = SCR_Y,
 
-    .fullscreen = true,
+    .fullscreen = false,
     .fps        = 60,
 
     .flags      = Win::DO_MOUSE_TRAP
@@ -56,6 +102,10 @@ void spawn_window(void) {
 
   Chasm.draw  = &draw;
   Chasm.logic = &logic;
+
+  // get handle to program clock
+  auto& Sin=SIN::ice();
+  Sin.get_clock=&get_clock;
 
 };
 
@@ -145,7 +195,7 @@ int logic(void* data) {
 
   auto& Sin   = SIN::ice();
   auto& Chasm = CHASM::ice();
- 
+
   auto& rat   = Chasm.ev.get_rat();
   auto  mo    = rat.get_motion(0.01f);
 
@@ -156,11 +206,30 @@ int logic(void* data) {
 
   if(dx || dy) {
 
-    glm::quat r {1,-mo.y,mo.x,0};
-//    glm::vec3 m {mo.x,0,0};
+    auto  hax = cam.get_hax() * mo.y;
 
-    cam.rotate(r);
-//    cam.move(m,mo.x < 0);
+    glm::quat y {1,-hax.x,hax.y,-hax.z};
+    glm::quat x {1,0,-mo.x,0};
+
+    glm::quat r=x*y;
+    glm::vec3 v={r.x,r.y,r.z};
+
+    v*=4;
+
+    cam.set_angvel(v);
+    cam.ang_fmotion();
+
+  };
+
+  auto lclick = rat.clicks(Rat::LEFT);
+  auto rclick = rat.clicks(Rat::RIGHT);
+
+  if(lclick || rclick) {
+
+    float sign = (lclick) ? -1 : 1;
+
+    cam.set_lindirn_ax(2,sign * 4);
+    cam.lin_fmotion();
 
   };
 

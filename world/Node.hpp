@@ -7,7 +7,7 @@
   #include "bitter/kvrnel/Style.hpp"
   #include "gaoler/Bound.hpp"
 
-  #include "mesh/T3D.hpp"
+  #include "world/T3D.hpp"
 
 // ---   *   ---   *   ---
 // info
@@ -45,10 +45,24 @@ public:
 
   };
 
+  // for keeping track of
+  // state changes
+  struct States {
+
+    bool bounds;
+    bool movement;
+
+    bool visibility;
+
+  };
+
 // ---   *   ---   *   ---
 // defd by SIN
 
   void draw(void);
+
+  void lin_fmotion(void);
+  void ang_fmotion(void);
 
 // ---   *   ---   *   ---
 // attrs
@@ -61,11 +75,21 @@ private:
 
   Gaol::Bound m_bound;
 
+  glm::vec3   m_lindirn = {0,0,0};
   glm::vec3   m_linvel  = {0,0,0};
-  glm::quat   m_angvel  = {1,0,0,0};
+
+  glm::vec3   m_angdirn = {0,0,0};
+  glm::vec3   m_angvel  = {0,0,0};
 
   bool        m_still   = true;
   bool        m_visible = false;
+
+// ---   *   ---   *   ---
+// ctrash
+
+protected:
+
+  States      m_updated = {0};
 
 // ---   *   ---   *   ---
 // iface
@@ -100,6 +124,47 @@ public:
 
   };
 
+  // local vectors
+  inline glm::vec3& get_hax(void) {
+    return m_xform.hax();
+
+  };
+
+  inline glm::vec3& get_up(void) {
+    return m_xform.up();
+
+  };
+
+  inline glm::vec3& get_fwd(void) {
+    return m_xform.fwd();
+
+  };
+
+  inline glm::vec3& get_pos(void) {
+    return m_xform.position();
+
+  };
+
+  inline glm::quat& get_rot(void) {
+    return m_xform.orientation();
+
+  };
+
+  // calc point in front of self
+  inline glm::vec3 get_fwd_cast(
+    float dist=3.5f
+
+  ) {
+
+    return
+
+      (this->get_pos())
+    + (this->get_fwd() * dist)
+
+    ;
+
+  };
+
   // setters
   inline void set_linvel(glm::vec3& vel) {
     m_linvel = vel;
@@ -107,41 +172,65 @@ public:
 
   };
 
-  inline void set_angvel(glm::quat& vel) {
+  inline void set_angvel(glm::vec3& vel) {
     m_angvel = vel;
     m_still  = false;
 
   };
 
-  inline void move(glm::vec3 vel) {
+  inline void set_lindirn_ax(
+    uint8_t ax,
+    float   value
+
+  ) {
+
+    m_lindirn[ax] = value;
+    m_still       = false;
+
+    m_updated.movement = true;
+
+  };
+
+  inline void set_angdirn_ax(
+    uint8_t ax,
+    float   value
+
+  ) {
+
+    m_angdirn[ax] = value;
+    m_still       = false;
+
+    m_updated.movement = true;
+
+  };
+
+  inline void move(glm::vec3& vel) {
+
     m_xform.move(vel);
-    this->calc_bounds();
+
+    m_updated.bounds   = true;
+    m_updated.movement = true;
 
   };
 
-  inline void rot(glm::quat delta) {
+  inline void rotate(glm::quat& delta) {
+
     m_xform.rotate(delta);
-    this->calc_bounds();
+    m_xform.calc_facing();
 
-  };
-
-  // ^moves accto set velocities
-  inline void fmotion(void) {
-
-    if(m_still) {return;};
-
-    m_xform.move(m_linvel);
-    m_xform.rotate(m_angvel);
-
-    this->calc_bounds();
+    m_updated.bounds   = true;
+    m_updated.movement = true;
 
   };
 
   inline void halt(void) {
 
-    m_still  = true;
-    m_linvel = {0,0,0};
-    m_angvel = {1,0,0,0};
+    m_still   = true;
+
+    m_lindirn = {0,0,0};
+    m_linvel  = {0,0,0};
+    m_angdirn = {0,0,0};
+    m_angvel  = {0,0,0};
 
   };
 
@@ -154,6 +243,7 @@ public:
   // toggle visibility
   inline void set_visible(bool x) {
     m_visible=x;
+    m_updated.visibility=true;
 
   };
 

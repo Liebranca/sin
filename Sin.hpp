@@ -5,11 +5,12 @@
 // deps
 
   #include "bitter/kvrnel/Style.hpp"
+  #include "bitter/kvrnel/Clock.hpp"
 
   #include "shader/Frame.hpp"
   #include "mesh/Frame.hpp"
-  #include "mesh/Camera.hpp"
-  #include "world/Node.hpp"
+
+  #include "world/Camera.hpp"
 
 // ---   *   ---   *   ---
 // info
@@ -18,7 +19,7 @@ class SIN {
 
 public:
 
-  VERSION   "v0.00.5b";
+  VERSION   "v0.00.6b";
   AUTHOR    "IBN-3DILA";
 
   cx8 PROGRAM0 = 0x00;
@@ -32,7 +33,14 @@ public:
   typedef std::vector<Node>   Nodes;
 
 // ---   *   ---   *   ---
+// fptrs
+
+  typedef Clock& (*ClockF) (void);
+
+// ---   *   ---   *   ---
 // attrs
+
+public:
 
   Batches  meshes;
   Programs programs;
@@ -44,6 +52,8 @@ public:
 
   Nodes    nodes;
   Sprites  sprites;
+
+  ClockF   get_clock;
 
 // ---   *   ---   *   ---
 // guts
@@ -147,6 +157,24 @@ public:
     Meshes::Draw_Queue_Mats& mats
 
   );
+
+// ---   *   ---   *   ---
+// program clock wrappers
+
+  inline float fBy(void) {
+    return this->get_clock().fBy();
+
+  };
+
+  inline void set_timescale(float x) {
+    this->get_clock().set_scale(x);
+
+  };
+
+  inline float get_timescale(void) {
+    return this->get_clock().get_scale();
+
+  };
 
 };
 

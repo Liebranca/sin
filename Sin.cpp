@@ -190,6 +190,45 @@ void Node::draw(void) {
 };
 
 // ---   *   ---   *   ---
+// moves accto set direction
+// and linear velocity
+
+void Node::lin_fmotion(void) {
+
+  auto& Sin=SIN::ice();
+
+  glm::vec3 mvec=((
+    (this->get_hax() * m_lindirn.x)
+  + (this->get_up()  * m_lindirn.y)
+  + (this->get_fwd() * m_lindirn.z)
+
+  ) + m_linvel) * Sin.fBy();
+
+  this->move(mvec);
+
+};
+
+// ---   *   ---   *   ---
+// ^rotates
+
+void Node::ang_fmotion(void) {
+
+  auto& Sin=SIN::ice();
+
+  glm::vec3 dirn=((
+    (this->get_hax() * m_angdirn.x)
+  + (this->get_up()  * m_angdirn.y)
+  + (this->get_fwd() * m_angdirn.z)
+
+  ) + m_angvel) * Sin.fBy();;
+
+  glm::quat rvec={1,dirn.x,dirn.y,dirn.z};
+
+  this->rotate(rvec);
+
+};
+
+// ---   *   ---   *   ---
 // put draw commands "on hold"
 
 void SIN::enqueue(

@@ -1,5 +1,5 @@
-#ifndef __24_CAMERA_H__
-#define __24_CAMERA_H__
+#ifndef __5E_CAMERA_H__
+#define __5E_CAMERA_H__
 
 // ---   *   ---   *   ---
 // deps
@@ -10,22 +10,22 @@
   #include <glm/gtx/transform.hpp>
 
   #include "bitter/kvrnel/Style.hpp"
-  #include "mesh/T3D.hpp"
-
   #include "gaoler/Frustum.hpp"
+
+  #include "world/Node.hpp"
 
 // ---   *   ---   *   ---
 // info
 
-class Camera {
+class Camera : public Node {
 
 public:
 
-  VERSION   "v2.00.5";
+  VERSION   "v2.00.6";
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
-// helper
+// helpers
 
   typedef struct {
 
@@ -79,21 +79,25 @@ public:
   } Lens;
 
 // ---   *   ---   *   ---
+// attrs
 
-  // cstruc
-  void nit(
-    const glm::vec3& pos,
-    Camera::Lens&    lens,
+private:
 
-    uint32_t         bind_idex
+  glm::mat4     m_view;
+  glm::mat4     m_proj;
 
-  );
+  Camera::Lens  m_lens;
+  Gaol::Frustum m_frustum;
 
-  // ctrash
-  Camera(void) {};
-  ~Camera(void);
+  uint32_t      m_ubo     = 0;
+  bool          m_ortho   = false;
 
 // ---   *   ---   *   ---
+// guts
+
+  // for VP to shader
+  void nit_ubo(uint32_t loc);
+  void update_ubo(bool which);
 
   // regenerate view matrix
   inline glm::mat4 calc_view(void) {
@@ -105,24 +109,6 @@ public:
     + this->get_fwd(),
 
       Y_AXIS
-
-    );
-
-  };
-
-  // ^fetches
-  glm::mat4& get_view(void);
-
-  inline glm::mat4& get_proj(void) {
-    return m_proj;
-
-  };
-
-  inline glm::vec3 get_eye(void) {
-
-    return glm::normalize(
-      this->get_pos()
-    + this->get_fwd()
 
     );
 
@@ -142,19 +128,24 @@ public:
   };
 
 // ---   *   ---   *   ---
-// GAOLER...
+// iface
 
-//  void onAreaChange(void);
-//
-//  void cellCulling(
-//    uint32_t num_cells,
-//    viewFrustum* lightFrustums[SIN_MAX_LAMPS],
-//
-//    uint32_t num_dirlights
-//
-//  );
-//
-//  void resetCulling(void);
+public:
+
+  // cstruc
+  void nit(
+    const glm::vec3& pos,
+    Camera::Lens&    lens,
+
+    uint32_t         bind_idex
+
+  );
+
+  // ctrash
+  Camera(void) {};
+  ~Camera(void);
+
+// ---   *   ---   *   ---
 
   // frustum wrappers
   // used for visibility checks
@@ -208,10 +199,10 @@ public:
 
   inline void use_ortho(void) {
 
-    m_update = true;
+    m_ortho = true;
+    m_proj  = m_lens.ortho();
 
-    m_ortho  = true;
-    m_proj   = m_lens.ortho();
+    m_updated.visibility = true;
 
     this->update_ubo(0);
 
@@ -219,10 +210,10 @@ public:
 
   inline void use_persp(void) {
 
-    m_update = true;
-
     m_ortho  = false;
     m_proj   = m_lens.persp();
+
+    m_updated.visibility = true;
 
     this->update_ubo(0);
 
@@ -233,9 +224,6 @@ public:
 
   };
 
-  void move(glm::vec3& mvec,bool local=false);
-  void rotate(glm::quat& rvec);
-
 // ---   *   ---   *   ---
 // getters
 
@@ -244,81 +232,30 @@ public:
 
   };
 
-  inline glm::vec3& get_fwd(void) {
-    return m_xform.fwd();
-
-  };
-
-  inline glm::vec3& get_pos(void) {
-    return m_xform.position();
-
-  };
-
-  inline glm::vec3& get_up(void) {
-    return m_xform.up();
-
-  };
-
-  inline glm::vec3& get_hax(void) {
-    return m_xform.hax();
-
-  };
-
-  inline glm::vec3 get_fwd_cast(
-    float dist=3.5f
-
-  ) {return get_pos()+(get_fwd()*dist);};
-
   inline Gaol::Frustum& get_frustum(void) {
     return m_frustum;
 
   };
 
-// ---   *   ---   *   ---
-// G A O L E R !!!
-//
-//  inline uint32_t& getGridpos(void) {
-//    return m_curcell.gridpos;
-//
-//  };
-//
-//  inline int& getCellpos(void) {
-//    return m_curcell.worldpos;
-//
-//  };
-//
-//  inline DAGCI* getCellPositions(void) {
-//    return m_nearcells;
-//
-//  };
+  glm::mat4& get_view(void);
 
-// ---   *   ---   *   ---
-// attrs
+  inline glm::mat4& get_proj(void) {
+    return m_proj;
 
-private:
+  };
 
-  T3D           m_xform;
+  inline glm::vec3 get_eye(void) {
 
-  glm::mat4     m_view;
-  glm::mat4     m_proj;
+    return glm::normalize(
+      this->get_pos()
+    + this->get_fwd()
 
-  bool          m_update = true;
-  bool          m_ortho  = false;
+    );
 
-  uint32_t      m_ubo    = 0;
-
-  Camera::Lens  m_lens;
-  Gaol::Frustum m_frustum;
-
-// ---   *   ---   *   ---
-// guts
-
-  // for VP to shader
-  void nit_ubo(uint32_t loc);
-  void update_ubo(bool which);
+  };
 
 };
 
 // ---   *   ---   *   ---
 
-#endif // __24_CAMERA_H__
+#endif // __5E_CAMERA_H__
