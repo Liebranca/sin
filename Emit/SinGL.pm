@@ -148,7 +148,7 @@ sub get_params($class,$stout) {
     $gv->{decl}
   . $gf->{decl}
 
-  . "  const Params $name={\n"
+  . "  static const Params $name={\n"
 
   . "    .source_v     = $gv->{name},\n"
   . "    .source_v_sz  = $gv->{cnt},\n\n"
@@ -221,7 +221,7 @@ sub get_GENIUS($class,$stout,$mode) {
   );
 
   my $decl=
-    "  const char* ${name}[]={\n"
+    "  static const char* ${name}[]={\n"
   . "    " . (join ",\n$pad",@ar) . "\n"
   . "  };\n\n"
   ;
@@ -248,7 +248,7 @@ sub get_src($class,$stout,$mode) {
 
   return
 
-    "  const char* $name="
+    "  static const char* $name="
   . q[R"glsl(]
   . "\n"
 

@@ -94,7 +94,10 @@ void Camera::update_ubo(bool which) {
 // cstruc
 
 void Camera::nit(
+
   const glm::vec3& pos,
+  const glm::quat& rot,
+
   Camera::Lens&    lens,
 
   uint32_t         bind_idex
@@ -104,8 +107,11 @@ void Camera::nit(
   m_lens=lens;
 
   glm::vec3 npos=pos;
+  glm::quat nrot=rot;
 
   this->move(npos);
+  this->rotate(nrot);
+
   this->nit_ubo(bind_idex);
 
   m_frustum.set(

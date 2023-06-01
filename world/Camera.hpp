@@ -135,6 +135,8 @@ public:
   // cstruc
   void nit(
     const glm::vec3& pos,
+    const glm::quat& rot,
+
     Camera::Lens&    lens,
 
     uint32_t         bind_idex

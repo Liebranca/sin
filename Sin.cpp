@@ -103,6 +103,8 @@ void SIN::nit_programs(
 void SIN::nit_camera(
 
   const glm::vec3& pos,
+  const glm::quat& rot,
+
   Camera::Lens&    lens,
 
   uint32_t         bind_idex,
@@ -110,7 +112,7 @@ void SIN::nit_camera(
 
 ) {
 
-  cam.nit(pos,lens,bind_idex);
+  cam.nit(pos,rot,lens,bind_idex);
 
   if(ortho) {
     cam.use_ortho();
