@@ -19,6 +19,9 @@
   CX glm::vec3 Y_AXIS( 0, 1, 0);
   CX glm::vec3 Z_AXIS( 0, 0,-1);
 
+  CX glm::vec3 ID_VEC3(0,0,0);
+  CX glm::quat ID_QUAT(1,0,0,0);
+
 // ---   *   ---   *   ---
 // info
 
@@ -26,7 +29,7 @@ class T3D {
 
 public:
 
-  VERSION   "v2.00.5";
+  VERSION   "v2.00.6";
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -126,8 +129,16 @@ public:
   // accto orientation
   void calc_facing(void);
 
-  inline void move(glm::vec3 vel) {
+  // add vel to position
+  inline void move(glm::vec3& vel) {
     m_position+=vel;
+    m_cache.needs_update=1;
+
+  };
+
+  // ^overwrite
+  inline void teleport(glm::vec3& pos) {
+    m_position=pos;
     m_cache.needs_update=1;
 
   };

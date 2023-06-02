@@ -16,7 +16,7 @@ class Node {
 
 public:
 
-  VERSION   "v0.00.5b";
+  VERSION   "v0.00.7b";
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -178,6 +178,15 @@ public:
 
   };
 
+  inline void set_lindirn(glm::vec3& dirn) {
+
+    m_lindirn = dirn;
+    m_still   = false;
+
+    m_updated.movement = true;
+
+  };
+
   inline void set_lindirn_ax(
     uint8_t ax,
     float   value
@@ -186,6 +195,15 @@ public:
 
     m_lindirn[ax] = value;
     m_still       = false;
+
+    m_updated.movement = true;
+
+  };
+
+  inline void set_angdirn(glm::vec3& dirn) {
+
+    m_angdirn = dirn;
+    m_still   = false;
 
     m_updated.movement = true;
 
@@ -217,6 +235,15 @@ public:
 
     m_xform.rotate(delta);
     m_xform.calc_facing();
+
+    m_updated.bounds   = true;
+    m_updated.movement = true;
+
+  };
+
+  inline void teleport(glm::vec3& to) {
+
+    m_xform.teleport(to);
 
     m_updated.bounds   = true;
     m_updated.movement = true;
