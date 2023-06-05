@@ -60,6 +60,8 @@ void Meshes::nit(
   m_texture.nit(texsz);
   m_nitted=true;
 
+  m_vao.unbind();
+
 };
 
 // ---   *   ---   *   ---

@@ -13,8 +13,8 @@ class GBuff {
 
 public:
 
-  VERION    'v0.00.1b';
-  AUTHOR    'IBN-3DILA';
+  VERSION   "v0.00.1b";
+  AUTHOR    "IBN-3DILA";
 
   // usage hints
   cx32 BUFF_USAGE = 0x00FF;
@@ -56,7 +56,7 @@ private:
 // ---   *   ---   *   ---
 // guts
 
-  uint32_t gen(uint32_t* dst);
+  void gen(void);
   void expand_mode(uint32_t mode);
 
 // ---   *   ---   *   ---
@@ -88,8 +88,8 @@ public:
   ~GBuff(void);
 
   // use/dont use
-  void bind(void):
-  void unbind(void):
+  void bind(void);
+  void unbind(void);
 
   // (re) alloc and write
   void set_data(void* data);

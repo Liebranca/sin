@@ -95,7 +95,7 @@ private:
 
   ) {
 
-    auto& gbuff=m_vao->gbuff(dst);
+    auto& gbuff=m_vao.gbuff(dst);
     gbuff.sub_data(data,offset,cnt);
 
   };
@@ -210,7 +210,7 @@ public:
 
   // bind buffers
   inline void use(void) {
-    glBindVertexArray(m_vao);
+    m_vao.bind();
     m_texture.use();
 
   };

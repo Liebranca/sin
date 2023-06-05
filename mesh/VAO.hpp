@@ -14,8 +14,8 @@ class VAO {
 
 public:
 
-  VERSION   'v0.00.1b';
-  AUTHOR    'IBN-3DILA';
+  VERSION   "v0.00.1b";
+  AUTHOR    "IBN-3DILA";
 
   enum {
 
@@ -86,7 +86,7 @@ private:
 
   void vattr_i(
 
-    uint32_t mode,
+    Attr_Desc& d,
 
     uint64_t stride,
     uint64_t offset
@@ -95,7 +95,7 @@ private:
 
   void vattr_f(
 
-    uint32_t mode,
+    Attr_Desc& d,
 
     uint64_t stride,
     uint64_t offset
@@ -143,6 +143,9 @@ public:
   // use/dont use
   void bind(void);
   void unbind(void);
+
+  void bind_buffers(void);
+  void unbind_buffers(void);
 
   // set vertex attrs
   void vattr(

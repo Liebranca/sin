@@ -30,7 +30,7 @@ void VAO::gen(void) {
 void VAO::Attr_Desc::expand_mode(uint32_t mode) {
 
   // get data type
-  uint32_t t = mode & (INT_ATTR | FLOAT_ATTR);
+  uint32_t t = mode & (INT_ATTR | FLT_ATTR);
   uint32_t s = 0;
   bool     n = false;
 
@@ -99,18 +99,13 @@ void VAO::Attr_Desc::expand_mode(uint32_t mode) {
 
 void VAO::vattr_i(
 
-  uint32_t mode,
+  VAO::Attr_Desc& d,
 
   uint64_t stride,
   uint64_t offset
 
 ) {
 
-  // get descriptor from flags
-  Attr_Desc d;
-  d.expand_mode(mode);
-
-  // ^set values
   glVertexAttribIPointer(
 
     m_attr_ptr,
@@ -119,9 +114,6 @@ void VAO::vattr_i(
     stride,(void*) offset
 
   );
-
-  // move to next attr
-  this->adv_ptr(d);
 
 };
 
@@ -130,6 +122,29 @@ void VAO::vattr_i(
 
 void VAO::vattr_f(
 
+  VAO::Attr_Desc& d,
+
+  uint64_t stride,
+  uint64_t offset
+
+) {
+
+  glVertexAttribPointer(
+
+    m_attr_ptr,
+    d.elem_cnt,d.gl_type,d.norm,
+
+    stride,(void*) offset
+
+  );
+
+};
+
+// ---   *   ---   *   ---
+// set vertex attr
+
+void VAO::vattr(
+
   uint32_t mode,
 
   uint64_t stride,
@@ -137,24 +152,26 @@ void VAO::vattr_f(
 
 ) {
 
+  glEnableVertexAttribArray(m_attr_ptr);
+
   // get descriptor from flags
   Attr_Desc d;
   d.expand_mode(mode);
 
-  // ^set values
-  glVertexAttribIPointer(
+  // fork accto type
+  if(mode & INT_ATTR) {
+    this->vattr_i(d,stride,offset);
 
-    m_attr_ptr,
-    d.elem_cnt,d.gl_type,
+  } else {
+    this->vattr_f(d,stride,offset);
 
-    stride,(void*) offset
+  };
 
-  );
-
-  // move to next attr
+  // go to next attr
   this->adv_ptr(d);
 
 };
+
 
 // ---   *   ---   *   ---
 // increase idex accto attr size
@@ -175,36 +192,6 @@ void VAO::adv_ptr(
 };
 
 // ---   *   ---   *   ---
-// set vertex attr
-
-void VAO::vattr(
-
-  uint32_t mode,
-
-  uint64_t stride,
-  uint64_t offset
-
-) {
-
-  this->bind();
-  m_gbuff[VBO].bind();
-
-  glEnableVertexAttribArray(m_attr_ptr);
-
-  if(type & INT_ATTR) {
-    this->vattr_i(mode,stride,offset);
-
-  } else {
-    this->vattr_f(mode,stride,offset);
-
-  };
-
-  m_gbuff[VBO].unbind();
-  this->unbind();
-
-};
-
-// ---   *   ---   *   ---
 // use/dont use
 
 void VAO::bind(void) {
@@ -214,6 +201,18 @@ void VAO::bind(void) {
 
 void VAO::unbind(void) {
   glBindVertexArray(0);
+
+};
+
+void VAO::bind_buffers(void) {
+  m_gbuff[VBO].bind();
+  m_gbuff[IBO].bind();
+
+};
+
+void VAO::unbind_buffers(void) {
+  m_gbuff[VBO].unbind();
+  m_gbuff[IBO].unbind();
 
 };
 
@@ -277,8 +276,6 @@ void VAO::nit(
     ibo_elem_cnt
 
   );
-
-  this->unbind();
 
 };
 

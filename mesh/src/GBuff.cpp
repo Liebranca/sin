@@ -97,8 +97,6 @@ void GBuff::set_data(void* data) {
   this->bind();
   glBufferData(m_type,m_size,data,m_usage);
 
-  this->unbind();
-
 };
 
 // ---   *   ---   *   ---
@@ -118,8 +116,6 @@ void GBuff::sub_data(
 
   this->bind();
   glBufferSubData(m_type,offset,cnt,data);
-
-  this->unbind();
 
 };
 
