@@ -65,6 +65,21 @@ void Meshes::nit(
 };
 
 // ---   *   ---   *   ---
+// use/dont use
+
+void Meshes::bind(void) {
+  m_vao.bind();
+  m_texture.bind();
+
+};
+
+void Meshes::unbind(void) {
+  m_vao.unbind();
+  m_texture.unbind();
+
+};
+
+// ---   *   ---   *   ---
 // upload CRK verts to buffers
 
 uint32_t Meshes::new_mesh(

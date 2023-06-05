@@ -41,26 +41,16 @@ mat4& Camera::get_view(void) {
 
 void Camera::nit_ubo(uint32_t idex) {
 
-  glGenBuffers(1,&m_ubo);
-  glBindBuffer(GL_UNIFORM_BUFFER,m_ubo);
+  m_ubo.nit(
 
-  glBufferData(
-    GL_UNIFORM_BUFFER,
+    GBuff::D_UNIFORM,
 
-    sizeof(mat4)*2,
-    NULL,
-
-    GL_DYNAMIC_DRAW
+    sizeof(mat4),
+    2
 
   );
 
-  glBindBufferBase(
-    GL_UNIFORM_BUFFER,
-
-    idex,
-    m_ubo
-
-  );
+  m_ubo.bind_base(idex);
 
 };
 
@@ -69,26 +59,12 @@ void Camera::nit_ubo(uint32_t idex) {
 
 void Camera::update_ubo(bool which) {
 
-  uint64_t offset=(which)
-    ? sizeof(mat4)
-    : 0
-    ;
-
   auto& data=(which)
     ? m_view
     : m_proj
     ;
 
-  glBindBuffer(GL_UNIFORM_BUFFER,m_ubo);
-  glBufferSubData(
-    GL_UNIFORM_BUFFER,
-
-    offset,
-    sizeof(data),
-
-    (void*) &data[0][0]
-
-  );
+  m_ubo.sub_data((void*) &data[0][0],which,1);
 
 };
 
@@ -126,17 +102,6 @@ void Camera::nit(
     lens.far
 
   );
-
-}
-
-// ---   *   ---   *   ---
-
-Camera::~Camera(void) {
-
-  if(m_ubo) {
-    glDeleteBuffers(1,&m_ubo);
-
-  };
 
 };
 

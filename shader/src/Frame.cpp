@@ -73,7 +73,7 @@ void Programs::del(Program* p) {
 // ---   *   ---   *   ---
 // set current program
 
-void Programs::use(Program* p) {
+void Programs::bind(Program* p) {
 
   if(p != m_current) {
     m_current=p;

@@ -19,37 +19,17 @@ class SIN {
 
 public:
 
-  VERSION   "v0.00.8b";
+  VERSION   "v0.00.9b";
   AUTHOR    "IBN-3DILA";
 
+  // used for lines
   cx8 PROGRAM0 = 0x00;
+
+  // reserved for user
   cx8 PROGRAM1 = 0x01;
+  cx8 PROGRAM2 = 0x02;
 
-  CX vec3 COLORS[]={
-
-    {0.00f,0.00f,0.00f},
-    {0.49f,0.00f,0.00f},
-    {0.13f,0.50f,0.13f},
-    {0.81f,0.60f,0.13f},
-
-    {0.00f,0.38f,0.69f},
-    {0.25f,0.00f,0.25f},
-    {0.00f,0.50f,0.50f},
-    {0.72f,0.72f,0.72f},
-
-    {0.00f,0.00f,0.50f},
-    {0.63f,0.06f,0.13f},
-    {0.25f,0.68f,0.25f},
-    {0.69f,0.69f,0.00f},
-
-    {0.00f,0.25f,0.69f},
-    {0.50f,0.00f,0.62f},
-    {0.00f,0.62f,0.62f},
-    {0.69f,0.62f,0.38f},
-
-  };
-
-  // ^indices
+  // indices into color array
   enum {
 
     BLACK,RED,GREEN,YELLOW,
@@ -58,6 +38,8 @@ public:
     BRIGHT=8
 
   };
+
+  cx32 LINE_VAO_SZ = 0x100 * 2;
 
 // ---   *   ---   *   ---
 // helpers
@@ -115,20 +97,17 @@ private:
   enum {
 
     MATRIX_SSBO,
-
-    LINE_VBO,
-    LINE_IBO,
-
     NUM_BUFFS
 
   };
 
-  uint16_t m_line_cnt=0;
-  uint32_t m_buff[NUM_BUFFS];
+  GBuff    m_gbuff[NUM_BUFFS];
 
-  // ^makes and undoes
+  VAO      m_line_vao;
+  uint16_t m_line_cnt=0;
+
+  // ^makes
   void nit_buffs(void);
-  void del_buffs(void);
 
 // ---   *   ---   *   ---
 // iface
@@ -148,8 +127,9 @@ public:
 
   );
 
-  // ^make current
-  void use_batch(uint32_t idex);
+  // use/dont use
+  void bind_batch(uint32_t idex);
+  void unbind_batch(void);
 
   // instantiate an array of
   // shader params

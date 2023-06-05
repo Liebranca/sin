@@ -27,7 +27,7 @@ void Texture::nit(
   m_img_sz=sz;
 
   glGenTextures(1,&m_loc);
-  this->use();
+  this->bind();
 
   // alloc
   glTexStorage3D(
@@ -217,9 +217,9 @@ uint32_t Texture::can_push(uint32_t n) {
 };
 
 // ---   *   ---   *   ---
-// bind
+// use/dont use
 
-void Texture::use(void) {
+void Texture::bind(void) {
 
   glActiveTexture(GL_TEXTURE0+m_slot);
   glBindTexture(
@@ -227,6 +227,11 @@ void Texture::use(void) {
     m_loc
 
   );
+
+};
+
+void Texture::unbind(void) {
+  glBindTexture(GL_TEXTURE_2D_ARRAY,0);
 
 };
 

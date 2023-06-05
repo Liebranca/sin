@@ -397,7 +397,7 @@ sub get_deps_list($class,$stout) {
 
   return (
 
-    '<glm/vec4.hpp>',
+    '"bitter/kvrnel/GLM.hpp"',
     '"sin/shader/Params.hpp"',
 
     map {q["] . shpath($ARG) . q["] } @out

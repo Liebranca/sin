@@ -90,6 +90,14 @@ void GBuff::unbind(void) {
 };
 
 // ---   *   ---   *   ---
+// set bindpoint for ubo/ssbo
+
+void GBuff::bind_base(uint32_t idex) {
+  glBindBufferBase(m_type,idex,m_loc);
+
+};
+
+// ---   *   ---   *   ---
 // (re) alloc
 
 void GBuff::set_data(void* data) {

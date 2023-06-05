@@ -1,0 +1,102 @@
+// ---   *   ---   *   ---
+// DEBUG LINE
+// Must see the vecs
+//
+// LIBRE SOFTWARE
+// Licensed under GNU GPL3
+// be a bro and inherit
+//
+// CONTRIBUTORS
+// lyeb,
+
+// ---   *   ---   *   ---
+// info
+
+$:VERT;>
+
+  VERSION   v0.00.1b;
+  AUTHOR    "IBN-3DILA";
+
+// ---   *   ---   *   ---
+// inputs
+
+  in  vec4 Vertex;
+  flat out uint Color_ID;
+
+  layout (std140) uniform _Camera {
+    mat4 Projection;
+    mat4 View;
+
+  } Camera;
+
+// ---   *   ---   *   ---
+// world to screen
+
+vec4 apply_transform(vec4 co) {
+
+  return
+
+    Camera.Projection
+  * Camera.View
+
+  * co
+  ;
+
+};
+
+// ---   *   ---   *   ---
+
+void main(void) {
+
+  Color_ID    = uint(Vertex.w);
+  vec4 co     = vec4(Vertex.xyz,1);
+
+  gl_Position = apply_transform(co);
+
+};
+
+// ---   *   ---   *   ---
+// deps
+
+$:FRAG;>
+
+// ---   *   ---   *   ---
+// ROM
+
+  const vec3 COLORS[16]={
+
+    vec3(0.00f,0.00f,0.00f),
+    vec3(0.49f,0.00f,0.00f),
+    vec3(0.13f,0.50f,0.13f),
+    vec3(0.81f,0.60f,0.13f),
+
+    vec3(0.00f,0.38f,0.69f),
+    vec3(0.25f,0.00f,0.25f),
+    vec3(0.00f,0.50f,0.50f),
+    vec3(0.72f,0.72f,0.72f),
+
+    vec3(0.00f,0.00f,0.50f),
+    vec3(0.63f,0.06f,0.13f),
+    vec3(0.25f,0.68f,0.25f),
+    vec3(0.69f,0.69f,0.00f),
+
+    vec3(0.00f,0.25f,0.69f),
+    vec3(0.50f,0.00f,0.62f),
+    vec3(0.00f,0.62f,0.62f),
+    vec3(0.69f,0.62f,0.38f)
+
+  };
+
+// ---   *   ---   *   ---
+// outputs
+
+  out vec4 Frag_Color;
+
+// ---   *   ---   *   ---
+
+void main(void) {
+  Frag_Color=vec4(COLORS[Color_ID],1);
+
+};
+
+// ---   *   ---   *   ---

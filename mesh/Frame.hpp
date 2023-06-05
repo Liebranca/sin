@@ -208,12 +208,9 @@ public:
 
   );
 
-  // bind buffers
-  inline void use(void) {
-    m_vao.bind();
-    m_texture.use();
-
-  };
+  // use/dont use
+  void bind(void);
+  void unbind(void);
 
   inline void draw(uint32_t idex) {
     m_mesh[idex].draw();

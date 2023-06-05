@@ -22,7 +22,7 @@ Avt::set_config(
   incl=>[qw(bitter chasm)],
   libs=>[qw(gaoler)],
 
-  post_build=>q{
+  pre_build=>q{
 
     chdir Shb7::dir('sin');
 
@@ -38,6 +38,8 @@ Avt::set_config(
 
       "mesh/src/CRK_Linear.sg",
       "mesh/src/CRK_Angular.sg",
+
+      "mesh/src/Debug_Line.sg",
 
       "mesh/src/JOJ_Sprite.sg",
       "mesh/src/M3D.sg",

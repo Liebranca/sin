@@ -91,6 +91,9 @@ public:
   void bind(void);
   void unbind(void);
 
+  // set bindpoint for ubo/ssbo
+  void bind_base(uint32_t idex);
+
   // (re) alloc and write
   void set_data(void* data);
 

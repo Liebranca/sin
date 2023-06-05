@@ -13,6 +13,8 @@
 // deps
 
   #include "bitter/kvrnel/Bytes.hpp"
+  #include "mesh/Debug_Line.hpp_sg"
+
   #include "Sin.hpp"
 
 // ---   *   ---   *   ---
@@ -52,7 +54,7 @@ uint32_t SIN::new_batch(
   meshes.push_back(Meshes());
   meshes.back().nit(pidex,texsz);
 
-  this->use_batch(out);
+  this->bind_batch(out);
   m_queues.push_back(Queue());
 
   return out;
@@ -62,7 +64,7 @@ uint32_t SIN::new_batch(
 // ---   *   ---   *   ---
 // ^make current
 
-void SIN::use_batch(uint32_t idex) {
+void SIN::bind_batch(uint32_t idex) {
 
   // already set, skip
   if(idex == batch_id) {
@@ -76,8 +78,25 @@ void SIN::use_batch(uint32_t idex) {
   batch    = &meshes[idex];
   program  = programs.get(batch->get_pidex());
 
-  programs.use(program);
-  batch->use();
+  programs.bind(program);
+  batch->bind();
+
+};
+
+// ---   *   ---   *   ---
+// ^iv
+
+void SIN::unbind_batch(void) {
+
+  if(batch == NULL || batch_id== -1) {
+    return;
+
+  };
+
+  batch->unbind();
+
+  batch    = NULL;
+  batch_id = -1;
 
 };
 
@@ -288,7 +307,7 @@ void SIN::draw_enqueued(void) {
 
     };
 
-    this->use_batch(i);
+    this->bind_batch(i);
 
     // ^multiple matrix blocks
     // per batch
@@ -338,6 +357,30 @@ void SIN::draw_enqueued(void) {
     // advance batid
     i++;
 
+    this->unbind_batch();
+
+  };
+
+  if(m_line_cnt) {
+
+    m_line_vao.bind();
+
+    program=programs.get(PROGRAM0);
+    programs.bind(program);
+
+    glDrawElements(
+
+      GL_LINES,
+      m_line_cnt*2,
+
+      GL_UNSIGNED_SHORT,
+      (void*) 0
+
+    );
+
+    m_line_cnt=0;
+    m_line_vao.unbind();
+
   };
 
 };
@@ -354,9 +397,27 @@ void SIN::draw_line(
 
 ) {
 
-  auto& color=COLORS[color_idex];
+  uint16_t offset=m_line_cnt*2;
 
-  
+  vec4 verts[2]={
+    {a.x,a.y,a.z,float(color_idex)},
+    {b.x,b.y,b.z,float(color_idex)}
+
+  };
+
+  uint16_t indices[2]={
+    uint16_t(offset+0),
+    uint16_t(offset+1)
+
+  };
+
+  auto& vbo=m_line_vao.gbuff(VAO::VBO);
+  auto& ibo=m_line_vao.gbuff(VAO::IBO);
+
+  vbo.sub_data((void*) verts,offset,2);
+  ibo.sub_data((void*) indices,offset,2);
+
+  m_line_cnt++;
 
 };
 
@@ -368,17 +429,8 @@ void SIN::upload_mats(
 
 ) {
 
-  glBindBuffer(
-    GL_SHADER_STORAGE_BUFFER,
-    m_buff[MATRIX_SSBO]
-
-  );
-
-  glBufferSubData(
-    GL_SHADER_STORAGE_BUFFER,0,
-
-    sizeof(mats),
-    (void*) &mats
+  m_gbuff[MATRIX_SSBO].sub_data(
+    (void*) &mats,0,1
 
   );
 
@@ -389,39 +441,40 @@ void SIN::upload_mats(
 
 void SIN::nit_buffs(void) {
 
-  glGenBuffers(NUM_BUFFS,&m_buff[0]);
+  m_gbuff[MATRIX_SSBO].nit(
 
-  glBindBuffer(
-    GL_SHADER_STORAGE_BUFFER,
-    m_buff[MATRIX_SSBO]
-
-  );
-
-  glBufferData(
-    GL_SHADER_STORAGE_BUFFER,
+    GBuff::D_STORAGE,
 
     sizeof(Meshes::Draw_Queue_Mats),
-
-    NULL,
-    GL_DYNAMIC_DRAW
+    1
 
   );
 
-  glBindBufferBase(
-    GL_SHADER_STORAGE_BUFFER,
-    0,
+  m_gbuff[MATRIX_SSBO].bind_base(0);
 
-    m_buff[MATRIX_SSBO]
+  m_line_vao.nit(
+
+    GBuff::D_ARRAY,
+    GBuff::D_ELEMENT,
+
+    sizeof(vec4),
+    LINE_VAO_SZ,
+
+    sizeof(uint16_t),
+    LINE_VAO_SZ
 
   );
 
-};
+  m_line_vao.vattr(
 
-// ---   *   ---   *   ---
-// ^cleanup
+    VAO::R32_4,
 
-void SIN::del_buffs(void) {
-  glDeleteBuffers(NUM_BUFFS,&m_buff[0]);
+    sizeof(vec4),
+    0
+
+  );
+
+  m_line_vao.unbind();
 
 };
 
@@ -430,12 +483,10 @@ void SIN::del_buffs(void) {
 
 SIN::SIN(void) {
   this->nit_buffs();
+  programs.nit(&shader::mesh::Debug_Line);
 
 };
 
-SIN::~SIN(void) {
-  this->del_buffs();
-
-};
+SIN::~SIN(void) {};
 
 // ---   *   ---   *   ---

@@ -9,6 +9,7 @@
   #include "bitter/kvrnel/GLM.hpp"
   #include "gaoler/Frustum.hpp"
 
+  #include "mesh/GBuff.hpp"
   #include "world/Node.hpp"
 
 // ---   *   ---   *   ---
@@ -18,7 +19,7 @@ class Camera : public Node {
 
 public:
 
-  VERSION   "v2.00.6";
+  VERSION   "v2.00.7";
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -80,15 +81,16 @@ public:
 
 private:
 
-  mat4     m_view;
-  mat4     m_proj;
-  mat4     m_stow;
-
   Camera::Lens  m_lens;
   Gaol::Frustum m_frustum;
 
-  uint32_t      m_ubo     = 0;
-  bool          m_ortho   = false;
+  GBuff m_ubo;
+
+  mat4  m_view;
+  mat4  m_proj;
+  mat4  m_stow;
+
+  bool  m_ortho=false;
 
 // ---   *   ---   *   ---
 // guts
@@ -153,7 +155,6 @@ public:
 
   // ctrash
   Camera(void) {};
-  ~Camera(void);
 
 // ---   *   ---   *   ---
 

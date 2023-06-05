@@ -18,7 +18,7 @@ class Programs {
 
 public:
 
-  VERSION   "v0.00.2b";
+  VERSION   "v0.00.3b";
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -56,9 +56,9 @@ public:
   };
 
   // set current
-  void use(Program* p);
-  inline void use(uint32_t p) {
-    this->use(this->get(p));
+  void bind(Program* p);
+  inline void bind(uint32_t p) {
+    this->bind(this->get(p));
 
   };
 

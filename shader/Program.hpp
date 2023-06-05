@@ -153,9 +153,6 @@ public:
 
 };
 
-// glUseProgram wrapper
-void chkProgram(uint64_t idex);
-
 // ---   *   ---   *   ---
 
 #endif // __SHADER_PROGRAM_H__

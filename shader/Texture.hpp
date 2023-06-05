@@ -14,7 +14,7 @@ class Texture {
 
 public:
 
-  VERSION   "v0.00.4b";
+  VERSION   "v0.00.5b";
   AUTHOR    "IBN-3DILA";
 
   cx8 MAX_MIP         = 1;
@@ -71,8 +71,9 @@ public:
   // dstruc
   ~Texture(void);
 
-  // bind
-  void use(void);
+  // use/dont use
+  void bind(void);
+  void unbind(void);
 
 //  // transfer ownership
 //  inline void from(Texture& other) {
