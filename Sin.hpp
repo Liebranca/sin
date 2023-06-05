@@ -4,7 +4,7 @@
 // ---   *   ---   *   ---
 // deps
 
-  #include "bitter/kvrnel/Style.hpp"
+  #include "bitter/kvrnel/GLM.hpp"
   #include "bitter/kvrnel/Clock.hpp"
 
   #include "shader/Frame.hpp"
@@ -121,8 +121,8 @@ public:
   // initialize camera
   void nit_camera(
 
-    const glm::vec3& pos,
-    const glm::quat& rot,
+    const vec3& pos,
+    const quat& rot,
 
     Camera::Lens&    lens,
 
@@ -147,8 +147,8 @@ public:
     uint32_t   batid,
     uint32_t   meshid,
 
-    glm::mat4& model,
-    glm::mat3& nmat
+    mat4& model,
+    mat3& nmat
 
   );
 
@@ -160,7 +160,7 @@ public:
     vec3    a,
     vec3    b,
 
-    uint8_t color=RED
+    uint8_t color=0x00
 
   );
 

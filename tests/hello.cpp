@@ -151,8 +151,8 @@ int draw(void* data) {
 
 int logic(void* data) {
 
-  static glm::vec3 linvel(0.2f,0,0);
-  static glm::quat angvel(1,
+  static vec3 linvel(0.2f,0,0);
+  static quat angvel(1,
     glm::radians(1.25f),
     glm::radians(0.75f),
 

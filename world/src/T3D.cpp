@@ -27,7 +27,7 @@ mat4 T3D::calc_model(bool igpar) {
   mat4 parmat;
 
   mat4 wpos=glm::translate(m_position);
-  mat4 wrot=glm::mat4_cast(
+  mat4 wrot=mat4_cast(
     glm::normalize(m_orientation)
 
   );
@@ -96,7 +96,7 @@ bool T3D::face_to(
 //
 //  };
 //
-//  quat delta=glm::quatLookAt(vecTo,Y_AXIS);
+//  quat delta=quatLookAt(vecTo,Y_AXIS);
 //  quat& rot=this->orientation;
 //
 //  if(delta!=rot) {

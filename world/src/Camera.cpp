@@ -18,7 +18,7 @@
 // ---   *   ---   *   ---
 // fetch or regenerate view matrix
 
-glm::mat4& Camera::get_view(void) {
+mat4& Camera::get_view(void) {
 
   if(m_updated.movement) {
 
@@ -47,7 +47,7 @@ void Camera::nit_ubo(uint32_t idex) {
   glBufferData(
     GL_UNIFORM_BUFFER,
 
-    sizeof(glm::mat4)*2,
+    sizeof(mat4)*2,
     NULL,
 
     GL_DYNAMIC_DRAW
@@ -70,7 +70,7 @@ void Camera::nit_ubo(uint32_t idex) {
 void Camera::update_ubo(bool which) {
 
   uint64_t offset=(which)
-    ? sizeof(glm::mat4)
+    ? sizeof(mat4)
     : 0
     ;
 
@@ -97,8 +97,8 @@ void Camera::update_ubo(bool which) {
 
 void Camera::nit(
 
-  const glm::vec3& pos,
-  const glm::quat& rot,
+  const vec3& pos,
+  const quat& rot,
 
   Camera::Lens&    lens,
 
@@ -108,8 +108,8 @@ void Camera::nit(
 
   m_lens=lens;
 
-  glm::vec3 npos=pos;
-  glm::quat nrot=rot;
+  vec3 npos=pos;
+  quat nrot=rot;
 
   this->move(npos);
   this->rotate(nrot);

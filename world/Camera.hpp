@@ -6,10 +6,7 @@
 
   #include <cmath>
 
-  #include <glm/glm.hpp>
-  #include <glm/gtx/transform.hpp>
-
-  #include "bitter/kvrnel/Style.hpp"
+  #include "bitter/kvrnel/GLM.hpp"
   #include "gaoler/Frustum.hpp"
 
   #include "world/Node.hpp"
@@ -40,7 +37,7 @@ public:
 
 // ---   *   ---   *   ---
 
-    glm::mat4 ortho(void) {
+    mat4 ortho(void) {
 
       float w=width;
       float h=height;
@@ -59,7 +56,7 @@ public:
 
     };
 
-    glm::mat4 persp(void) {
+    mat4 persp(void) {
 
       float w=width;
       float h=height;
@@ -83,9 +80,9 @@ public:
 
 private:
 
-  glm::mat4     m_view;
-  glm::mat4     m_proj;
-  glm::mat4     m_stow;
+  mat4     m_view;
+  mat4     m_proj;
+  mat4     m_stow;
 
   Camera::Lens  m_lens;
   Gaol::Frustum m_frustum;
@@ -101,7 +98,7 @@ private:
   void update_ubo(bool which);
 
   // regenerate view matrix
-  inline glm::mat4 calc_view(void) {
+  inline mat4 calc_view(void) {
     return glm::lookAt(
 
       this->get_pos(),
@@ -116,7 +113,7 @@ private:
   };
 
   // ^get screen-to-world matrix
-  inline glm::mat4 calc_stow(void) {
+  inline mat4 calc_stow(void) {
 
     return
       glm::inverse(m_view)
@@ -145,8 +142,8 @@ public:
 
   // cstruc
   void nit(
-    const glm::vec3& pos,
-    const glm::quat& rot,
+    const vec3& pos,
+    const quat& rot,
 
     Camera::Lens&    lens,
 
@@ -172,7 +169,7 @@ public:
   };
 
   inline bool point_in_frustum(
-    glm::vec3& p
+    vec3& p
 
   ) {
 
@@ -250,19 +247,19 @@ public:
 
   };
 
-  glm::mat4& get_view(void);
+  mat4& get_view(void);
 
-  inline glm::mat4& get_stow(void) {
+  inline mat4& get_stow(void) {
     return m_stow;
 
   };
 
-  inline glm::mat4& get_proj(void) {
+  inline mat4& get_proj(void) {
     return m_proj;
 
   };
 
-  inline glm::vec3 get_eye(void) {
+  inline vec3 get_eye(void) {
 
     return glm::normalize(
       this->get_pos()

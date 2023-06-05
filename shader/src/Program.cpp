@@ -28,7 +28,7 @@
 
 void Program::set_uniform(
   uint32_t   idex,
-  glm::mat4& data
+  mat4& data
 
 ) {
 
@@ -42,7 +42,7 @@ void Program::set_uniform(
 
 void Program::set_uniform(
   uint32_t   idex,
-  glm::mat3& data
+  mat3& data
 
 ) {
 
@@ -56,7 +56,7 @@ void Program::set_uniform(
 
 void Program::set_uniform(
   uint32_t    idex,
-  glm::uvec4& data
+  uvec4& data
 
 ) {
 

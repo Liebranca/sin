@@ -32,7 +32,7 @@ void Node::nit(Bld& bld) {
 
 void Node::calc_bounds(void) {
 
-  glm::vec3 dim(0.5f,1.0,0.5);
+  vec3 dim(0.5f,1.0,0.5);
 
   m_bound.set(
     m_xform.get_model(),
@@ -57,7 +57,7 @@ bool Node::boundschk(Node& other) {
   auto col=s0.isect_sphere(s1);
 
   if(col.hit()) {
-    glm::vec3 n=col.normal()*0.05f;
+    vec3 n=col.normal()*0.05f;
     this->set_linvel(n);
 
   };

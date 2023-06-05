@@ -7,7 +7,7 @@
   #include <memory>
   #include <glm/glm.hpp>
 
-  #include "bitter/kvrnel/Style.hpp"
+  #include "bitter/kvrnel/GLM.hpp"
   #include "bitter/ff/CRK.hpp"
 
   #include "mesh/Mesh.hpp"
@@ -32,8 +32,8 @@ public:
 
   // ^matrices per queue
   struct Draw_Queue_Mats {
-    glm::mat4 model[QUEUE_SZ];
-    glm::mat4 nmat[QUEUE_SZ];
+    mat4 model[QUEUE_SZ];
+    mat4 nmat[QUEUE_SZ];
 
   };
 

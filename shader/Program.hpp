@@ -7,7 +7,7 @@
   #include <vector>
   #include <glm/mat4x4.hpp>
 
-  #include "bitter/kvrnel/Style.hpp"
+  #include "bitter/kvrnel/GLM.hpp"
   #include "shader/Constants.hpp"
   #include "shader/Params.hpp"
 
@@ -106,19 +106,19 @@ public:
 
   void set_uniform(
     uint32_t   idex,
-    glm::mat4& data
+    mat4& data
 
   );
 
   void set_uniform(
     uint32_t   idex,
-    glm::mat3& data
+    mat3& data
 
   );
 
   void set_uniform(
     uint32_t    idex,
-    glm::uvec4& data
+    uvec4& data
 
   );
 

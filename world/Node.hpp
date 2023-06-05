@@ -4,7 +4,7 @@
 // ---   *   ---   *   ---
 // deps
 
-  #include "bitter/kvrnel/Style.hpp"
+  #include "bitter/kvrnel/GLM.hpp"
   #include "gaoler/Bound.hpp"
 
   #include "world/T3D.hpp"
@@ -73,11 +73,11 @@ private:
 
   Gaol::Bound m_bound;
 
-  glm::vec3   m_lindirn = {0,0,0};
-  glm::vec3   m_linvel  = {0,0,0};
+  vec3   m_lindirn = {0,0,0};
+  vec3   m_linvel  = {0,0,0};
 
-  glm::vec3   m_angdirn = {0,0,0};
-  glm::vec3   m_angvel  = {0,0,0};
+  vec3   m_angdirn = {0,0,0};
+  vec3   m_angvel  = {0,0,0};
 
   bool        m_still   = true;
   bool        m_visible = false;
@@ -124,33 +124,33 @@ public:
   };
 
   // local vectors
-  inline glm::vec3& get_hax(void) {
+  inline vec3& get_hax(void) {
     return m_xform.hax();
 
   };
 
-  inline glm::vec3& get_up(void) {
+  inline vec3& get_up(void) {
     return m_xform.up();
 
   };
 
-  inline glm::vec3& get_fwd(void) {
+  inline vec3& get_fwd(void) {
     return m_xform.fwd();
 
   };
 
-  inline glm::vec3& get_pos(void) {
+  inline vec3& get_pos(void) {
     return m_xform.position();
 
   };
 
-  inline glm::quat& get_rot(void) {
+  inline quat& get_rot(void) {
     return m_xform.orientation();
 
   };
 
   // calc point in front of self
-  inline glm::vec3 get_fwd_cast(
+  inline vec3 get_fwd_cast(
     float dist=3.5f
 
   ) {
@@ -165,19 +165,19 @@ public:
   };
 
   // setters
-  inline void set_linvel(glm::vec3& vel) {
+  inline void set_linvel(vec3& vel) {
     m_linvel = vel;
     m_still  = false;
 
   };
 
-  inline void set_angvel(glm::vec3& vel) {
+  inline void set_angvel(vec3& vel) {
     m_angvel = vel;
     m_still  = false;
 
   };
 
-  inline void set_lindirn(glm::vec3& dirn) {
+  inline void set_lindirn(vec3& dirn) {
 
     m_lindirn = dirn;
     m_still   = false;
@@ -199,7 +199,7 @@ public:
 
   };
 
-  inline void set_angdirn(glm::vec3& dirn) {
+  inline void set_angdirn(vec3& dirn) {
 
     m_angdirn = dirn;
     m_still   = false;
@@ -221,7 +221,7 @@ public:
 
   };
 
-  inline void move(glm::vec3& vel) {
+  inline void move(vec3& vel) {
 
     m_xform.move(vel);
 
@@ -230,7 +230,7 @@ public:
 
   };
 
-  inline void rotate(glm::quat& delta) {
+  inline void rotate(quat& delta) {
 
     m_xform.rotate(delta);
     m_xform.calc_facing();
@@ -240,7 +240,7 @@ public:
 
   };
 
-  inline void teleport(glm::vec3& to) {
+  inline void teleport(vec3& to) {
 
     m_xform.teleport(to);
 

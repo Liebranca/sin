@@ -102,8 +102,8 @@ void SIN::nit_programs(
 
 void SIN::nit_camera(
 
-  const glm::vec3& pos,
-  const glm::quat& rot,
+  const vec3& pos,
+  const quat& rot,
 
   Camera::Lens&    lens,
 
@@ -199,7 +199,7 @@ void Node::lin_fmotion(void) {
 
   auto& Sin=SIN::ice();
 
-  glm::vec3 mvec=((
+  vec3 mvec=((
     (this->get_hax() * m_lindirn.x)
   + (this->get_up()  * m_lindirn.y)
   + (this->get_fwd() * m_lindirn.z)
@@ -217,14 +217,14 @@ void Node::ang_fmotion(void) {
 
   auto& Sin=SIN::ice();
 
-  glm::vec3 dirn=((
+  vec3 dirn=((
     (this->get_hax() * m_angdirn.x)
   + (this->get_up()  * m_angdirn.y)
   + (this->get_fwd() * m_angdirn.z)
 
   ) + m_angvel) * Sin.fBy();;
 
-  glm::quat rvec={1,dirn.x,dirn.y,dirn.z};
+  quat rvec={1,dirn.x,dirn.y,dirn.z};
 
   this->rotate(rvec);
 
@@ -238,8 +238,8 @@ void SIN::enqueue(
   uint32_t   batid,
   uint32_t   meshid,
 
-  glm::mat4& model,
-  glm::mat3& nmat
+  mat4& model,
+  mat3& nmat
 
 ) {
 
@@ -313,7 +313,7 @@ void SIN::draw_enqueued(void) {
         uint32_t matid  = batch->matof(meshid);
 
         // ^single uniform per draw ;>
-        glm::uvec4 obdata={
+        uvec4 obdata={
           drawid,
           matid,
           0,
@@ -345,7 +345,16 @@ void SIN::draw_enqueued(void) {
 // ---   *   ---   *   ---
 // ^selfex
 
-void SIN::draw_line();
+void SIN::draw_line(
+
+  vec3    a,
+  vec3    b,
+
+  uint8_t color
+
+) {
+
+};
 
 // ---   *   ---   *   ---
 // updates ssbo with matrix block
