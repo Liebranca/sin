@@ -350,9 +350,13 @@ void SIN::draw_line(
   vec3    a,
   vec3    b,
 
-  uint8_t color
+  uint8_t color_idex
 
 ) {
+
+  auto& color=COLORS[color_idex];
+
+  
 
 };
 

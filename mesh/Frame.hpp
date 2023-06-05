@@ -10,6 +10,7 @@
   #include "bitter/kvrnel/GLM.hpp"
   #include "bitter/ff/CRK.hpp"
 
+  #include "mesh/VAO.hpp"
   #include "mesh/Mesh.hpp"
   #include "mesh/Sprite.hpp"
 
@@ -20,7 +21,7 @@ class Meshes {
 
 public:
 
-  VERSION   "v0.01.6b";
+  VERSION   "v0.01.7b";
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -60,23 +61,12 @@ private:
   // ^max instances independent of size
   cx16 BATCH_SZ  = Texture::MAX_DEPTH;
 
-  enum {
-
-    VBO,
-    IBO,
-
-    NUM_BUFFS
-
-  };
-
   typedef std::vector<ANS> Anim_Meta;
 
 // ---   *   ---   *   ---
 // attrs
 
-  uint32_t m_vao;
-  uint32_t m_buff[NUM_BUFFS];
-
+  VAO      m_vao;
   Mesh     m_mesh[BATCH_SZ];
 
   uint16_t m_vcount = 0;
@@ -95,45 +85,41 @@ private:
 // ---   *   ---   *   ---
 // guts
 
-  // wrap around the boiler for
-  // gl-subdata into m_buff[idex]
-  void upload(
+  inline void upload(
 
-    uint64_t idex,
+    uint64_t dst,
+    void*    data,
 
     uint64_t offset,
-    uint64_t sz,
+    uint64_t cnt
 
-    void*    data
+  ) {
 
-  );
+    auto& gbuff=m_vao->gbuff(dst);
+    gbuff.sub_data(data,offset,cnt);
 
-  // ^ice for vertex buffer
-  inline void upload_verts(
+  };
 
+  // ^add to vertex buffer
+  inline void push_verts(
     uint64_t cnt,
-    uint64_t sz,
-
     void*    data
 
   ) {
 
-    this->upload(VBO,m_vcount*sz,cnt*sz,data);
+    this->upload(VAO::VBO,data,m_vcount,cnt);
     m_vcount+=cnt;
 
   };
 
-  // ^ice for index buffer
-  inline void upload_indices(
-
+  // ^add to index buffer
+  inline void push_indices(
     uint64_t cnt,
-    uint64_t sz,
-
     void*    data
 
   ) {
 
-    this->upload(IBO,m_icount*sz,cnt*sz,data);
+    this->upload(VAO::IBO,data,m_icount,cnt);
     m_icount+=cnt;
 
   };
@@ -145,8 +131,6 @@ private:
 
   );
 
-  CRK::Mesh defcube(void);
-
 // ---   *   ---   *   ---
 // changing already set sections
 // of gl buffers
@@ -154,30 +138,26 @@ private:
   inline void repl_verts(
 
     uint64_t offset,
-
     uint64_t cnt,
-    uint64_t sz,
 
     void*    data
 
   ) {
 
-    this->upload(VBO,offset*sz,cnt*sz,data);
+    this->upload(VAO::VBO,data,offset,cnt);
 
   };
 
   inline void repl_indices(
 
     uint64_t offset,
-
     uint64_t cnt,
-    uint64_t sz,
 
     void*    data
 
   ) {
 
-    this->upload(IBO,offset*sz,cnt*sz,data);
+    this->upload(VAO::IBO,data,offset,cnt);
 
   };
 
@@ -204,7 +184,6 @@ public:
 
   // ctrash
   Meshes(void) {};
-  ~Meshes(void);
 
   // loads resource from file
   uint32_t load_asset(

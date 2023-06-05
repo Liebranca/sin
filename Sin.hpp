@@ -19,11 +19,45 @@ class SIN {
 
 public:
 
-  VERSION   "v0.00.7b";
+  VERSION   "v0.00.8b";
   AUTHOR    "IBN-3DILA";
 
   cx8 PROGRAM0 = 0x00;
   cx8 PROGRAM1 = 0x01;
+
+  CX vec3 COLORS[]={
+
+    {0.00f,0.00f,0.00f},
+    {0.49f,0.00f,0.00f},
+    {0.13f,0.50f,0.13f},
+    {0.81f,0.60f,0.13f},
+
+    {0.00f,0.38f,0.69f},
+    {0.25f,0.00f,0.25f},
+    {0.00f,0.50f,0.50f},
+    {0.72f,0.72f,0.72f},
+
+    {0.00f,0.00f,0.50f},
+    {0.63f,0.06f,0.13f},
+    {0.25f,0.68f,0.25f},
+    {0.69f,0.69f,0.00f},
+
+    {0.00f,0.25f,0.69f},
+    {0.50f,0.00f,0.62f},
+    {0.00f,0.62f,0.62f},
+    {0.69f,0.62f,0.38f},
+
+  };
+
+  // ^indices
+  enum {
+
+    BLACK,RED,GREEN,YELLOW,
+    BLUE,PURPLE,CYAN,WHITE,
+
+    BRIGHT=8
+
+  };
 
 // ---   *   ---   *   ---
 // helpers
@@ -79,11 +113,17 @@ private:
 
   // for gl buffers
   enum {
+
     MATRIX_SSBO,
+
+    LINE_VBO,
+    LINE_IBO,
+
     NUM_BUFFS
 
   };
 
+  uint16_t m_line_cnt=0;
   uint32_t m_buff[NUM_BUFFS];
 
   // ^makes and undoes
@@ -160,7 +200,7 @@ public:
     vec3    a,
     vec3    b,
 
-    uint8_t color=0x00
+    uint8_t color_idex=RED
 
   );
 

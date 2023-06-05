@@ -32,101 +32,33 @@ void Meshes::nit(
 
   m_pidex=pidex;
 
-  // gl alloc
-  glGenVertexArrays(1,&m_vao);
-  glBindVertexArray(m_vao);
-  glGenBuffers(NUM_BUFFS,&m_buff[0]);
+  // nit buffs
+  m_vao.nit(
 
-  // get vertex mem
-  glBindBuffer(
-    GL_ARRAY_BUFFER,
-    m_buff[VBO]
-
-  );
-
-  glBufferData(
-    GL_ARRAY_BUFFER,
-
-    Meshes::BUFF_SZ
-  * sizeof(CRK::Vertex),
-
-    NULL,
-    GL_DYNAMIC_DRAW
-
-  );
-
-  // set attrib pointers
-  glEnableVertexAttribArray(0);
-  glVertexAttribIPointer(
-    0,4,GL_UNSIGNED_INT,
+    GBuff::D_ARRAY,
+    GBuff::D_ELEMENT,
 
     sizeof(CRK::Vertex),
-    (void*) offsetof(CRK::Vertex,data)
+    Meshes::BUFF_SZ,
 
-  );
-
-  // get idex mem
-  glBindBuffer(
-    GL_ELEMENT_ARRAY_BUFFER,
-    m_buff[IBO]
-
-  );
-
-  glBufferData(
-    GL_ELEMENT_ARRAY_BUFFER,
-
+    sizeof(uint16_t),
     Meshes::BUFF_SZ
-  * sizeof(uint16_t),
-
-    NULL,
-    GL_DYNAMIC_DRAW
 
   );
 
+  // ^vertex attrs
+  m_vao.vattr(
+
+    VAO::U32_4,
+
+    sizeof(CRK::Vertex),
+    offsetof(CRK::Vertex,data)
+
+  );
+
+  // reserve texture array
   m_texture.nit(texsz);
   m_nitted=true;
-
-  // unbind
-  glBindVertexArray(0);
-
-};
-
-// ---   *   ---   *   ---
-// destroy
-
-Meshes::~Meshes(void) {
-
-  if(m_nitted) {
-    glDeleteBuffers(NUM_BUFFS,&m_buff[0]);
-    glDeleteVertexArrays(1,&m_vao);
-
-  };
-
-};
-
-// ---   *   ---   *   ---
-// wrap around the boiler for
-// gl-subdata into m_buff[idex]
-
-void Meshes::upload(
-
-  uint64_t idex,
-
-  uint64_t offset,
-  uint64_t sz,
-
-  void*    data
-
-) {
-
-  // TODO: make this a const array fetch
-  uint32_t type=(idex==VBO)
-    ? GL_ARRAY_BUFFER
-    : GL_ELEMENT_ARRAY_BUFFER
-    ;
-
-  glBindBuffer(type,m_buff[idex]);
-  glBufferSubData(type,offset,sz,data);
 
 };
 
@@ -161,15 +93,8 @@ uint32_t Meshes::new_mesh(
   m_mesh[m_top].set_caps(vcount,icount);
 
   // send data to glbuffs
-  this->upload_verts(
-    vcount,sizeof(CRK::Vertex),verts
-
-  );
-
-  this->upload_indices(
-    icount,sizeof(uint16_t),indices
-
-  );
+  this->push_verts(vcount,verts);
+  this->push_indices(icount,indices);
 
   return m_top++;
 
@@ -218,15 +143,8 @@ bool Meshes::repl_mesh(
   );
 
   // send data to glbuffs
-  this->repl_verts(
-    voffset,vcount,sizeof(CRK::Vertex),verts
-
-  );
-
-  this->repl_indices(
-    ioffset,icount,sizeof(uint16_t),indices
-
-  );
+  this->repl_verts(voffset,vcount,verts);
+  this->repl_indices(ioffset,icount,indices);
 
   return true;
 
