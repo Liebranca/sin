@@ -20,7 +20,7 @@ class Meshes {
 
 public:
 
-  VERSION   "v0.01.4b";
+  VERSION   "v0.01.6b";
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -148,6 +148,49 @@ private:
   CRK::Mesh defcube(void);
 
 // ---   *   ---   *   ---
+// changing already set sections
+// of gl buffers
+
+  inline void repl_verts(
+
+    uint64_t offset,
+
+    uint64_t cnt,
+    uint64_t sz,
+
+    void*    data
+
+  ) {
+
+    this->upload(VBO,offset*sz,cnt*sz,data);
+
+  };
+
+  inline void repl_indices(
+
+    uint64_t offset,
+
+    uint64_t cnt,
+    uint64_t sz,
+
+    void*    data
+
+  ) {
+
+    this->upload(IBO,offset*sz,cnt*sz,data);
+
+  };
+
+  bool repl_mesh(
+
+    uint32_t   idex,
+
+    CRK::Prim& p,
+    uint32_t   mode=GL_TRIANGLES
+
+  );
+
+// ---   *   ---   *   ---
 // iface
 
 public:
@@ -178,6 +221,13 @@ public:
 
   // create editable mesh
   uint32_t new_edit(void);
+
+  // overwrite vertex data in slot
+  void repl(
+    uint32_t  beg,
+    CRK::Prim p
+
+  );
 
   // bind buffers
   inline void use(void) {

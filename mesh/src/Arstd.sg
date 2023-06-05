@@ -45,6 +45,9 @@ $:VERT;>
 
   out vec3 Tex_Coords;
 
+  out vec3 Cam_Fwd;
+  out vec3 Cam_Pos;
+
   flat out uint fDraw_ID;
   flat out uint fSurf_ID;
 
@@ -85,6 +88,19 @@ vec3 extract_tex(void) {
     Draw_Data[1]
 
   );
+
+};
+
+// ---   *   ---   *   ---
+// get camera position and
+// fwd normal from view
+
+void unpack_view(void) {
+
+  mat4 m  = inverse(Camera.View);
+
+  Cam_Fwd = vec3(m[2]);
+  Cam_Pos = vec3(m[3]);
 
 };
 

@@ -39,6 +39,8 @@ void main(void) {
   fDraw_ID    = Draw_Data[0];
   fSurf_ID    = Draw_Data[1];
 
+  unpack_view();
+
 };
 
 // ---   *   ---   *   ---
@@ -58,10 +60,10 @@ $:FRAG;>
 
   out vec4 Frag_Color;
 
-  const vec3 Eye=vec3(0,0,1);
-  const vec3 Colors[2]={
-    vec3(0,0,1),
-    vec3(1,0,0)
+  const vec3 COLORS[2]={
+
+    vec3(0.8,0.8,0.8),
+    vec3(0.8,0.0,0.0),
 
   };
 
@@ -69,13 +71,12 @@ $:FRAG;>
 
 void main(void) {
 
-  Frag_Color=texture(Surface,Tex_Coords);
+//  Frag_Color=texture(Surface,Tex_Coords);
 
-  float d=dot(Eye,Normal);
-  int idex=int(fDraw_ID==0);
+  fDraw_ID;
 
-  vec3 color=Colors[idex]*d;
-  Frag_Color=vec4(color,1);
+  float d=dot(Cam_Fwd,Normal);
+  Frag_Color=vec4(COLORS[fDraw_ID]*d,1);
 
 };
 

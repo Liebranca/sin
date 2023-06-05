@@ -4,23 +4,19 @@
 // ---   *   ---   *   ---
 // deps
 
-  #include <glm/glm.hpp>
-  #include <glm/gtx/quaternion.hpp>
-  #include <glm/gtc/matrix_inverse.hpp>
-
-  #include "bitter/kvrnel/Style.hpp"
+  #include "bitter/kvrnel/GLM.hpp"
 
 // ---   *   ---   *   ---
 // consts
 
-  CX glm::mat4 IDENTITY(1);
+  CX mat4 IDENTITY(1);
 
-  CX glm::vec3 X_AXIS( 1, 0, 0);
-  CX glm::vec3 Y_AXIS( 0, 1, 0);
-  CX glm::vec3 Z_AXIS( 0, 0,-1);
+  CX vec3 X_AXIS( 1, 0, 0);
+  CX vec3 Y_AXIS( 0, 1, 0);
+  CX vec3 Z_AXIS( 0, 0,-1);
 
-  CX glm::vec3 ID_VEC3(0,0,0);
-  CX glm::quat ID_QUAT(1,0,0,0);
+  CX vec3 ID_VEC3(0,0,0);
+  CX quat ID_QUAT(1,0,0,0);
 
 // ---   *   ---   *   ---
 // info
@@ -29,7 +25,7 @@ class T3D {
 
 public:
 
-  VERSION   "v2.00.6";
+  VERSION   "v2.00.7";
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -41,8 +37,8 @@ private:
   // model matrix
   struct Model_Cache {
 
-    glm::mat4 model;
-    glm::mat3 nmat;
+    mat4 model;
+    mat3 nmat;
 
     union {
 
@@ -65,13 +61,13 @@ private:
 
   T3D*        m_parent;
 
-  glm::vec3   m_position;
-  glm::quat   m_orientation;
-  glm::vec3   m_scaling;
+  vec3   m_position;
+  quat   m_orientation;
+  vec3   m_scaling;
 
-  glm::vec3   m_fwd = Z_AXIS;
-  glm::vec3   m_up  = Y_AXIS;
-  glm::vec3   m_hax = X_AXIS;
+  vec3   m_fwd = Z_AXIS;
+  vec3   m_up  = Y_AXIS;
+  vec3   m_hax = X_AXIS;
 
 public:
 
@@ -79,9 +75,9 @@ public:
 // iface
 
   T3D(
-    glm::vec3 pos   = {0,0,0},
-    glm::quat rot   = {1,0,0,0},
-    glm::vec3 scale = {1,1,1}
+    vec3 pos   = {0,0,0},
+    quat rot   = {1,0,0,0},
+    vec3 scale = {1,1,1}
 
   ):
 
@@ -99,10 +95,10 @@ public:
 
   ~T3D(void) {};
 
-  glm::mat4  calc_model(bool igpar);
-  glm::mat4& get_model(bool igpar=false);
+  mat4  calc_model(bool igpar);
+  mat4& get_model(bool igpar=false);
 
-  inline glm::mat3& get_nmat(void) {
+  inline mat3& get_nmat(void) {
     return m_cache.nmat;
 
   };
@@ -114,7 +110,7 @@ public:
   }
 
   bool face_to(
-    glm::vec3 v,
+    vec3 v,
     float     elapsed,
 
     float     rfac    = 10.0f,
@@ -123,21 +119,21 @@ public:
   );
 
   // selfex
-  void rotate(glm::quat delta);
+  void rotate(quat delta);
 
   // update facing vectors
   // accto orientation
   void calc_facing(void);
 
   // add vel to position
-  inline void move(glm::vec3& vel) {
+  inline void move(vec3& vel) {
     m_position+=vel;
     m_cache.needs_update=1;
 
   };
 
   // ^overwrite
-  inline void teleport(glm::vec3& pos) {
+  inline void teleport(vec3& pos) {
     m_position=pos;
     m_cache.needs_update=1;
 
@@ -145,28 +141,28 @@ public:
 
   // getters
   // careful: these do not trigger update
-  inline glm::vec3& position(void) {
+  inline vec3& position(void) {
     return m_position;
 
   };
 
-  inline glm::quat& orientation(void) {
+  inline quat& orientation(void) {
     return m_orientation;
 
   };
 
   // get facing vectors
-  inline glm::vec3& fwd(void) {
+  inline vec3& fwd(void) {
     return m_fwd;
 
   };
 
-  inline glm::vec3& up(void) {
+  inline vec3& up(void) {
     return m_up;
 
   };
 
-  inline glm::vec3& hax(void) {
+  inline vec3& hax(void) {
     return m_hax;
 
   };

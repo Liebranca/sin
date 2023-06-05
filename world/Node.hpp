@@ -16,7 +16,7 @@ class Node {
 
 public:
 
-  VERSION   "v0.00.7b";
+  VERSION   "v0.00.8b";
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -71,8 +71,6 @@ private:
 
   Draw_Data   m_draw_data;
 
-  T3D         m_xform;
-
   Gaol::Bound m_bound;
 
   glm::vec3   m_lindirn = {0,0,0};
@@ -89,6 +87,7 @@ private:
 
 protected:
 
+  T3D         m_xform;
   States      m_updated = {0};
 
 // ---   *   ---   *   ---

@@ -85,6 +85,7 @@ private:
 
   glm::mat4     m_view;
   glm::mat4     m_proj;
+  glm::mat4     m_stow;
 
   Camera::Lens  m_lens;
   Gaol::Frustum m_frustum;
@@ -111,6 +112,16 @@ private:
       Y_AXIS
 
     );
+
+  };
+
+  // ^get screen-to-world matrix
+  inline glm::mat4 calc_stow(void) {
+
+    return
+      glm::inverse(m_view)
+    * glm::inverse(m_proj)
+    ;
 
   };
 
@@ -240,6 +251,11 @@ public:
   };
 
   glm::mat4& get_view(void);
+
+  inline glm::mat4& get_stow(void) {
+    return m_stow;
+
+  };
 
   inline glm::mat4& get_proj(void) {
     return m_proj;

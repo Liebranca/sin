@@ -32,7 +32,7 @@ void Node::nit(Bld& bld) {
 
 void Node::calc_bounds(void) {
 
-  glm::vec3 dim(0.5f,1,0.5f);
+  glm::vec3 dim(0.5f,1.0,0.5);
 
   m_bound.set(
     m_xform.get_model(),

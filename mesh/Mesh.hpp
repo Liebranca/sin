@@ -18,7 +18,7 @@ class Mesh {
 
 public:
 
-  VERSION   "v0.00.5b";
+  VERSION   "v0.00.6b";
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -29,9 +29,14 @@ private:
   uint16_t m_vcount;
   uint16_t m_icount;
   uint16_t m_mode;
-  uint16_t m_base;
 
-  uint64_t m_offset;
+  uint16_t m_voffset;
+  uint16_t m_ioffset;
+
+  uint16_t m_icap;
+  uint16_t m_vcap;
+
+  uint64_t m_byte_offset;
 
 // ---   *   ---   *   ---
 // iface
@@ -49,17 +54,20 @@ public:
 
     uint16_t mode,
 
-    uint16_t base,
-    uint16_t offset
+    uint16_t voffset,
+    uint16_t ioffset
 
   ) {
 
-    m_vcount = vcount;
-    m_icount = icount;
-    m_mode   = mode;
-    m_base   = base;
+    m_vcount  = vcount;
+    m_icount  = icount;
 
-    m_offset = offset * sizeof(uint16_t);
+    m_mode    = mode;
+
+    m_voffset = voffset;
+    m_ioffset = ioffset;
+
+    m_byte_offset = m_ioffset * sizeof(uint16_t);
 
   };
 
@@ -70,11 +78,64 @@ public:
       m_icount,
 
       GL_UNSIGNED_SHORT,
-      (void*) m_offset,
+      (void*) m_byte_offset,
 
-      m_base
+      m_voffset
 
     );
+
+  };
+
+// ---   *   ---   *   ---
+// mesh slot is big enough for data
+
+  inline bool room_for(
+    uint16_t vcount,
+    uint16_t icount
+
+  ) {
+
+  return
+     vcount <= m_vcap
+  && vcount <= m_icap
+  ;
+
+  };
+
+// ---   *   ---   *   ---
+// setters
+
+  inline void set_caps(
+    uint16_t vcap,
+    uint16_t icap
+
+  ) {
+
+    m_vcap=vcap;
+    m_icap=icap;
+
+  };
+
+// ---   *   ---   *   ---
+// getters
+
+  inline uint16_t get_vcount(void) {
+    return m_vcount;
+
+  };
+
+  inline uint16_t get_icount(void) {
+    return m_icount;
+
+  };
+
+  inline uint16_t get_voffset(void) {
+    return m_voffset;
+
+  };
+
+  inline uint16_t get_ioffset(void) {
+    return m_ioffset;
 
   };
 

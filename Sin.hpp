@@ -19,7 +19,7 @@ class SIN {
 
 public:
 
-  VERSION   "v0.00.6b";
+  VERSION   "v0.00.7b";
   AUTHOR    "IBN-3DILA";
 
   cx8 PROGRAM0 = 0x00;
@@ -133,6 +133,7 @@ public:
   );
 
   uint32_t new_node(
+
     uint32_t meshid,
     uint8_t  type,
 
@@ -153,6 +154,15 @@ public:
 
   // ^exec
   void draw_enqueued(void);
+
+  void draw_line(
+
+    vec3    a,
+    vec3    b,
+
+    uint8_t color=RED
+
+  );
 
   // updates ssbo with matrix block
   void upload_mats(

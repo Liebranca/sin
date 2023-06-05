@@ -129,6 +129,7 @@ void SIN::nit_camera(
 // ---   *   ---   *   ---
 
 uint32_t SIN::new_node(
+
   uint32_t meshid,
   uint8_t  type,
 
@@ -137,9 +138,8 @@ uint32_t SIN::new_node(
 ) {
 
   uint32_t out  = nodes.size();
-  uint32_t mesh = 0;
+  uint32_t mesh = sprites.size();
 
-  mesh=sprites.size();
   sprites.push_back(
     batch->ice_asset(meshid)
 
@@ -176,7 +176,7 @@ void Node::draw(void) {
 
   auto  meshid = (data.type==Node::ANIMATED)
     ? Sin.sprites[data.mesh].play()
-    : Sin.sprites[data.mesh].get_cpose()
+    : Sin.sprites[data.mesh].get_cpose_abs()
     ;
 
   Sin.enqueue(
@@ -341,6 +341,11 @@ void SIN::draw_enqueued(void) {
   };
 
 };
+
+// ---   *   ---   *   ---
+// ^selfex
+
+void SIN::draw_line();
 
 // ---   *   ---   *   ---
 // updates ssbo with matrix block

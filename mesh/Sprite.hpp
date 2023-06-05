@@ -84,6 +84,12 @@ public:
 
   };
 
+  // ^offset by mesh idex
+  inline uint32_t get_cpose_abs(void) {
+    return m_cpose + m_src;
+
+  };
+
 };
 
 // ---   *   ---   *   ---

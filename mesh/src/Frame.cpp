@@ -34,8 +34,8 @@ void Meshes::nit(
 
   // gl alloc
   glGenVertexArrays(1,&m_vao);
-  glGenBuffers(NUM_BUFFS,&m_buff[0]);
   glBindVertexArray(m_vao);
+  glGenBuffers(NUM_BUFFS,&m_buff[0]);
 
   // get vertex mem
   glBindBuffer(
@@ -85,6 +85,9 @@ void Meshes::nit(
 
   m_texture.nit(texsz);
   m_nitted=true;
+
+  // unbind
+  glBindVertexArray(0);
 
 };
 
@@ -155,6 +158,8 @@ uint32_t Meshes::new_mesh(
 
   );
 
+  m_mesh[m_top].set_caps(vcount,icount);
+
   // send data to glbuffs
   this->upload_verts(
     vcount,sizeof(CRK::Vertex),verts
@@ -167,6 +172,63 @@ uint32_t Meshes::new_mesh(
   );
 
   return m_top++;
+
+};
+
+// ---   *   ---   *   ---
+// ^overwrite
+
+bool Meshes::repl_mesh(
+
+  uint32_t   idex,
+  CRK::Prim& p,
+
+  uint32_t   mode
+
+) {
+
+  void*    verts   = p.verts.data();
+  void*    indices = p.indices.data();
+
+  uint16_t vcount  = p.verts.size();
+  uint16_t icount  = p.indices.size();
+
+  auto&    me      = m_mesh[idex];
+
+  // exit if slot cant hold data
+  if(! me.room_for(vcount,icount)) {
+    return false;
+
+  };
+
+  uint16_t voffset = me.get_voffset();
+  uint16_t ioffset = me.get_ioffset();
+
+  // fill out struct
+  m_mesh[idex]=Mesh(
+
+    vcount,
+    icount,
+
+    mode,
+
+    voffset,
+    ioffset
+
+  );
+
+  // send data to glbuffs
+  this->repl_verts(
+    voffset,vcount,sizeof(CRK::Vertex),verts
+
+  );
+
+  this->repl_indices(
+    ioffset,icount,sizeof(uint16_t),indices
+
+  );
+
+  return true;
 
 };
 
@@ -240,12 +302,9 @@ uint32_t Meshes::new_edit(void) {
 
   // upload poses to glbuff
   auto& poses = m_anims.back();
-  auto  me    = this->defcube();
+  auto  p     = CRK::Prim(0x100);
 
-  for(auto& p : me) {
-    poses.push_back(this->new_mesh(p));
-
-  };
+  poses.push_back(this->new_mesh(p));
 
   // generate anim data ice
   m_anim_meta.push_back(ANS());
@@ -256,45 +315,27 @@ uint32_t Meshes::new_edit(void) {
 };
 
 // ---   *   ---   *   ---
-// generates default shape
-// for edit meshes
+// overwrite vertex data in slot
 
-CRK::Mesh Meshes::defcube(void) {
+void Meshes::repl(
+  uint32_t  beg,
+  CRK::Prim p
 
-  CRK::Prim front;
-  front.verts.resize(4);
-  front.indices.resize(6);
+) {
 
-  glm::vec3 p0={ 1,-1,0};
-  glm::vec3 p1={-1,-1,0};
-  glm::vec3 p2={-1, 1,0};
-  glm::vec3 p3={ 1, 1,0};
+  if(! this->repl_mesh(beg,p)) {
 
-  front.verts[0].set_xyz(p0);
-  front.verts[1].set_xyz(p1);
-  front.verts[2].set_xyz(p2);
-  front.verts[3].set_xyz(p3);
+    fprintf(
+      stderr,
+      "meshid %08X too small for repl",
 
-  glm::vec3 n={0,0,1};
-  front.verts[0].set_n(n);
-  front.verts[1].set_n(n);
-  front.verts[2].set_n(n);
-  front.verts[3].set_n(n);
+      beg
 
-  front.indices[0]=0;
-  front.indices[1]=1;
-  front.indices[2]=2;
+    );
 
-  front.indices[3]=0;
-  front.indices[4]=2;
-  front.indices[5]=3;
-
-  CRK::Mesh out {
-    front
+    exit(1);
 
   };
-
-  return out;
 
 };
 

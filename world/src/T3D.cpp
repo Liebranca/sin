@@ -22,17 +22,17 @@
 // ---   *   ---   *   ---
 // recalculates model matrix
 
-glm::mat4 T3D::calc_model(bool igpar) {
+mat4 T3D::calc_model(bool igpar) {
 
-  glm::mat4 parmat;
+  mat4 parmat;
 
-  glm::mat4 wpos=glm::translate(m_position);
-  glm::mat4 wrot=glm::mat4_cast(
+  mat4 wpos=glm::translate(m_position);
+  mat4 wrot=glm::mat4_cast(
     glm::normalize(m_orientation)
 
   );
 
-  glm::mat4 wscale=glm::scale(m_scaling);
+  mat4 wscale=glm::scale(m_scaling);
 
   parmat=(m_parent==NULL || igpar)
     ? IDENTITY
@@ -47,7 +47,7 @@ glm::mat4 T3D::calc_model(bool igpar) {
 // ---   *   ---   *   ---
 // ^fetches or recalculates
 
-glm::mat4& T3D::get_model(bool igpar) {
+mat4& T3D::get_model(bool igpar) {
 
   if(
 
@@ -73,7 +73,7 @@ glm::mat4& T3D::get_model(bool igpar) {
 // this one needs tuning ;>
 
 bool T3D::face_to(
-  glm::vec3 v,
+  vec3 v,
 
   float elapsed,
   float rfac,
@@ -83,7 +83,7 @@ bool T3D::face_to(
 
   return false;
 
-//  glm::vec3 vecTo;
+//  vec3 vecTo;
 //
 //  if (!fullRot) {
 //    vecTo = -(
@@ -96,8 +96,8 @@ bool T3D::face_to(
 //
 //  };
 //
-//  glm::quat delta=glm::quatLookAt(vecTo,Y_AXIS);
-//  glm::quat& rot=this->orientation;
+//  quat delta=glm::quatLookAt(vecTo,Y_AXIS);
+//  quat& rot=this->orientation;
 //
 //  if(delta!=rot) {
 //    this->tick += elapsed;
@@ -121,7 +121,7 @@ bool T3D::face_to(
 
 // ---   *   ---   *   ---
 
-void T3D::rotate(glm::quat delta) {
+void T3D::rotate(quat delta) {
 
   m_orientation=glm::normalize(
     m_orientation*delta

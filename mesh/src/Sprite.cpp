@@ -34,8 +34,8 @@ uint32_t Sprite::play(void) {
 
   };
 
-  // ret mesh idex
-  return out;
+  // ret mesh idex offset by pose
+  return out+m_src;
 
 };
 

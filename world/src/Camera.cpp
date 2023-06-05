@@ -22,7 +22,9 @@ glm::mat4& Camera::get_view(void) {
 
   if(m_updated.movement) {
 
-    m_view = this->calc_view();
+    m_view  = this->calc_view();
+    m_stow  = this->calc_stow();
+
     m_updated.movement = false;
 
     this->update_frustum();
