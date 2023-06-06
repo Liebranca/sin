@@ -21,7 +21,7 @@ class Meshes {
 
 public:
 
-  VERSION   "v0.01.7b";
+  VERSION   "v0.01.8b";
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -204,7 +204,9 @@ public:
   // overwrite vertex data in slot
   void repl(
     uint32_t  beg,
-    CRK::Prim p
+    CRK::Prim p,
+
+    uint32_t  mode=GL_TRIANGLES
 
   );
 

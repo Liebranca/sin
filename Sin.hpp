@@ -5,12 +5,9 @@
 // deps
 
   #include "bitter/kvrnel/GLM.hpp"
-  #include "bitter/kvrnel/Clock.hpp"
 
   #include "shader/Frame.hpp"
   #include "mesh/Frame.hpp"
-
-  #include "world/Camera.hpp"
 
 // ---   *   ---   *   ---
 // info
@@ -19,7 +16,7 @@ class SIN {
 
 public:
 
-  VERSION   "v0.00.9b";
+  VERSION   "v0.01.0b";
   AUTHOR    "IBN-3DILA";
 
   // used for lines
@@ -46,12 +43,6 @@ public:
 
   typedef std::vector<Meshes> Batches;
   typedef std::vector<Sprite> Sprites;
-  typedef std::vector<Node>   Nodes;
-
-// ---   *   ---   *   ---
-// fptrs
-
-  typedef Clock& (*ClockF) (void);
 
 // ---   *   ---   *   ---
 // attrs
@@ -60,16 +51,12 @@ public:
 
   Batches  meshes;
   Programs programs;
-  Camera   cam;
 
   Program* program;
   Meshes*  batch;
   uint32_t batch_id=-1;
 
-  Nodes    nodes;
   Sprites  sprites;
-
-  ClockF   get_clock;
 
 // ---   *   ---   *   ---
 // guts
@@ -109,6 +96,12 @@ private:
   // ^makes
   void nit_buffs(void);
 
+  // updates ssbo with matrix block
+  void upload_mats(
+    Meshes::Draw_Queue_Mats& mats
+
+  );
+
 // ---   *   ---   *   ---
 // iface
 
@@ -138,29 +131,6 @@ public:
 
   );
 
-  // initialize camera
-  void nit_camera(
-
-    const vec3& pos,
-    const quat& rot,
-
-    Camera::Lens&    lens,
-
-    uint32_t         bind_idex,
-
-    bool             ortho=true
-
-  );
-
-  uint32_t new_node(
-
-    uint32_t meshid,
-    uint8_t  type,
-
-    T3D      xform=T3D()
-
-  );
-
   // put draw commands "on hold"
   void enqueue(
 
@@ -183,30 +153,6 @@ public:
     uint8_t color_idex=RED
 
   );
-
-  // updates ssbo with matrix block
-  void upload_mats(
-    Meshes::Draw_Queue_Mats& mats
-
-  );
-
-// ---   *   ---   *   ---
-// program clock wrappers
-
-  inline float fBy(void) {
-    return this->get_clock().fBy();
-
-  };
-
-  inline void set_timescale(float x) {
-    this->get_clock().set_scale(x);
-
-  };
-
-  inline float get_timescale(void) {
-    return this->get_clock().get_scale();
-
-  };
 
 };
 

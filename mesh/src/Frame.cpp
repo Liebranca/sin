@@ -254,11 +254,13 @@ uint32_t Meshes::new_edit(void) {
 
 void Meshes::repl(
   uint32_t  beg,
-  CRK::Prim p
+  CRK::Prim p,
+
+  uint32_t  mode
 
 ) {
 
-  if(! this->repl_mesh(beg,p)) {
+  if(! this->repl_mesh(beg,p,mode)) {
 
     fprintf(
       stderr,
