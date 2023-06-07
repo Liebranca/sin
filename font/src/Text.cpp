@@ -17,13 +17,12 @@
 // ---   *   ---   *   ---
 // makes GBuff data from string
 
-void Text::fill_buff(void) {
+void Text::fill_buff(vec2 pos) {
 
   m_verts.clear();
   m_indices.clear();
 
-  char* s   = m_ct.c_str();
-  vec2  pos = m_pos;
+  char* s = (char*) m_ct.c_str();
 
   // make planes for each char
   while(*s++) {
@@ -49,6 +48,37 @@ void Text::fill_buff(void) {
     };
 
   };
+
+};
+
+// ---   *   ---   *   ---
+// gl boiler
+
+void Text::nit_vao(vec2 dim) {
+
+  // nit buffs
+  m_vao.nit(
+
+    GBuff::D_ARRAY,
+    GBuff::D_ELEMENT,
+
+    sizeof(Text::Vertex),
+    uint64_t(dim.x * dim.y),
+
+    sizeof(uint16_t),
+    uint64_t(dim.x * dim.y)
+
+  );
+
+  // ^vertex attrs
+  m_vao.vattr(
+
+    VAO::U32_4,
+
+    sizeof(Text::Vertex),
+    offsetof(Text::Vertex,m_data)
+
+  );
 
 };
 
@@ -134,7 +164,7 @@ void Text::Vertex::set_show_ctl(bool show) {
 // cats four vertices to Q
 
 void Text::emit(
-  Text::Vertex>& tl
+  Text::Vertex& tl
 
 ) {
 
@@ -142,33 +172,33 @@ void Text::emit(
   tl.m_data.y=0b00;
 
   // top right
-  Vertex tr=*tl;
+  Vertex tr=tl;
   tr.m_data.y=0b10;
 
   // bottom right, bottom left
-  Vertex br=*tl;
-  Vertex bl=*tl;
+  Vertex br=tl;
+  Vertex bl=tl;
   br.m_data.y=0b11;
   bl.m_data.y=0b10;
 
   // ^commit
-  verts.push_back(br);
-  verts.push_back(bl);
-  verts.push_back(tl);
-  verts.push_back(tr);
+  m_verts.push_back(br);
+  m_verts.push_back(bl);
+  m_verts.push_back(tl);
+  m_verts.push_back(tr);
 
   // make quad
-  uint16_t base=indices.size();
+  uint16_t base=m_indices.size();
 
   // tri A
-  indices.push_back(base+0);
-  indices.push_back(base+1);
-  indices.push_back(base+2);
+  m_indices.push_back(base+0);
+  m_indices.push_back(base+1);
+  m_indices.push_back(base+2);
 
   // tri B
-  indices.push_back(base+0);
-  indices.push_back(base+2);
-  indices.push_back(base+3);
+  m_indices.push_back(base+0);
+  m_indices.push_back(base+2);
+  m_indices.push_back(base+3);
 
 };
 

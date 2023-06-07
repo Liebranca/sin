@@ -228,7 +228,7 @@ Sprite Meshes::ice_asset(uint32_t src) {
 // ---   *   ---   *   ---
 // create editable mesh
 
-uint32_t Meshes::new_edit(void) {
+uint32_t Meshes::new_edit(uint64_t size) {
 
   uint32_t out=m_anims.size();
 
@@ -237,7 +237,7 @@ uint32_t Meshes::new_edit(void) {
 
   // upload poses to glbuff
   auto& poses = m_anims.back();
-  auto  p     = CRK::Prim(0x100);
+  auto  p     = CRK::Prim(size);
 
   poses.push_back(this->new_mesh(p));
 

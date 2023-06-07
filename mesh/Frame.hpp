@@ -199,7 +199,7 @@ public:
   Sprite ice_asset(uint32_t src);
 
   // create editable mesh
-  uint32_t new_edit(void);
+  uint32_t new_edit(uint64_t size=0x100);
 
   // overwrite vertex data in slot
   void repl(

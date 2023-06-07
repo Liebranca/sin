@@ -72,7 +72,7 @@ Avt::set_config(
 
       q[-o],"font",
 
-      "font/src/Color.sg",
+      "font/src/Colors.sg",
       "font/src/Chars.sg",
       "font/src/Raster.sg",
 

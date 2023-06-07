@@ -4,7 +4,8 @@
 // ---   *   ---   *   ---
 // deps
 
-  #include "bitter/kvrnel/Style.hpp"
+  #include "bitter/kvrnel/GLM.hpp"
+  #include "mesh/VAO.hpp"
 
 // ---   *   ---   *   ---
 // info
@@ -54,12 +55,15 @@ public:
 
 private:
 
+  VAO m_vao;
+
   std::vector<Vertex>   m_verts;
   std::vector<uint16_t> m_indices;
 
   std::string m_ct;
 
   vec2     m_pos   = {-1,-1};
+  vec2     m_dim   = {9,16};
 
   float    m_scale = 1.0f;
   uint16_t m_color = 0x00F7;
@@ -67,7 +71,7 @@ private:
 // ---   *   ---   *   ---
 // drawable space guides
 
-  vec2  m_line_beg  = {-1,-1};
+  float m_line_beg  = -1;
   float m_line_wall = CENT_X * 48;
 
 // ---   *   ---   *   ---
@@ -87,6 +91,8 @@ private:
 
 public:
 
+  void nit_vao(vec2 dim);
+
   // set string to display
   inline void set_content(std::string s) {
     m_ct      = s;
@@ -101,7 +107,21 @@ public:
   };
 
   // get string formatted for GBuff
-  inline Vertex* get_buff(void) {
+  inline std::vector<Vertex>& get_verts(void) {
+
+    // TODO: update F based on flag
+    if(m_updated) {
+      this->fill_buff();
+      m_updated=false;
+
+    };
+
+    return m_verts;
+
+  };
+
+  // ^indices
+  inline std::vector<uint16_t>& get_indices(void) {
 
     if(m_updated) {
       this->fill_buff();
@@ -109,7 +129,7 @@ public:
 
     };
 
-    return m_buff.data();
+    return m_indices;
 
   };
 
@@ -119,8 +139,8 @@ public:
 
   };
 
-  inline void set_line_beg(vec2 pos) {
-    m_line_beg=pos;
+  inline void set_line_beg(float x) {
+    m_line_beg=x;
 
   };
 
@@ -130,7 +150,7 @@ public:
   };
 
   inline void set_scale(float z) {
-    m_scale=x;
+    m_scale=z;
 
   };
 
@@ -144,7 +164,17 @@ public:
 
   };
 
+  inline bool get_updated(void) {
+    return m_updated;
+
+  };
+
 };
+
+// ---   *   ---   *   ---
+// sugar for clarifying usage
+
+typedef Text Panels;
 
 // ---   *   ---   *   ---
 
