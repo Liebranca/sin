@@ -1,4 +1,5 @@
 #!/usr/bin/perl
+# ---   *   ---   *   ---
 
   use v5.36.0;
   use strict;
@@ -22,9 +23,43 @@ Avt::set_config(
   incl=>[qw(bitter chasm)],
   libs=>[qw(gaoler)],
 
+# ---   *   ---   *   ---
+# pre-processor bootstrap
+#
+# needed for singl to run
+# on a first build
+#
+# ie: this saves you having
+# to do the copying manually
+
   pre_build=>q{
 
     chdir Shb7::dir('sin');
+
+    # lib => source file
+    my $deps={
+
+      '../lib/Grammar/SinGL.pm' =>
+      './Grammar/SinGL.pm',
+
+      '../lib/Emit/SinGL.pm' =>
+      './Emit/SinGL.pm',
+
+    };
+
+    # ^copy missing/updated
+    for my $dst(keys %$deps) {
+
+      my $src=$deps->{$dst};
+
+      `cp $src $dst`
+      if Shb7::moo($dst,$src);
+
+    };
+
+# ---   *   ---   *   ---
+# ^use preprocessor to generate
+# hpp_sg files from glsl source
 
     my $ex   = "bin/singl";
     my @call = (
@@ -49,6 +84,8 @@ Avt::set_config(
     system {$call[0]} @call;
 
   },
+
+# ---   *   ---   *   ---
 
 );
 
