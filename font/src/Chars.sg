@@ -6,14 +6,14 @@
 
 $:VERT;>
 
-  AUTHOR    "IBN-3DILA";
   VERSION   v1.00.0;
+  AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
 
 $:FRAG;>
 
-const uint LYCON[256]={
+const uint CHARS[256]={
 
   0x827C0028,0x70087082,0xADBD81FF,0xFF81BDB5,
   0x9189817E,0x809088BA,0x7E7E7E00,0x007E7E7E,

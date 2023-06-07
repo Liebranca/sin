@@ -1,0 +1,144 @@
+// ---   *   ---   *   ---
+// RASTER
+// Font rendering
+//
+// LIBRE SOFTWARE
+// Licensed under GNU GPL3
+// be a bro and inherit
+//
+// CONTRIBUTORS
+// lyeb,
+
+// ---   *   ---   *   ---
+// deps
+
+$:VERT;>
+
+// ---   *   ---   *   ---
+// info
+
+  VERSION   v1.00.1;
+  AUTHOR    "IBN-3DILA";
+
+// ---   *   ---   *   ---
+// inputs
+
+  in uvec4 Vertex;
+  uniform vec4 Xform;
+
+// ---   *   ---   *   ---
+// outputs
+
+  out vec2 Tex_Cords;
+
+  flat out uint Char_Idex;
+  flat out uint Show_Ctl;
+
+  flat out uint Fg_Col_Idex;
+  flat out uint Bg_Col_Idex;
+
+// ---   *   ---   *   ---
+// ROM
+
+  const float DIV8   = 1.0f / 256.0f;
+  const float DIV15  = 1.0f / float((1<<15)-1);
+
+  const float CENT_X = 8.0f / 1366.0f;
+  const float CENT_Y = 9.0f / 768.0f;
+
+// ---   *   ---   *   ---
+// crux
+
+void main() {
+
+  // unpack vert
+  vec2  position = vec2(
+    (Vertex.x  & 0xFFFF) * DIV15,
+    (Vertex.x >>     16) * DIV15
+
+  ) - vec2(1,1);
+
+  Tex_Coords  = vec2(
+    Vertex.y & 0b01,
+    Vertex.y & 0b10
+
+  );
+
+  float scale = float(Vertex.z) * DIV8;
+
+  Char_Idex   = Vertex.w;
+
+  // ^break down
+  Fg_Col_Idex = (Char_Idex  >>  8) & 0xFF;
+  Bg_Col_Idex = ((Char_Idex >> 16) & 0xFF);
+
+  Show_Ctl    = (Char_Idex  >> 24) & 0x1;
+  Char_Idex   = Char_Idex & 0xFF;
+
+  // adjust corners from uv
+  position += vec2(
+    CENT_X * Tex_Cords.x,
+    CENT_Y * Tex_Cords.y
+
+  );
+
+  // setout
+  gl_Position = vec4(
+    position.xy * scale
+  + Xform.xy,
+
+    0,1
+
+  );
+
+};
+
+// ---   *   ---   *   ---
+// deps
+
+$:FRAG;>
+
+  #include <font/Colors>
+  #include <font/Chars>
+
+// ---   *   ---   *   ---
+// outputs
+
+  out vec4 Frag_Color;
+
+// ---   *   ---   *   ---
+// crux
+
+void main() {
+
+  // stretch UVs for reasons
+  uint x = uint(Tex_Cords.x * 8);
+  uint y = uint(Tex_Cords.y * 8);
+
+  // manual texture fetch
+  uint i = x+(y*8);
+  uint z = uint(i > 31);
+
+  i-=z*32;
+
+  // solve pixel alpha
+  bool r=bool(CHARS[Char_Idex][z]&(1<<i));
+  r=r&&(Char_Idex >= Show_Ctl);
+
+  // palette fetch
+  vec4  fg_col   = COLORS[Fg_Col_Idex&0xF];
+  vec4  bg_col   = COLORS[Bg_Col_Idex&0xF];
+
+  float fg_alpha = Fg_Col_Idex >> 4;
+  float bg_alpha = Bg_Col_Idex >> 4;
+
+  // apply foreground and background colors
+  vec4 col  = vec4(fg_col.rgb,float(r));
+  col.rgb  += bg_col.rgb * float(col.w<0.04);
+
+  // setout
+  FragColor = col;
+
+};
+
+// ---   *   ---   *   ---

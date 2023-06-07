@@ -61,8 +61,29 @@ Avt::set_config(
 # ^use preprocessor to generate
 # hpp_sg files from glsl source
 
-    my $ex   = "bin/singl";
-    my @call = (
+    my $ex="bin/singl";
+
+# ---   *   ---   *   ---
+# UI draw shaders
+
+    my @call=(
+
+      $ex,
+
+      q[-o],"font",
+
+      "font/src/Color.sg",
+      "font/src/Chars.sg",
+      "font/src/Raster.sg",
+
+    );
+
+    system {$call[0]} @call;
+
+# ---   *   ---   *   ---
+# viewport draw shaders
+
+    @call=(
 
       $ex,
 

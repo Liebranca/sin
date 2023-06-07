@@ -1,0 +1,51 @@
+// ---   *   ---   *   ---
+// COLORS
+// A hardcoded palette
+//
+// LIBRE SOFTWARE
+// Licensed under GNU GPL3
+// be a bro and inherit
+//
+// CONTRIBUTORS
+// lyeb,
+
+// ---   *   ---   *   ---
+// info
+
+$:VERT;>
+
+  VERSION   v0.00.1b;
+  AUTHOR    "IBN-3DILA";
+
+// ---   *   ---   *   ---
+
+$:FRAG;>
+
+// ---   *   ---   *   ---
+// ROM
+
+  const vec3 COLORS[16]={
+
+    vec3(0.00f,0.00f,0.00f),
+    vec3(0.49f,0.00f,0.00f),
+    vec3(0.13f,0.50f,0.13f),
+    vec3(0.81f,0.60f,0.13f),
+
+    vec3(0.00f,0.38f,0.69f),
+    vec3(0.25f,0.00f,0.25f),
+    vec3(0.00f,0.50f,0.50f),
+    vec3(0.72f,0.72f,0.72f),
+
+    vec3(0.00f,0.00f,0.50f),
+    vec3(0.63f,0.06f,0.13f),
+    vec3(0.25f,0.68f,0.25f),
+    vec3(0.69f,0.69f,0.00f),
+
+    vec3(0.00f,0.25f,0.69f),
+    vec3(0.50f,0.00f,0.62f),
+    vec3(0.00f,0.62f,0.62f),
+    vec3(0.69f,0.62f,0.38f)
+
+  };
+
+// ---   *   ---   *   ---
