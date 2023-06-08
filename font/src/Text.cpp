@@ -12,17 +12,19 @@
 // ---   *   ---   *   ---
 // deps
 
+  #include <GL/glew.h>
   #include "font/Text.hpp"
 
 // ---   *   ---   *   ---
 // makes GBuff data from string
 
-void Text::fill_buff(vec2 pos) {
+void Text::fill_buff(void) {
 
   m_verts.clear();
   m_indices.clear();
 
-  char* s = (char*) m_ct.c_str();
+  char* s   = (char*) m_ct.c_str();
+  vec2  pos = m_pos;
 
   // make planes for each char
   while(*s++) {
@@ -38,16 +40,73 @@ void Text::fill_buff(vec2 pos) {
     this->emit(vert);
 
     // move to next square
-    if(*s != '\n' && pos.x < m_line_wall) {
+    if(*s != '\n' && pos.x < m_line_wall.x) {
       pos.x += CENT_X;
 
-    } else {
+    } else if(pos.y < m_line_wall.y) {
       pos.y += CENT_Y;
-      pos.x  = m_line_beg;
+      pos.x  = m_pos.x;
+
+    } else {
+      break;
 
     };
 
   };
+
+};
+
+// ---   *   ---   *   ---
+// calls sub_data for vao buffs
+
+void Text::upload(void) {
+
+  // trigger update
+  auto& verts   = this->get_verts();
+  auto& indices = this->get_indices();
+
+  // get handles to buffs
+  auto& vbo = m_vao.gbuff(VAO::VBO);
+  auto& ibo = m_vao.gbuff(VAO::IBO);
+
+  if(! indices.size()) {
+    return;
+
+  };
+
+  // push
+  vbo.sub_data(
+    (void*) verts.data(),
+    0,verts.size()
+
+  );
+
+  ibo.sub_data(
+    (void*) indices.data(),
+    0,indices.size()
+
+  );
+
+};
+
+// ---   *   ---   *   ---
+// makes gl draw call for vao
+
+void Text::draw(void) {
+
+  m_vao.bind();
+
+  glDrawElements(
+
+    GL_TRIANGLES,
+    m_indices.size(),
+
+    GL_UNSIGNED_SHORT,
+    (void*) 0
+
+  );
+
+  m_vao.unbind();
 
 };
 
@@ -104,23 +163,26 @@ void Text::Vertex::nit(uint8_t idex) {
 };
 
 // ---   *   ---   *   ---
-// converts float cord to div16
-// encoding used by raster font
-
-static uint16_t f_to_d16(float co) {
-  return uint16_t((co * 0x8000) + 0x7FFF);
-
-};
-
-// ---   *   ---   *   ---
 // set char position
 
 void Text::Vertex::set_pos(vec2 pos) {
 
-  uint16_t x = f_to_d16(pos.x);
-  uint16_t y = f_to_d16(pos.y);
+  uint16_t x = uint16_t(pos.x/CENT_X);
+  uint16_t y = uint16_t(pos.y/CENT_Y);
 
   m_data.x = uint32_t(x) | (uint32_t(y) << 16);
+
+};
+
+// ---   *   ---   *   ---
+// ^retrieve
+
+vec2 Text::Vertex::get_pos(void) {
+
+  float x=(m_data.x  & 0xFFFF) * CENT_X;
+  float y=(m_data.x >>     16) * CENT_Y;
+
+  return {x,y};
 
 };
 
@@ -170,16 +232,20 @@ void Text::emit(
 
   // base eq top left
   tl.m_data.y=0b00;
+  vec2 pos=tl.get_pos();
 
   // top right
   Vertex tr=tl;
   tr.m_data.y=0b10;
+  tr.set_pos(pos+vec2({CENT_X,0}));
 
   // bottom right, bottom left
   Vertex br=tl;
   Vertex bl=tl;
   br.m_data.y=0b11;
-  bl.m_data.y=0b10;
+  bl.m_data.y=0b01;
+  br.set_pos(pos+vec2({CENT_X,CENT_Y}));
+  bl.set_pos(pos+vec2({0,CENT_Y}));
 
   // ^commit
   m_verts.push_back(br);
@@ -188,7 +254,7 @@ void Text::emit(
   m_verts.push_back(tr);
 
   // make quad
-  uint16_t base=m_indices.size();
+  uint16_t base=m_verts.size();
 
   // tri A
   m_indices.push_back(base+0);

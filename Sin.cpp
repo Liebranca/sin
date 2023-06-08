@@ -13,7 +13,11 @@
 // deps
 
   #include "bitter/kvrnel/Bytes.hpp"
+
   #include "mesh/Debug_Line.hpp_sg"
+  #include "font/Raster.hpp_sg"
+  #include "mesh/JOJ_Sprite.hpp_sg"
+  #include "mesh/M3D.hpp_sg"
 
   #include "Sin.hpp"
 
@@ -52,7 +56,7 @@ uint32_t SIN::new_batch(
   uint32_t out=meshes.size();
 
   meshes.push_back(Meshes());
-  meshes.back().nit(pidex,texsz);
+  meshes.back().nit(m_shaders[pidex],texsz);
 
   this->bind_batch(out);
   m_queues.push_back(Queue());
@@ -232,7 +236,7 @@ void SIN::draw_enqueued(void) {
 
     m_line_vao.bind();
 
-    program=programs.get(PROGRAM0);
+    program=programs.get(m_shaders[LINE]);
     programs.bind(program);
 
     glDrawElements(
@@ -247,6 +251,15 @@ void SIN::draw_enqueued(void) {
 
     m_line_cnt=0;
     m_line_vao.unbind();
+
+  };
+
+  if(m_text.ready()) {
+
+    program=programs.get(m_shaders[TEXT]);
+    programs.bind(program);
+
+    m_text.draw();
 
   };
 
@@ -285,6 +298,28 @@ void SIN::draw_line(
   ibo.sub_data((void*) indices,offset,2);
 
   m_line_cnt++;
+
+};
+
+// ---   *   ---   *   ---
+// ^idem
+
+void SIN::draw_text(
+
+  std::string ct,
+
+  vec2        pos,
+  vec2        dim,
+
+  uint16_t    color
+
+) {
+
+  m_text.set_content(ct);
+  m_text.set_pos(pos);
+  m_text.set_dim(dim);
+
+  m_text.upload();
 
 };
 
@@ -349,8 +384,30 @@ void SIN::nit_buffs(void) {
 // ctrash
 
 SIN::SIN(void) {
+
   this->nit_buffs();
-  programs.nit(&shader::mesh::Debug_Line);
+
+  m_shaders[LINE]=programs.nit(
+    &shader::mesh::Debug_Line
+
+  );
+
+  m_shaders[TEXT]=programs.nit(
+    &shader::font::Raster
+
+  );
+
+  m_shaders[IMAGE]=programs.nit(
+    &shader::mesh::JOJ_Sprite
+
+  );
+
+  m_shaders[MESH]=programs.nit(
+    &shader::mesh::M3D
+
+  );
+
+  m_text.nit_vao({9,16});
 
 };
 

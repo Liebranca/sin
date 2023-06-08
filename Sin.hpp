@@ -6,6 +6,7 @@
 
   #include "bitter/kvrnel/GLM.hpp"
 
+  #include "font/Text.hpp"
   #include "shader/Frame.hpp"
   #include "mesh/Frame.hpp"
 
@@ -19,12 +20,13 @@ public:
   VERSION   "v0.01.0b";
   AUTHOR    "IBN-3DILA";
 
-  // used for lines
-  cx8 PROGRAM0 = 0x00;
+  // indices into shader array
+  enum {
 
-  // reserved for user
-  cx8 PROGRAM1 = 0x01;
-  cx8 PROGRAM2 = 0x02;
+    LINE,TEXT,IMAGE,MESH,
+    NUM_SHMODES
+
+  };
 
   // indices into color array
   enum {
@@ -91,6 +93,8 @@ private:
   GBuff    m_gbuff[NUM_BUFFS];
 
   VAO      m_line_vao;
+  Text     m_text;
+
   uint16_t m_line_cnt=0;
 
   // ^makes
@@ -101,6 +105,8 @@ private:
     Meshes::Draw_Queue_Mats& mats
 
   );
+
+  uint32_t m_shaders[NUM_SHMODES];
 
 // ---   *   ---   *   ---
 // iface
@@ -151,6 +157,17 @@ public:
     vec3    b,
 
     uint8_t color_idex=RED
+
+  );
+
+  void draw_text(
+
+    std::string ct,
+
+    vec2        pos   = {0,0},
+    vec2        dim   = {9,16},
+
+    uint16_t    color = 0x00F7
 
   );
 

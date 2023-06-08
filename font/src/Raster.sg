@@ -17,7 +17,7 @@ $:VERT;>
 // ---   *   ---   *   ---
 // info
 
-  VERSION   v1.00.1;
+  VERSION   v1.00.2;
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -52,15 +52,15 @@ $:VERT;>
 void main() {
 
   // unpack vert
-  vec2  position = vec2(
-    (Vertex.x  & 0xFFFF) * DIV15,
-    (Vertex.x >>     16) * DIV15
+  vec2 position = vec2(
+    float(Vertex.x  & 0xFFFF) * CENT_X * 16,
+    float(Vertex.x >>     16) * CENT_Y * 16
 
-  ) - vec2(1,1);
+  );
 
-  Tex_Coords  = vec2(
-    Vertex.y & 0b01,
-    Vertex.y & 0b10
+  Tex_Cords = vec2(
+    float((Vertex.y & uint(0x1)) >> 0),
+    float((Vertex.y & uint(0x2)) >> 1)
 
   );
 
@@ -69,27 +69,21 @@ void main() {
   Char_Idex   = Vertex.w;
 
   // ^break down
-  Fg_Col_Idex = (Char_Idex  >>  8) & 0xFF;
-  Bg_Col_Idex = ((Char_Idex >> 16) & 0xFF);
+  Fg_Col_Idex = (Char_Idex >>  8) & 0xFF;
+  Bg_Col_Idex = (Char_Idex >> 16) & 0xFF;
 
-  Show_Ctl    = (Char_Idex  >> 24) & 0x1;
+  Show_Ctl    = (Char_Idex >> 24) & 0x1;
   Char_Idex   = Char_Idex & 0xFF;
 
-  // adjust corners from uv
-  position += vec2(
-    CENT_X * Tex_Cords.x,
-    CENT_Y * Tex_Cords.y
-
-  );
+//  // adjust corners from uv
+//  position += vec2(
+//    CENT_X * Tex_Cords.x,
+//    CENT_Y * Tex_Cords.y
+//
+//  );
 
   // setout
-  gl_Position = vec4(
-    position.xy * scale
-  + Xform.xy,
-
-    0,1
-
-  );
+  gl_Position = vec4(position,0,1);
 
 };
 
@@ -109,6 +103,12 @@ $:FRAG;>
 // ---   *   ---   *   ---
 // crux
 
+const uint Icon[2]={
+
+  0x4242427E,0x3E624242
+
+};
+
 void main() {
 
   // stretch UVs for reasons
@@ -122,22 +122,22 @@ void main() {
   i-=z*32;
 
   // solve pixel alpha
-  bool r=bool(CHARS[Char_Idex][z]&(1<<i));
+  bool r=bool(Icon[z] & uint(1<<i));
   r=r&&(Char_Idex >= Show_Ctl);
 
   // palette fetch
-  vec4  fg_col   = COLORS[Fg_Col_Idex&0xF];
-  vec4  bg_col   = COLORS[Bg_Col_Idex&0xF];
+  vec3  fg_col   = COLORS[Fg_Col_Idex&uint(0xF)];
+  vec3  bg_col   = COLORS[Bg_Col_Idex&uint(0xF)];
 
-  float fg_alpha = Fg_Col_Idex >> 4;
-  float bg_alpha = Bg_Col_Idex >> 4;
+  float fg_alpha = float(Fg_Col_Idex >> 4)/16.0f;
+  float bg_alpha = float(Bg_Col_Idex >> 4)/16.0f;
 
   // apply foreground and background colors
   vec4 col  = vec4(fg_col.rgb,float(r));
   col.rgb  += bg_col.rgb * float(col.w<0.04);
 
   // setout
-  FragColor = col;
+  Frag_Color = col;
 
 };
 

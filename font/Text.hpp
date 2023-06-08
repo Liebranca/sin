@@ -48,6 +48,9 @@ public:
     void set_color(uint16_t color);
     void set_show_ctl(bool show);
 
+    // ^inspect
+    vec2 get_pos(void);
+
   };
 
 // ---   *   ---   *   ---
@@ -71,8 +74,7 @@ private:
 // ---   *   ---   *   ---
 // drawable space guides
 
-  float m_line_beg  = -1;
-  float m_line_wall = CENT_X * 48;
+  vec2 m_line_wall;
 
 // ---   *   ---   *   ---
 // flags
@@ -133,19 +135,31 @@ public:
 
   };
 
+  // ^get drawable tris avail
+  inline uint64_t ready(void) {
+    return m_indices.size() *! m_updated;
+
+  };
+
   // ^touch config
   inline void set_pos(vec2 pos) {
     m_pos=pos;
 
   };
 
-  inline void set_line_beg(float x) {
-    m_line_beg=x;
+  inline void set_dim(vec2 dim) {
 
-  };
+    m_dim       = {
+      dim.x * CENT_X,
+      dim.y * CENT_Y
 
-  inline void set_line_wall(float x) {
-    m_line_wall=x;
+    };
+
+    m_line_wall = {
+      m_pos.x + m_dim.x,
+      m_pos.y + m_dim.y,
+
+    };
 
   };
 
@@ -168,6 +182,12 @@ public:
     return m_updated;
 
   };
+
+  // calls sub_data for vao buffs
+  void upload(void);
+
+  // makes gl draw call for vao
+  void draw(void);
 
 };
 
