@@ -103,12 +103,6 @@ $:FRAG;>
 // ---   *   ---   *   ---
 // crux
 
-const uint Icon[2]={
-
-  0x4242427E,0x3E624242
-
-};
-
 void main() {
 
   // stretch UVs for reasons
@@ -122,7 +116,7 @@ void main() {
   i-=z*32;
 
   // solve pixel alpha
-  bool r=bool(Icon[z] & uint(1<<i));
+  bool r=bool(CHARS[Char_Idex][z] & uint(1<<i));
   r=r&&(Char_Idex >= Show_Ctl);
 
   // palette fetch
