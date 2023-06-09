@@ -66,7 +66,7 @@ void UI::Element::nit(
 
 void UI::Element::emit(UI& dst) {
 
-  vec2 pos=m_pos;
+  vec2     pos  = m_pos;
 
   // make planes for each char
   for(uint64_t i=0;i<m_ct.length();i++) {
@@ -118,10 +118,37 @@ uint32_t UI::push(
   m_elems.push_back(Element());
   auto& elem=m_elems.back();
 
+  // reset corner cache
+  m_corners[0]=m_verts.size();
+  m_corners[1]=m_verts.size();
+  m_corners[2]=m_verts.size();
+  m_corners[3]=m_verts.size();
+
+  // generate verts
   elem.nit(ct,pos,dim,color,show_ctl);
   elem.emit(*this);
 
+  // ^do a backflip
+  this->round_corners();
+
   return out;
+
+};
+
+// ---   *   ---   *   ---
+// does a backflip!
+
+void UI::round_corners(void) {
+
+  auto& br=m_verts[m_corners[0]];
+  auto& bl=m_verts[m_corners[1]];
+  auto& tl=m_verts[m_corners[2]];
+  auto& tr=m_verts[m_corners[3]];
+
+  br.m_data.y |= 0b000100;
+  bl.m_data.y |= 0b001000;
+  tl.m_data.y |= 0b010000;
+  tr.m_data.y |= 0b100000;
 
 };
 
@@ -330,6 +357,9 @@ void UI::emit(
   m_verts.push_back(tl);
   m_verts.push_back(tr);
 
+  // rounded edges calc
+  this->get_corners(base);
+
   // tri A
   m_indices.push_back(base+0);
   m_indices.push_back(base+1);
@@ -339,6 +369,75 @@ void UI::emit(
   m_indices.push_back(base+0);
   m_indices.push_back(base+2);
   m_indices.push_back(base+3);
+
+};
+
+// ---   *   ---   *   ---
+// find min-max xy points from base
+
+void UI::get_corners(uint32_t base) {
+
+  for(uint32_t i=0;i<4;i++) {
+
+    auto& a=m_verts[base+i];
+    auto& b=m_verts[m_corners[i]];
+
+    m_corners[i]=(this->cmp_corner(a,b,i))
+      ? base+i
+      : m_corners[i]
+      ;
+
+  };
+
+};
+
+// ---   *   ---   *   ---
+// find A fits corner criteria
+// better than B does
+
+bool UI::cmp_corner(
+
+  UI::Vertex& a,
+  UI::Vertex& b,
+
+  uint32_t    i
+
+) {
+
+  switch(i) {
+
+  // bottom right
+  case 0:
+    return
+       (a.get_pos().x >= b.get_pos().x)
+    && (a.get_pos().y <= b.get_pos().y)
+    ;
+
+  // bottom left
+  case 1:
+    return
+       (a.get_pos().x <= b.get_pos().x)
+    && (a.get_pos().y <= b.get_pos().y)
+    ;
+
+  // top left
+  case 2:
+    return
+       (a.get_pos().x <= b.get_pos().x)
+    && (a.get_pos().y >= b.get_pos().y)
+    ;
+
+  // top right
+  case 3:
+    return
+       (a.get_pos().x >= b.get_pos().x)
+    && (a.get_pos().y >= b.get_pos().y)
+    ;
+
+  default:
+    return false;
+
+  };
 
 };
 

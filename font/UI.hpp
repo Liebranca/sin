@@ -16,7 +16,7 @@ class UI {
 
 public:
 
-  VERSION   "v0.00.3b";
+  VERSION   "v0.00.4b";
   AUTHOR    "IBN-3DILA";
 
   cxr32 CENT_X = 8.0f / 1366.0f;
@@ -117,8 +117,22 @@ private:
 
   std::vector<Element>  m_elems;
 
+  uint32_t m_corners[4]={0,0,0,0};
+
 // ---   *   ---   *   ---
 // guts
+
+  bool cmp_corner(
+
+    UI::Vertex& a,
+    UI::Vertex& b,
+
+    uint32_t    i
+
+  );
+
+  void get_corners(uint32_t base);
+  void round_corners(void);
 
 // ---   *   ---   *   ---
 // iface

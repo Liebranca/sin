@@ -29,7 +29,7 @@ $:VERT;>
 // ---   *   ---   *   ---
 // outputs
 
-  out vec2 Tex_Cords;
+  out vec3 Tex_Cords;
 
   flat out uint Char_Idex;
   flat out uint Show_Ctl;
@@ -63,9 +63,12 @@ void main() {
 
   ) - NEGATIVE;
 
-  Tex_Cords = vec2(
-    float((Vertex.y & uint(0x1)) >> 0),
-    float((Vertex.y & uint(0x2)) >> 1)
+  Tex_Cords = vec3(
+    float((Vertex.y & uint(0x01)) >> 0),
+    float((Vertex.y & uint(0x02)) >> 1),
+
+    // 0b111100, either on for corners
+    float((Vertex.y & uint(0x3C)) != 0)
 
   );
 
@@ -113,6 +116,19 @@ void main() {
   uint x = uint(Tex_Cords.x * 8);
   uint y = uint(Tex_Cords.y * 8);
 
+  // rounded edges
+  float corner = 1.0f-smoothstep(
+
+    1.650f,
+    2.000f,
+
+    Tex_Cords.z
+
+  + abs((Tex_Cords.x-0.5f)*2)
+  * abs((Tex_Cords.y-0.5f)*2)
+
+  );
+
   // manual texture fetch
   uint i = x+(y*8);
   uint z = uint(i > 31);
@@ -135,7 +151,7 @@ void main() {
 
   vec4  bg_col   = vec4(
     COLORS[Bg_Col_Idex&uint(0xF)],
-    bg_alpha
+    bg_alpha * corner
 
   );
 
