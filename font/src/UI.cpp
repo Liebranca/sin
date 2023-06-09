@@ -41,7 +41,7 @@ void UI::Element::nit(
 
   m_line_wall={
     m_pos.x + m_dim.x * m_scale,
-    m_pos.y + m_dim.y * m_scale,
+    m_pos.y - m_dim.y * m_scale,
 
   };
 
@@ -85,7 +85,7 @@ void UI::Element::emit(UI& dst) {
     if(m_ct[i] != '\n' && pos.x < m_line_wall.x) {
       pos.x += CENT_X * m_scale;
 
-    } else if(pos.y < m_line_wall.y) {
+    } else if(pos.y > m_line_wall.y) {
       pos.y -= (CENT_Y + LINE_SPACE) * m_scale;
       pos.x  = m_pos.x;
 
