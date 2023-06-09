@@ -6,7 +6,7 @@
 
   #include "bitter/kvrnel/GLM.hpp"
 
-  #include "font/Text.hpp"
+  #include "font/UI.hpp"
   #include "shader/Frame.hpp"
   #include "mesh/Frame.hpp"
 
@@ -17,7 +17,7 @@ class SIN {
 
 public:
 
-  VERSION   "v0.01.0b";
+  VERSION   "v0.01.1b";
   AUTHOR    "IBN-3DILA";
 
   // indices into shader array
@@ -93,7 +93,7 @@ private:
   GBuff    m_gbuff[NUM_BUFFS];
 
   VAO      m_line_vao;
-  Text     m_text;
+  UI       m_ui;
 
   uint16_t m_line_cnt=0;
 
@@ -160,16 +160,25 @@ public:
 
   );
 
-  void draw_text(
+  // makes ui element
+  // gives idex to it
+  uint32_t draw_text(
 
     std::string ct,
 
-    vec2        pos   = {0,0},
-    vec3        dim   = {9,16,8},
+    vec2        pos      = {0,0},
+    vec3        dim      = {9,16,8},
 
-    uint16_t    color = 0x00F7
+    uint16_t    color    = 0x00F7,
+    bool        show_ctl = false
 
   );
+
+  // ^retrieve
+  inline UI::Element& ui_elem(uint32_t idex) {
+    return m_ui.get_elem(idex);
+
+  };
 
 };
 

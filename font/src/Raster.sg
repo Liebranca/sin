@@ -43,7 +43,7 @@ $:VERT;>
   const float DIV8   = 1.0f / 256.0f;
 
   const float CENT_X = 8.0f / 1366.0f;
-  const float CENT_Y = 9.0f / 768.0f;
+  const float CENT_Y = 8.0f / 768.0f;
 
   const vec2 NEGATIVE = vec2(
     CENT_X * 256,
@@ -77,10 +77,17 @@ void main() {
   Fg_Col_Idex = (Vertex.w >>  8) & uint(0xFF);
   Bg_Col_Idex = (Vertex.w >> 16) & uint(0xFF);
 
-  Show_Ctl    = (Vertex.w >> 24) & uint(0x1);
+  Show_Ctl    = 1-(Vertex.w >> 24) & uint(0x1);
 
   // setout
-  gl_Position = vec4(position * scale,0,1);
+  position   += vec2(
+
+     Tex_Cords.x * CENT_X,
+    -Tex_Cords.y * CENT_Y
+
+  ) * scale;
+
+  gl_Position = vec4(position,0,1);
 
 };
 
@@ -114,18 +121,32 @@ void main() {
 
   // solve pixel alpha
   bool r=bool(CHARS[Char_Idex][z] & uint(1<<i));
-//  r=r&&(Char_Idex >= Show_Ctl);
-
-  // palette fetch
-  vec3  fg_col   = COLORS[Fg_Col_Idex&uint(0xF)];
-  vec3  bg_col   = COLORS[Bg_Col_Idex&uint(0xF)];
+  r=r&&(Char_Idex >= Show_Ctl*0x1F);
 
   float fg_alpha = float(Fg_Col_Idex >> 4)/16.0f;
   float bg_alpha = float(Bg_Col_Idex >> 4)/16.0f;
 
-  // apply foreground and background colors
-  vec4 col  = vec4(fg_col.rgb,float(r));
-  col.rgb  += bg_col.rgb * float(col.w<0.04);
+  // palette fetch
+  vec4  fg_col   = vec4(
+    COLORS[Fg_Col_Idex&uint(0xF)],
+    fg_alpha
+
+  );
+
+  vec4  bg_col   = vec4(
+    COLORS[Bg_Col_Idex&uint(0xF)],
+    bg_alpha
+
+  );
+
+  // ^apply
+  vec4 col=mix(
+    bg_col,
+    fg_col,
+
+    float(r)
+
+  );
 
   // setout
   Frag_Color = col;

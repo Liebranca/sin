@@ -1,6 +1,6 @@
 // ---   *   ---   *   ---
-// TEXT
-// For you to RD/WT
+// UI
+// Shows you things
 //
 // LIBRE SOFTWARE
 // Licensed under GNU GPL3
@@ -13,17 +13,60 @@
 // deps
 
   #include <GL/glew.h>
-  #include "font/Text.hpp"
+  #include "font/UI.hpp"
 
 // ---   *   ---   *   ---
-// makes GBuff data from string
+// setup for single element
 
-void Text::fill_buff(void) {
+void UI::Element::nit(
 
-  m_verts.clear();
-  m_indices.clear();
+  std::string ct,
 
-  vec2  pos = m_pos;
+  vec2 pos,
+  vec3 dim,
+
+  uint16_t color,
+  bool show_ctl
+
+) {
+
+  m_pos   = pos;
+  m_scale = dim.z;
+
+  m_dim={
+    dim.x * CENT_X,
+    dim.y * CENT_Y
+
+  };
+
+  m_line_wall={
+    m_pos.x + m_dim.x * m_scale,
+    m_pos.y + m_dim.y * m_scale,
+
+  };
+
+  m_ct       = ct;
+  m_color    = color;
+  m_show_ctl = show_ctl;
+
+  // calc collision plane
+  vec3 tl={m_pos.x,m_pos.y,0};
+  vec3 tr={m_line_wall.x,m_pos.y,0};
+  vec3 bl={m_pos.x,m_line_wall.y,0};
+  vec3 br={m_line_wall.x,m_line_wall.y,0};
+
+  // ^commit
+  m_plane.set(tl,tr,bl,br);
+
+};
+
+// ---   *   ---   *   ---
+// get ref point for drawing
+// char of element
+
+void UI::Element::emit(UI& dst) {
+
+  vec2 pos=m_pos;
 
   // make planes for each char
   for(uint64_t i=0;i<m_ct.length();i++) {
@@ -36,14 +79,14 @@ void Text::fill_buff(void) {
     vert.set_show_ctl(m_show_ctl);
 
     // write to buff
-    this->emit(vert);
+    dst.emit(vert);
 
     // move to next square
     if(m_ct[i] != '\n' && pos.x < m_line_wall.x) {
-      pos.x += CENT_X;
+      pos.x += CENT_X * m_scale;
 
     } else if(pos.y < m_line_wall.y) {
-      pos.y -= CENT_Y;
+      pos.y -= (CENT_Y + LINE_SPACE) * m_scale;
       pos.x  = m_pos.x;
 
     } else {
@@ -56,33 +99,66 @@ void Text::fill_buff(void) {
 };
 
 // ---   *   ---   *   ---
+// put element in Q
+
+uint32_t UI::push(
+
+  std::string ct,
+
+  vec2 pos,
+  vec3 dim,
+
+  uint16_t color,
+  bool show_ctl
+
+) {
+
+  uint32_t out=m_elems.size();
+
+  m_elems.push_back(Element());
+  auto& elem=m_elems.back();
+
+  elem.nit(ct,pos,dim,color,show_ctl);
+  elem.emit(*this);
+
+  return out;
+
+};
+
+// ---   *   ---   *   ---
+// empties buffers
+
+void UI::clear(void) {
+  m_verts.clear();
+  m_indices.clear();
+  m_elems.clear();
+
+};
+
+// ---   *   ---   *   ---
 // calls sub_data for vao buffs
 
-void Text::upload(void) {
-
-  // trigger update
-  auto& verts   = this->get_verts();
-  auto& indices = this->get_indices();
+void UI::upload(void) {
 
   // get handles to buffs
   auto& vbo = m_vao.gbuff(VAO::VBO);
   auto& ibo = m_vao.gbuff(VAO::IBO);
 
-  if(! indices.size()) {
+  if(! m_indices.size()) {
     return;
 
   };
 
   // push
   vbo.sub_data(
-    (void*) verts.data(),
-    0,verts.size()
+    (void*) m_verts.data(),
+    0,m_verts.size()
 
   );
 
   ibo.sub_data(
-    (void*) indices.data(),
-    0,indices.size()
+    (void*) m_indices.data(),
+    0,m_indices.size()
 
   );
 
@@ -91,7 +167,7 @@ void Text::upload(void) {
 // ---   *   ---   *   ---
 // makes gl draw call for vao
 
-void Text::draw(void) {
+void UI::draw(void) {
 
   m_vao.bind();
 
@@ -106,13 +182,14 @@ void Text::draw(void) {
   );
 
   m_vao.unbind();
+  this->clear();
 
 };
 
 // ---   *   ---   *   ---
 // gl boiler
 
-void Text::nit_vao(vec2 dim) {
+void UI::nit_vao(uint64_t size) {
 
   // nit buffs
   m_vao.nit(
@@ -120,11 +197,8 @@ void Text::nit_vao(vec2 dim) {
     GBuff::D_ARRAY,
     GBuff::D_ELEMENT,
 
-    sizeof(Text::Vertex),
-    uint64_t(dim.x * dim.y),
-
-    sizeof(uint16_t),
-    uint64_t(dim.x * dim.y)
+    sizeof(UI::Vertex),size,
+    sizeof(uint16_t),size
 
   );
 
@@ -133,8 +207,8 @@ void Text::nit_vao(vec2 dim) {
 
     VAO::U32_4,
 
-    sizeof(Text::Vertex),
-    offsetof(Text::Vertex,m_data)
+    sizeof(UI::Vertex),
+    offsetof(UI::Vertex,m_data)
 
   );
 
@@ -143,12 +217,12 @@ void Text::nit_vao(vec2 dim) {
 // ---   *   ---   *   ---
 // ctrash
 
-Text::Vertex::Vertex(void) {
+UI::Vertex::Vertex(void) {
   this->nit();
 
 };
 
-Text::Vertex::Vertex(uint8_t idex) {
+UI::Vertex::Vertex(uint8_t idex) {
   this->nit(idex);
 
 };
@@ -156,7 +230,7 @@ Text::Vertex::Vertex(uint8_t idex) {
 // ---   *   ---   *   ---
 // ^cstruc
 
-void Text::Vertex::nit(uint8_t idex) {
+void UI::Vertex::nit(uint8_t idex) {
   this->set_char(idex);
 
 };
@@ -164,7 +238,7 @@ void Text::Vertex::nit(uint8_t idex) {
 // ---   *   ---   *   ---
 // set char position
 
-void Text::Vertex::set_pos(vec2 pos) {
+void UI::Vertex::set_pos(vec2 pos) {
 
   pos += vec2({NEGATIVE_X,NEGATIVE_Y});
 
@@ -178,7 +252,7 @@ void Text::Vertex::set_pos(vec2 pos) {
 // ---   *   ---   *   ---
 // ^retrieve
 
-vec2 Text::Vertex::get_pos(void) {
+vec2 UI::Vertex::get_pos(void) {
 
   float x=(m_data.x  & 0xFFFF) * CENT_X;
   float y=(m_data.x >>     16) * CENT_Y;
@@ -193,7 +267,7 @@ vec2 Text::Vertex::get_pos(void) {
 // ---   *   ---   *   ---
 // set char scale
 
-void Text::Vertex::set_scale(float z) {
+void UI::Vertex::set_scale(float z) {
   m_data.z=uint32_t(z*0xFF);
 
 };
@@ -201,7 +275,7 @@ void Text::Vertex::set_scale(float z) {
 // ---   *   ---   *   ---
 // select character idex
 
-void Text::Vertex::set_char(uint8_t idex) {
+void UI::Vertex::set_char(uint8_t idex) {
   m_data.w &=~ 0x000000FF;
   m_data.w |=  idex;
 
@@ -210,7 +284,7 @@ void Text::Vertex::set_char(uint8_t idex) {
 // ---   *   ---   *   ---
 // set fg/bg color
 
-void Text::Vertex::set_color(uint16_t color) {
+void UI::Vertex::set_color(uint16_t color) {
   m_data.w &=~ 0x00FFFF00;
   m_data.w |=  uint32_t(color) << 8;
 
@@ -220,39 +294,35 @@ void Text::Vertex::set_color(uint16_t color) {
 // enable/disable rendering of
 // control characters
 
-void Text::Vertex::set_show_ctl(bool show) {
+void UI::Vertex::set_show_ctl(bool show) {
   m_data.w &=~ 0x01000000;
   m_data.w |=  uint32_t(show) << 24;
 
 };
 
 // ---   *   ---   *   ---
-// cats four vertices to Q
+// ^makes verts from elem
 
-void Text::emit(
-  Text::Vertex& tl
+void UI::emit(
+  UI::Vertex& tl
 
 ) {
 
   // idex beg
   uint16_t base=m_verts.size();
 
-  // base eq top left
+  // top left
   tl.m_data.y=0b00;
-  vec2 pos=tl.get_pos();
 
   // top right
   Vertex tr=tl;
   tr.m_data.y=0b01;
-  tr.set_pos(pos+vec2({CENT_X,0}));
 
   // bottom right, bottom left
   Vertex br=tl;
   Vertex bl=tl;
   br.m_data.y=0b11;
   bl.m_data.y=0b10;
-  br.set_pos(pos+vec2({CENT_X,-CENT_Y}));
-  bl.set_pos(pos+vec2({0,-CENT_Y}));
 
   // ^commit
   m_verts.push_back(br);

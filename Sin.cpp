@@ -254,12 +254,13 @@ void SIN::draw_enqueued(void) {
 
   };
 
-  if(m_text.ready()) {
+  if(m_ui.ready()) {
 
     program=programs.get(m_shaders[TEXT]);
     programs.bind(program);
 
-    m_text.draw();
+    m_ui.upload();
+    m_ui.draw();
 
   };
 
@@ -302,24 +303,25 @@ void SIN::draw_line(
 };
 
 // ---   *   ---   *   ---
-// ^idem
+// makes ui element
+// gives idex to it
 
-void SIN::draw_text(
+uint32_t SIN::draw_text(
 
   std::string ct,
 
   vec2        pos,
   vec3        dim,
 
-  uint16_t    color
+  uint16_t    color,
+  bool        show_ctl
 
 ) {
 
-  m_text.set_content(ct);
-  m_text.set_pos(pos);
-  m_text.set_dim(dim);
+  return m_ui.push(
+    ct,pos,dim,color,show_ctl
 
-  m_text.upload();
+  );
 
 };
 
@@ -407,7 +409,7 @@ SIN::SIN(void) {
 
   );
 
-  m_text.nit_vao({9,16});
+  m_ui.nit_vao(0x1000);
 
 };
 
