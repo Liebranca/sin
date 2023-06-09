@@ -309,7 +309,7 @@ void SIN::draw_text(
   std::string ct,
 
   vec2        pos,
-  vec2        dim,
+  vec3        dim,
 
   uint16_t    color
 

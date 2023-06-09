@@ -165,7 +165,7 @@ public:
     std::string ct,
 
     vec2        pos   = {0,0},
-    vec2        dim   = {9,16},
+    vec3        dim   = {9,16,8},
 
     uint16_t    color = 0x00F7
 

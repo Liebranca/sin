@@ -23,14 +23,13 @@ void Text::fill_buff(void) {
   m_verts.clear();
   m_indices.clear();
 
-  char* s   = (char*) m_ct.c_str();
   vec2  pos = m_pos;
 
   // make planes for each char
-  while(*s++) {
+  for(uint64_t i=0;i<m_ct.length();i++) {
 
     // prepare render data
-    Vertex vert(*s);
+    Vertex vert(m_ct[i]);
     vert.set_pos(pos);
     vert.set_scale(m_scale);
     vert.set_color(m_color);
@@ -40,11 +39,11 @@ void Text::fill_buff(void) {
     this->emit(vert);
 
     // move to next square
-    if(*s != '\n' && pos.x < m_line_wall.x) {
+    if(m_ct[i] != '\n' && pos.x < m_line_wall.x) {
       pos.x += CENT_X;
 
     } else if(pos.y < m_line_wall.y) {
-      pos.y += CENT_Y;
+      pos.y -= CENT_Y;
       pos.x  = m_pos.x;
 
     } else {
@@ -167,6 +166,8 @@ void Text::Vertex::nit(uint8_t idex) {
 
 void Text::Vertex::set_pos(vec2 pos) {
 
+  pos += vec2({NEGATIVE_X,NEGATIVE_Y});
+
   uint16_t x = uint16_t(pos.x/CENT_X);
   uint16_t y = uint16_t(pos.y/CENT_Y);
 
@@ -181,6 +182,9 @@ vec2 Text::Vertex::get_pos(void) {
 
   float x=(m_data.x  & 0xFFFF) * CENT_X;
   float y=(m_data.x >>     16) * CENT_Y;
+
+  x -= NEGATIVE_X;
+  y -= NEGATIVE_Y;
 
   return {x,y};
 
@@ -198,7 +202,7 @@ void Text::Vertex::set_scale(float z) {
 // select character idex
 
 void Text::Vertex::set_char(uint8_t idex) {
-  m_data.w &=~ 0xFF;
+  m_data.w &=~ 0x000000FF;
   m_data.w |=  idex;
 
 };
@@ -207,8 +211,8 @@ void Text::Vertex::set_char(uint8_t idex) {
 // set fg/bg color
 
 void Text::Vertex::set_color(uint16_t color) {
-  m_data.w &=~ 0xFFFF00;
-  m_data.w |= uint32_t(color) << 8;
+  m_data.w &=~ 0x00FFFF00;
+  m_data.w |=  uint32_t(color) << 8;
 
 };
 
@@ -218,7 +222,7 @@ void Text::Vertex::set_color(uint16_t color) {
 
 void Text::Vertex::set_show_ctl(bool show) {
   m_data.w &=~ 0x01000000;
-  m_data.w |= uint32_t(show) << 24;
+  m_data.w |=  uint32_t(show) << 24;
 
 };
 
@@ -230,31 +234,31 @@ void Text::emit(
 
 ) {
 
+  // idex beg
+  uint16_t base=m_verts.size();
+
   // base eq top left
   tl.m_data.y=0b00;
   vec2 pos=tl.get_pos();
 
   // top right
   Vertex tr=tl;
-  tr.m_data.y=0b10;
+  tr.m_data.y=0b01;
   tr.set_pos(pos+vec2({CENT_X,0}));
 
   // bottom right, bottom left
   Vertex br=tl;
   Vertex bl=tl;
   br.m_data.y=0b11;
-  bl.m_data.y=0b01;
-  br.set_pos(pos+vec2({CENT_X,CENT_Y}));
-  bl.set_pos(pos+vec2({0,CENT_Y}));
+  bl.m_data.y=0b10;
+  br.set_pos(pos+vec2({CENT_X,-CENT_Y}));
+  bl.set_pos(pos+vec2({0,-CENT_Y}));
 
   // ^commit
   m_verts.push_back(br);
   m_verts.push_back(bl);
   m_verts.push_back(tl);
   m_verts.push_back(tr);
-
-  // make quad
-  uint16_t base=m_verts.size();
 
   // tri A
   m_indices.push_back(base+0);

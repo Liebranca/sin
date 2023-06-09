@@ -20,6 +20,9 @@ public:
   cxr32 CENT_X = 8.0f / 1366.0f;
   cxr32 CENT_Y = 9.0f / 768.0f;
 
+  cxr32 NEGATIVE_X = CENT_X * 256;
+  cxr32 NEGATIVE_Y = CENT_Y * 256;
+
 // ---   *   ---   *   ---
 // helpers
 
@@ -65,7 +68,7 @@ private:
 
   std::string m_ct;
 
-  vec2     m_pos   = {-1,-1};
+  vec2     m_pos   = {-1,1};
   vec2     m_dim   = {9,16};
 
   float    m_scale = 1.0f;
@@ -147,7 +150,7 @@ public:
 
   };
 
-  inline void set_dim(vec2 dim) {
+  inline void set_dim(vec3 dim) {
 
     m_dim       = {
       dim.x * CENT_X,
@@ -161,10 +164,7 @@ public:
 
     };
 
-  };
-
-  inline void set_scale(float z) {
-    m_scale=z;
+    m_scale=dim.z;
 
   };
 

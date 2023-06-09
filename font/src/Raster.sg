@@ -41,10 +41,15 @@ $:VERT;>
 // ROM
 
   const float DIV8   = 1.0f / 256.0f;
-  const float DIV15  = 1.0f / float((1<<15)-1);
 
   const float CENT_X = 8.0f / 1366.0f;
   const float CENT_Y = 9.0f / 768.0f;
+
+  const vec2 NEGATIVE = vec2(
+    CENT_X * 256,
+    CENT_Y * 256
+
+  );
 
 // ---   *   ---   *   ---
 // crux
@@ -53,10 +58,10 @@ void main() {
 
   // unpack vert
   vec2 position = vec2(
-    float(Vertex.x  & 0xFFFF) * CENT_X * 16,
-    float(Vertex.x >>     16) * CENT_Y * 16
+    float(Vertex.x  & 0xFFFF) * CENT_X,
+    float(Vertex.x >>     16) * CENT_Y
 
-  );
+  ) - NEGATIVE;
 
   Tex_Cords = vec2(
     float((Vertex.y & uint(0x1)) >> 0),
@@ -66,24 +71,16 @@ void main() {
 
   float scale = float(Vertex.z) * DIV8;
 
-  Char_Idex   = Vertex.w;
+  // ^break down char data
+  Char_Idex   = Vertex.w & uint(0xFF);
 
-  // ^break down
-  Fg_Col_Idex = (Char_Idex >>  8) & 0xFF;
-  Bg_Col_Idex = (Char_Idex >> 16) & 0xFF;
+  Fg_Col_Idex = (Vertex.w >>  8) & uint(0xFF);
+  Bg_Col_Idex = (Vertex.w >> 16) & uint(0xFF);
 
-  Show_Ctl    = (Char_Idex >> 24) & 0x1;
-  Char_Idex   = Char_Idex & 0xFF;
-
-//  // adjust corners from uv
-//  position += vec2(
-//    CENT_X * Tex_Cords.x,
-//    CENT_Y * Tex_Cords.y
-//
-//  );
+  Show_Ctl    = (Vertex.w >> 24) & uint(0x1);
 
   // setout
-  gl_Position = vec4(position,0,1);
+  gl_Position = vec4(position * scale,0,1);
 
 };
 
@@ -117,7 +114,7 @@ void main() {
 
   // solve pixel alpha
   bool r=bool(CHARS[Char_Idex][z] & uint(1<<i));
-  r=r&&(Char_Idex >= Show_Ctl);
+//  r=r&&(Char_Idex >= Show_Ctl);
 
   // palette fetch
   vec3  fg_col   = COLORS[Fg_Col_Idex&uint(0xF)];
