@@ -190,6 +190,17 @@ public:
 
   };
 
+  // ui draw cursor ctl
+  inline vec2& get_ui_cursor(void) {
+    return m_ui.get_cursor();
+
+  };
+
+  inline void reset_ui_cursor(void) {
+    m_ui.reset_cursor();
+
+  };
+
 };
 
 // ---   *   ---   *   ---

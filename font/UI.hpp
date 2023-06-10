@@ -132,7 +132,8 @@ public:
 
 private:
 
-  VAO m_vao;
+  VAO  m_vao;
+  vec2 m_cursor={0,0};
 
   std::vector<Vertex>   m_verts;
   std::vector<uint16_t> m_indices;
@@ -209,6 +210,17 @@ public:
   // get any elements Q'd
   bool ready(void) {
     return m_elems.size() > 0;
+
+  };
+
+  // gets last position draw on
+  inline vec2& get_cursor(void) {
+    return m_cursor;
+
+  };
+
+  inline void reset_cursor(void) {
+    m_cursor={0,0};
 
   };
 

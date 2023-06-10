@@ -91,10 +91,16 @@ UI::Vertex UI::Elem::base_vert(
 
 void UI::Elem::emit(UI& dst) {
 
-  vec2 pos=m_pos;
+  vec2  pos    = m_pos;
+  vec2& cursor = dst.get_cursor();
 
-  float max_x=0.0f;
-  float cur_x=0.0f;
+  float max_x  = 0.0f;
+
+  float step_x = CENT_X * m_scale;
+  float step_y =
+    (CENT_Y + LINE_SPACE)
+  * m_scale
+  ;
 
   m_rdim={0,0};
 
@@ -125,34 +131,28 @@ void UI::Elem::emit(UI& dst) {
     // move to next square
     if(! is_newline && pos.x < m_line_wall.x) {
 
-      float step=CENT_X * m_scale;
+      pos.x    += step_x;
+      cursor.x += step_x;
 
-      pos.x += step;
-      cur_x += step;
-
-      fits   = true;
+      fits = true;
 
     // ^move to next line
     } else if(pos.y > m_line_wall.y) {
 
-      float step=
-        (CENT_Y + LINE_SPACE)
-      * m_scale
-      ;
+      pos.y      -= step_y;
+      cursor.y   -= step_y;
+      m_rdim.y   -= step_y;
 
-      pos.y    -= step;
-      m_rdim.y -= step;
+      pos.x       = m_pos.x;
+      cursor.x    = 0.0f;
 
-      pos.x     = m_pos.x;
-      cur_x     = 0.0f;
-
-      fits      = true;
+      fits = true;
 
     };
 
     // get maximum line length
-    max_x=(cur_x > max_x)
-      ? cur_x
+    max_x=(cursor.x > max_x)
+      ? cursor.x
       : max_x
       ;
 
@@ -167,12 +167,17 @@ void UI::Elem::emit(UI& dst) {
   // approximate real dimensions
   // of element as drawn
   m_rdim.x=max_x;
+  m_rdim.y=(m_rdim.y >= 0)
+    ? -step_y
+    :  m_rdim.y
+    ;
+
   this->calc_plane();
 
-  m_rdim.x=(cur_x==0.0f)
-    ? 0.0
-    : m_rdim.x
-    ;
+  if(cursor.x != 0.0f) {
+    cursor.x += step_x;
+
+  };
 
 };
 
