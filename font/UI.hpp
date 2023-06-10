@@ -16,11 +16,14 @@ class UI {
 
 public:
 
-  VERSION   "v0.00.4b";
+  VERSION   "v0.00.5b";
   AUTHOR    "IBN-3DILA";
 
   cxr32 CENT_X = 8.0f / 1366.0f;
   cxr32 CENT_Y = 8.0f / 768.0f;
+
+  cxr32 SIZE_X = 1366.0f / 8.0f;
+  cxr32 SIZE_Y = 768.0f / 8.0f;
 
   cxr32 LINE_SPACE =  1.0f / 768.0f;
 
@@ -71,6 +74,7 @@ public:
 
     vec2     m_pos   = {-1,1};
     vec2     m_dim   = {9,16};
+    vec2     m_rdim  = {0,0};
 
     vec2     m_line_wall;
 
@@ -100,6 +104,11 @@ public:
 
     inline Gaol::Plane& get_plane(void) {
       return m_plane;
+
+    };
+
+    inline vec2& get_rdim(void) {
+      return m_rdim;
 
     };
 

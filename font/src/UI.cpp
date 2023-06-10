@@ -49,15 +49,6 @@ void UI::Element::nit(
   m_color    = color;
   m_show_ctl = show_ctl;
 
-  // calc collision plane
-  vec3 tl={m_pos.x,m_pos.y,0};
-  vec3 tr={m_line_wall.x,m_pos.y,0};
-  vec3 bl={m_pos.x,m_line_wall.y,0};
-  vec3 br={m_line_wall.x,m_line_wall.y,0};
-
-  // ^commit
-  m_plane.set(tl,tr,bl,br);
-
 };
 
 // ---   *   ---   *   ---
@@ -66,35 +57,92 @@ void UI::Element::nit(
 
 void UI::Element::emit(UI& dst) {
 
-  vec2     pos  = m_pos;
+  vec2 pos=m_pos;
+
+  float max_x=0.0f;
+  float cur_x=0.0f;
+
+  m_rdim={0,0};
 
   // make planes for each char
   for(uint64_t i=0;i<m_ct.length();i++) {
 
-    // prepare render data
-    Vertex vert(m_ct[i]);
-    vert.set_pos(pos);
-    vert.set_scale(m_scale);
-    vert.set_color(m_color);
-    vert.set_show_ctl(m_show_ctl);
+    // TODO: handle ctl chars proper
+    bool is_newline=
+        m_ct[i] == '\n'
+    &&! m_show_ctl
+    ;
 
-    // write to buff
-    dst.emit(vert);
+    bool fits=false;
+
+    // prepare render data
+    if(! is_newline) {
+
+      Vertex vert(m_ct[i]);
+      vert.set_pos(pos);
+      vert.set_scale(m_scale);
+      vert.set_color(m_color);
+      vert.set_show_ctl(m_show_ctl);
+
+      // write to buff
+      dst.emit(vert);
+
+    };
 
     // move to next square
-    if(m_ct[i] != '\n' && pos.x < m_line_wall.x) {
-      pos.x += CENT_X * m_scale;
+    if(! is_newline && pos.x < m_line_wall.x) {
+
+      float step=CENT_X * m_scale;
+
+      pos.x += step;
+      cur_x += step;
+
+      fits   = true;
 
     } else if(pos.y > m_line_wall.y) {
-      pos.y -= (CENT_Y + LINE_SPACE) * m_scale;
-      pos.x  = m_pos.x;
 
-    } else {
+      float step=
+        (CENT_Y + LINE_SPACE)
+      * m_scale
+      ;
+
+      pos.y    -= step;
+      m_rdim.y -= step;
+
+      pos.x     = m_pos.x;
+      cur_x     = 0.0f;
+
+      fits      = true;
+
+    };
+
+    max_x=(cur_x > max_x)
+      ? cur_x
+      : max_x
+      ;
+
+    if(! fits) {
       break;
 
     };
 
   };
+
+  m_rdim.x=max_x;
+
+  // calc collision plane
+  vec3 tl={m_pos.x,m_pos.y,0};
+  vec3 tr={m_pos.x+m_rdim.x,m_pos.y,0};
+  vec3 bl={m_pos.x,m_pos.y+m_rdim.y,0};
+  vec3 br={m_pos.x+m_rdim.x,m_pos.y+m_rdim.y,0};
+
+  // ^commit
+  m_plane.set(tl,tr,bl,br);
+
+  m_rdim.x=(cur_x==0.0f)
+    ? 0.0
+    : m_rdim.x
+    ;
 
 };
 
