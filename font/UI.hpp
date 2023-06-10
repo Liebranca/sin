@@ -16,7 +16,7 @@ class UI {
 
 public:
 
-  VERSION   "v0.00.5b";
+  VERSION   "v0.00.6b";
   AUTHOR    "IBN-3DILA";
 
   cxr32 CENT_X = 8.0f / 1366.0f;
@@ -43,7 +43,6 @@ public:
 
     // ^cstruc
     void nit(uint8_t idex=0x00);
-
     // copy
     Vertex& operator=(Vertex& other) {
       m_data=other.m_data;
@@ -57,6 +56,7 @@ public:
     void set_char(uint8_t idex);
     void set_color(uint16_t color);
     void set_show_ctl(bool show);
+    void set_layer(uint8_t z);
 
     // ^inspect
     vec2 get_pos(void);
@@ -66,7 +66,7 @@ public:
 // ---   *   ---   *   ---
 // a block of characters
 
-  struct Element {
+  struct Elem {
 
   private:
 
@@ -88,6 +88,12 @@ public:
 
   public:
 
+    Vertex base_vert(
+      vec2&   pos,
+      uint8_t c
+
+    );
+
     void emit(UI& dst);
 
     void nit(
@@ -102,8 +108,15 @@ public:
 
     );
 
+    void calc_plane(void);
+
     inline Gaol::Plane& get_plane(void) {
       return m_plane;
+
+    };
+
+    inline void set_rdim(vec2& dim) {
+      m_rdim=dim;
 
     };
 
@@ -124,7 +137,7 @@ private:
   std::vector<Vertex>   m_verts;
   std::vector<uint16_t> m_indices;
 
-  std::vector<Element>  m_elems;
+  std::vector<Elem>     m_elems;
 
   uint32_t m_corners[4]={0,0,0,0};
 
@@ -141,6 +154,8 @@ private:
   );
 
   void get_corners(uint32_t base);
+
+  void reset_corners(void);
   void round_corners(void);
 
 // ---   *   ---   *   ---
@@ -151,7 +166,7 @@ public:
   void nit_vao(uint64_t size);
 
   // put element in Q
-  uint32_t push(
+  uint32_t push_text(
 
     std::string ct,
 
@@ -163,8 +178,18 @@ public:
 
   );
 
+  // ^plain quad of size X, no chars
+  uint32_t push_quad(
+
+    vec2&    pos,
+    vec2&    dim,
+
+    uint16_t color
+
+  );
+
   // ^retrieve
-  inline Element& get_elem(uint32_t i) {
+  inline Elem& get_elem(uint32_t i) {
     return m_elems[i];
 
   };

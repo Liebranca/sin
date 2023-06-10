@@ -18,7 +18,7 @@
 // ---   *   ---   *   ---
 // setup for single element
 
-void UI::Element::nit(
+void UI::Elem::nit(
 
   std::string ct,
 
@@ -52,10 +52,44 @@ void UI::Element::nit(
 };
 
 // ---   *   ---   *   ---
+// calc collision plane for element
+
+void UI::Elem::calc_plane(void) {
+
+  vec3 tl={m_pos.x,m_pos.y,0};
+  vec3 tr={m_pos.x+m_rdim.x,m_pos.y,0};
+  vec3 bl={m_pos.x,m_pos.y+m_rdim.y,0};
+  vec3 br={m_pos.x+m_rdim.x,m_pos.y+m_rdim.y,0};
+
+  m_plane.set(tl,tr,bl,br);
+
+};
+
+// ---   *   ---   *   ---
+// generate point from elem
+
+UI::Vertex UI::Elem::base_vert(
+  vec2&   pos,
+  uint8_t c
+
+) {
+
+  Vertex vert(c);
+
+  vert.set_pos(pos);
+  vert.set_scale(m_scale);
+  vert.set_color(m_color);
+  vert.set_show_ctl(m_show_ctl);
+
+  return vert;
+
+};
+
+// ---   *   ---   *   ---
 // get ref point for drawing
 // char of element
 
-void UI::Element::emit(UI& dst) {
+void UI::Elem::emit(UI& dst) {
 
   vec2 pos=m_pos;
 
@@ -78,13 +112,12 @@ void UI::Element::emit(UI& dst) {
     // prepare render data
     if(! is_newline) {
 
-      Vertex vert(m_ct[i]);
-      vert.set_pos(pos);
-      vert.set_scale(m_scale);
-      vert.set_color(m_color);
-      vert.set_show_ctl(m_show_ctl);
+      Vertex vert=this->base_vert(
+        pos,
+        m_ct[i]
 
-      // write to buff
+      );
+
       dst.emit(vert);
 
     };
@@ -99,6 +132,7 @@ void UI::Element::emit(UI& dst) {
 
       fits   = true;
 
+    // ^move to next line
     } else if(pos.y > m_line_wall.y) {
 
       float step=
@@ -116,11 +150,13 @@ void UI::Element::emit(UI& dst) {
 
     };
 
+    // get maximum line length
     max_x=(cur_x > max_x)
       ? cur_x
       : max_x
       ;
 
+    // early exit if no more space
     if(! fits) {
       break;
 
@@ -128,16 +164,10 @@ void UI::Element::emit(UI& dst) {
 
   };
 
+  // approximate real dimensions
+  // of element as drawn
   m_rdim.x=max_x;
-
-  // calc collision plane
-  vec3 tl={m_pos.x,m_pos.y,0};
-  vec3 tr={m_pos.x+m_rdim.x,m_pos.y,0};
-  vec3 bl={m_pos.x,m_pos.y+m_rdim.y,0};
-  vec3 br={m_pos.x+m_rdim.x,m_pos.y+m_rdim.y,0};
-
-  // ^commit
-  m_plane.set(tl,tr,bl,br);
+  this->calc_plane();
 
   m_rdim.x=(cur_x==0.0f)
     ? 0.0
@@ -149,7 +179,7 @@ void UI::Element::emit(UI& dst) {
 // ---   *   ---   *   ---
 // put element in Q
 
-uint32_t UI::push(
+uint32_t UI::push_text(
 
   std::string ct,
 
@@ -163,18 +193,15 @@ uint32_t UI::push(
 
   uint32_t out=m_elems.size();
 
-  m_elems.push_back(Element());
-  auto& elem=m_elems.back();
+  m_elems.push_back(Elem());
+  auto& e=m_elems.back();
 
-  // reset corner cache
-  m_corners[0]=m_verts.size();
-  m_corners[1]=m_verts.size();
-  m_corners[2]=m_verts.size();
-  m_corners[3]=m_verts.size();
+  // re-initialize
+  this->reset_corners();
 
   // generate verts
-  elem.nit(ct,pos,dim,color,show_ctl);
-  elem.emit(*this);
+  e.nit(ct,pos,dim,color,show_ctl);
+  e.emit(*this);
 
   // ^do a backflip
   this->round_corners();
@@ -184,7 +211,104 @@ uint32_t UI::push(
 };
 
 // ---   *   ---   *   ---
-// does a backflip!
+// ^plain quad of size X, no chars
+
+uint32_t UI::push_quad(
+
+  vec2&    pos,
+  vec2&    dim,
+
+  uint16_t color
+
+) {
+
+  uint32_t out=m_elems.size();
+
+  // re-initialize
+  this->reset_corners();
+
+
+  // ^generate geometry
+  uint16_t base=m_verts.size();
+
+  m_elems.push_back(Elem());
+  auto& e=m_elems.back();
+
+  // generate verts
+  e.nit(
+
+    " ",pos,
+    {dim.x,dim.y,1.0f},
+
+    color,false
+
+  );
+
+  Vertex vert=e.base_vert(pos,' ');
+  this->emit(vert);
+
+  // ^get generated verts
+  auto& br=m_verts[base+0];
+  auto& bl=m_verts[base+1];
+  auto& tl=m_verts[base+2];
+  auto& tr=m_verts[base+3];
+
+  br.set_layer(1);
+  bl.set_layer(1);
+  tl.set_layer(1);
+  tr.set_layer(1);
+
+  // ^adjust to panel size
+  br.set_pos({
+    pos.x+dim.x+CENT_X*16,
+    pos.y-dim.y-CENT_Y*4,
+
+  });
+
+  bl.set_pos({
+    pos.x-CENT_X*4,
+    pos.y-dim.y-CENT_Y*4,
+
+  });
+
+  tr.set_pos({
+    pos.x+dim.x+CENT_X*16,
+    pos.y+CENT_Y*4,
+
+  });
+
+  tl.set_pos({
+    pos.x-CENT_X*4,
+    pos.y+CENT_Y*4,
+
+  });
+
+  // ^do a backflip
+  this->round_corners();
+
+  // get collision plane
+  e.set_rdim(dim);
+  e.calc_plane();
+
+  return out;
+
+};
+
+// ---   *   ---   *   ---
+// reset corner cache
+
+void UI::reset_corners(void) {
+
+  m_corners[0]=m_verts.size();
+  m_corners[1]=m_verts.size();
+  m_corners[2]=m_verts.size();
+  m_corners[3]=m_verts.size();
+
+};
+
+// ---   *   ---   *   ---
+// sets corresponding flag to
+// verts matching corner criteria
 
 void UI::round_corners(void) {
 
@@ -376,12 +500,18 @@ void UI::Vertex::set_show_ctl(bool show) {
 };
 
 // ---   *   ---   *   ---
+// enable/disable Z-offset
+
+void UI::Vertex::set_layer(uint8_t z) {
+  m_data.w &=~ 0xFE000000;
+  m_data.w |=  uint32_t(z) << 25;
+
+};
+
+// ---   *   ---   *   ---
 // ^makes verts from elem
 
-void UI::emit(
-  UI::Vertex& tl
-
-) {
+void UI::emit(UI::Vertex& tl) {
 
   // idex beg
   uint16_t base=m_verts.size();

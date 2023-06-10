@@ -318,8 +318,27 @@ uint32_t SIN::draw_text(
 
 ) {
 
-  return m_ui.push(
+  return m_ui.push_text(
     ct,pos,dim,color,show_ctl
+
+  );
+
+};
+
+// ---   *   ---   *   ---
+// ^same system, plain quad
+
+uint32_t SIN::draw_rect(
+
+  vec2     pos,
+  vec2     dim,
+
+  uint16_t color
+
+) {
+
+  return m_ui.push_quad(
+    pos,dim,color
 
   );
 

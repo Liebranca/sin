@@ -41,6 +41,7 @@ $:VERT;>
 // ROM
 
   const float DIV8   = 1.0f / 256.0f;
+  const float DIV7   = 1.0f / 128.0f;
 
   const float CENT_X = 8.0f / 1366.0f;
   const float CENT_Y = 8.0f / 768.0f;
@@ -82,6 +83,8 @@ void main() {
 
   Show_Ctl    = 1-(Vertex.w >> 24) & uint(0x1);
 
+  float layer = float(Vertex.w >> 25) * DIV7;
+
   // setout
   position   += vec2(
 
@@ -90,7 +93,7 @@ void main() {
 
   ) * scale;
 
-  gl_Position = vec4(position,0,1);
+  gl_Position = vec4(position,layer,1);
 
 };
 
@@ -116,6 +119,13 @@ void main() {
   uint x = uint(Tex_Cords.x * 8);
   uint y = uint(Tex_Cords.y * 8);
 
+  // UV as gradient
+  vec2 guv=vec2(
+    abs((Tex_Cords.x-0.5f)*2),
+    abs((Tex_Cords.y-0.5f)*2)
+
+  );
+
   // rounded edges
   float corner = 1.0f-smoothstep(
 
@@ -123,9 +133,16 @@ void main() {
     2.000f,
 
     Tex_Cords.z
+  + ((guv.x * guv.y) / 1.125)
 
-  + abs((Tex_Cords.x-0.5f)*2)
-  * abs((Tex_Cords.y-0.5f)*2)
+  );
+
+  corner=clamp(
+
+    ((corner * 2.0f) * float(corner > 0.4f))
+  + ((corner * 0.4f)),
+
+    0.0f,1.0f
 
   );
 

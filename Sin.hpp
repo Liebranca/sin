@@ -174,8 +174,18 @@ public:
 
   );
 
+  // ^same system, plain quad
+  uint32_t draw_rect(
+
+    vec2     pos,
+    vec2     dim,
+
+    uint16_t color=0xF800
+
+  );
+
   // ^retrieve
-  inline UI::Element& ui_elem(uint32_t idex) {
+  inline UI::Elem& ui_elem(uint32_t idex) {
     return m_ui.get_elem(idex);
 
   };
