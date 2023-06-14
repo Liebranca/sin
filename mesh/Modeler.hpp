@@ -6,6 +6,7 @@
 
   #include "bitter/kvrnel/GLM.hpp"
   #include "bitter/kvrnel/T3D.hpp"
+  #include "bitter/ff/CRK.hpp"
 
 // ---   *   ---   *   ---
 // info
@@ -14,7 +15,7 @@ class Modeler {
 
 public:
 
-  VERSION   "v0.00.2b";
+  VERSION   "v0.00.3b";
   AUTHOR    "IBN-3DILA";
 
   enum {
@@ -60,14 +61,15 @@ public:
   typedef svec<Vertex>       Verts;
   typedef svec<sref<Vertex>> Verts_Ref;
 
+  typedef svec<Verts_Ref>    Faces;
+
 // ---   *   ---   *   ---
 
   struct Joint {
 
-  public:
-    T3D xform;
-
   private:
+
+    T3D      m_xform;
 
     Verts    m_verts;
 
@@ -103,52 +105,111 @@ public:
 
     };
 
+    inline Verts& get_verts(void) {
+      return m_verts;
+
+    };
+
+    inline T3D& get_xform(void) {
+      return m_xform;
+
+    };
+
   };
 
   typedef svec<Joint> Joints;
+
+// ---   *   ---   *   ---
+
+  struct Cache {
+    bool calc_mesh=true;
+
+  };
 
 // ---   *   ---   *   ---
 // attrs
 
 private:
 
-  Joints    m_joints;
-  Verts_Ref m_vrefs;
+  CRK::Prim m_mesh;
+
+  Joints m_joints;
+  Faces  m_faces;
+
+  Cache  m_cache;
 
 // ---   *   ---   *   ---
 // guts
 
-  void join(Joint& a,Joint& b);
-
-  void join_quad(
-
-    Joint&   a,
-    Joint&   b,
-
-    uint16_t ai,
-    uint16_t bi
-
-  );
-
-  void join_tri(
-
-    Joint&   a,
-    Joint&   b,
-
-    uint16_t ai,
-    uint16_t bi
-
-  );
-
   void wind_even(Joint& a,Joint& b);
   void wind_uneven(Joint& a,Joint& b);
 
+  Verts_Ref& new_face(void) {
+    m_faces.push_back(Verts_Ref());
+    m_cache.calc_mesh=true;
+
+    return m_faces.back();
+
+  };
+
+  inline Verts_Ref& cur_face(void) {
+    return m_faces.back();
+
+  };
+
+  void push_quad(
+
+    Joint&   a,
+    Joint&   b,
+
+    uint16_t ai,
+    uint16_t bi
+
+  );
+
+  void push_tri(
+
+    Joint&   a,
+    Joint&   b,
+
+    uint16_t ai,
+    uint16_t bi
+
+  );
+
   #include "mesh/Modeler/Aux.hpp"
+
+  void calc_indices(void);
+  void calc_verts(void);
 
 // ---   *   ---   *   ---
 // iface
 
 public:
+
+  Modeler(void) {};
+
+  inline uint64_t new_joint(void) {
+
+    uint64_t out=m_joints.size();
+    m_joints.push_back(Joint());
+
+    return out;
+
+  };
+
+  void join(
+    uint64_t idex_a,
+    uint64_t idex_b
+
+  );
+
+  inline Joint& joint(uint64_t idex) {
+    return m_joints[idex];
+
+  };
+
+  CRK::Prim& get_mesh(void);
 
 };
 
