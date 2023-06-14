@@ -25,46 +25,31 @@ void Modeler::Joint::set_profile(
 
   m_verts.clear();
 
-  T3D   point;
+  // get surface point
+  vec3  fwd = {0,0,1};
 
-  vec3 origin = {0,0,0};
-  quat rot    = {1,0,Seph::PI/prof,0};
+  // axis angle -> quaternion
+  float ang = Seph::PI/prof;
+  quat  rot = {
+
+    float(cos(ang)),
+    0,
+    1 * float(sin(ang)),
+    0
+
+  };
 
   // ^rotate around self
   for(uint16_t i=0;i<prof;i++) {
 
-    point.teleport(origin);
-    point.rotate(rot);
-
-    point.teleport(point.fwd());
-
-    auto& model = point.get_model();
-    auto& nmat  = point.get_nmat();
-
-    vec3  fwd   = glm::normalize(
-      nmat * point.fwd()
-
-    );
-
-    vec3 pos    = vec3(model * vec4(
-      point.position(),1
-
-    ));
-
-    printf(
-      "%u: %f,%f,%f\n",
-      i,fwd.x,fwd.y,fwd.z
-
-    );
-
     m_verts.push_back(Vertex(
-      fwd,fwd,m_base+i
+      fwd * m_radius,fwd,m_base+i
 
     ));
+
+    fwd=fwd*rot;
 
   };
-
-  printf("\n");
 
   m_profile=prof;
 
