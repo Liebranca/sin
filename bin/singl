@@ -29,6 +29,8 @@ package main;
   use Arstd::Path;
   use Arstd::IO;
 
+  use Arstd::WLog;
+
   use Shb7::Path;
   use Cli;
 
@@ -115,15 +117,11 @@ sub flist_filter(@ar) {
 
   };
 
-  if(@out) {
+  $WLog->mprich(
+    'AR/SinGL',
+    "assembling shaders... "
 
-    say {*STDERR}
-      $Emit::Std::ARTAG,
-      "rebuilding SinGL headers... "
-
-    ;
-
-  };
+  ) if @out;
 
   return @out;
 
@@ -138,7 +136,7 @@ while(@Pending) {
   my $fname = shift @Pending;
   my $dst   = shift @Pending;
 
-  say {*STDERR} $Emit::Std::ARSEP,$fname;
+  $WLog->substep($fname);
 
   my $stout = Grammar::SinGL->fparse($fname,$dst);
      $stout = Grammar::SinGL->flatten($stout);

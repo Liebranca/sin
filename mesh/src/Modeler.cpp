@@ -157,32 +157,6 @@ void Modeler::wind_uneven(
 
 ) {
 
-  uint16_t ai    = 0;
-  uint16_t bi    = 1;
-
-  uint16_t align = 0;
-  uint16_t tresh = 
-
-  svec<uint16_t> anchors;
-
-  for(uint16_t i=0;i<a.get_profile();i++) {
-
-    this->join_tri(a,b,ai,bi);
-
-    align++;
-    ai++;
-
-    if(align==tresh) {
-
-      anchors.push_back(ai);
-
-      align=0;
-      bi++;
-
-    };
-
-  };
-
 };
 
 // ---   *   ---   *   ---

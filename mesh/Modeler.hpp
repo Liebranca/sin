@@ -14,7 +14,7 @@ class Modeler {
 
 public:
 
-  VERSION   "v0.00.1b";
+  VERSION   "v0.00.2b";
   AUTHOR    "IBN-3DILA";
 
   enum {
@@ -94,7 +94,7 @@ public:
     };
 
     inline uint16_t iof(uint16_t i) {
-      return i % m_points.size();
+      return i % m_verts.size();
 
     };
 
@@ -128,33 +128,22 @@ private:
     uint16_t ai,
     uint16_t bi
 
-  )
+  );
+
+  void join_tri(
+
+    Joint&   a,
+    Joint&   b,
+
+    uint16_t ai,
+    uint16_t bi
+
+  );
 
   void wind_even(Joint& a,Joint& b);
   void wind_uneven(Joint& a,Joint& b);
 
-  cx16 WINDING_A3[]={
-
-    3,3,
-    3,4,
-
-    4,4,
-    4,5
-
-  };
-
-  cx16 WINDING_A4[]={
-
-    sz eq {P-1};
-    bi eq {vcnt-1};
-
-    3,2,3,
-    3,3,3,
-    4,2,4,
-    4,3,4,
-    4,4,4
-
-  };
+  #include "mesh/Modeler/Aux.hpp"
 
 // ---   *   ---   *   ---
 // iface

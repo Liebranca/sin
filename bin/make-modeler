@@ -1,0 +1,199 @@
+#!/usr/bin/perl
+# ---   *   ---   *   ---
+# MAKE MODELER
+# Header generator script
+#
+# LIBRE SOFTWARE
+# Licensed under GNU GPL3
+# be a bro and inherit
+#
+# CONTRIBUTORS
+# lyeb,
+
+# ---   *   ---   *   ---
+# deps
+
+package main;
+
+  use v5.36.0;
+  use strict;
+  use warnings;
+
+  use Readonly;
+  use English qw(-no_match_vars);
+
+  use lib $ENV{'ARPATH'}.'/lib/sys/';
+
+  use Style;
+  use Shb7::Path;
+
+  use Arstd::String;
+  use Arstd::Path;
+  use Arstd::IO;
+
+  use Arstd::WLog;
+
+  use lib $ENV{'ARPATH'}.'/lib/';
+
+  use Emit::Std;
+  use Emit::C;
+
+  use lib $ENV{'ARPATH'}.'/sin/';
+  use Modeler::Join qw(distribute);
+
+# ---   *   ---   *   ---
+# info
+
+  our $VERSION = v0.00.1;#b
+  our $AUTHOR  = 'IBN-3DILA';
+
+# ---   *   ---   *   ---
+# ROM
+
+  Readonly our $FDIR=>
+    $ENV{'ARPATH'}.'/sin/mesh/';
+
+  Readonly our $MIN_POLY=>3;
+  Readonly our $MAX_POLY=>11;
+
+# ---   *   ---   *   ---
+# generate vertex distribution
+# for a range of polygon types
+
+sub gen_poly_join() {
+
+  my $prologue = q[
+
+  uint32_t id=
+    (b.get_profile() << 0)
+  | (a.get_profile() << 8)
+  ;
+
+];
+
+  my $beg   = $MIN_POLY;
+  my $end   = $MAX_POLY;
+
+  my %cases = ();
+
+  # walk polygon range
+  for my $i(0..$end-$beg) {
+    for my $j($beg+1..$end) {
+
+      my $id=sprintf "0x%04X",$beg | ($j << 8);
+
+      $cases{$id}=
+        "return {"
+      . (join q[,],distribute($beg,$j))
+
+      . "};"
+
+      ;
+
+    };
+
+    $beg++;
+
+  };
+
+  # ^generate code
+  $cases{default}="return {1};";
+  my $tab=Emit::C->switch_tab('id',%cases);
+
+  lineident(\$tab,1);
+
+  # give formatted C blocks
+  return Emit::C->fnwrap_ar(
+
+    "get_distribution",
+    "$prologue$tab",
+
+    class => 'Modeler',
+
+    rtype => "svec<uint16_t>",
+    args  => [
+      "Modeler::Joint& a",
+      "Modeler::Joint& b"
+
+    ],
+
+  );
+
+};
+
+# ---   *   ---   *   ---
+# assembles header and source
+# from all generators
+
+sub gen_files() {
+
+  my $hedpath="${FDIR}Modeler/Aux.hpp";
+  my $srcpath="${FDIR}src/Modeler_Aux.cpp";
+
+  # check not updated
+  return if
+
+     ! moo($hedpath,__FILE__)
+  && ! moo($hedpath,__FILE__)
+  ;
+
+  $WLog->fupdate('Modeler AUX');
+
+  # ^updated, proceed
+  my @blocks=(
+    gen_poly_join(),
+
+  );
+
+  my $hed=$NULLSTR;
+  my $src=$NULLSTR;
+
+  map {
+
+    $hed.=$ARG->[0];
+    $src.=$ARG->[1];
+
+  } @blocks;
+
+  # add formatting to header
+  $hed=Emit::C->codewrap(
+
+    '5E_Modeler_Aux',
+
+    body   => $hed,
+    author => $AUTHOR,
+
+    add_guards => 1,
+
+  );
+
+  Emit::C->cpptrim(\$hed);
+
+  # ^to source
+  $src=Emit::C->codewrap(
+
+    '5E_Modeler_Aux',
+
+    body    => $src,
+    author  => $AUTHOR,
+
+    include => [
+      q["mesh/Modeler.hpp"]
+
+    ],
+
+  );
+
+  # make paths if need
+  force_path(dirof($hedpath));
+
+  # ^write
+  owc($hedpath,$hed);
+  owc($srcpath,$src);
+
+};
+
+gen_files();
+
+# ---   *   ---   *   ---
+1; # ret

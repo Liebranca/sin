@@ -15,5 +15,8 @@ mig/
 
 !bin/
 
+# generated
 avto
 .avto-cache
+mesh/Modeler/Aux.hpp
+mesh/src/Modeler_Aux.cpp
