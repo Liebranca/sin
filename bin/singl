@@ -44,7 +44,7 @@ package main;
 # ---   *   ---   *   ---
 # info
 
-  our $VERSION = v0.05.0;#a
+  our $VERSION = v0.05.1;#a
   our $AUTHOR  = 'IBN-3DILA';
 
 # ---   *   ---   *   ---
@@ -74,7 +74,7 @@ my @Includes=($M->{inc} ne $NULL)
 
 # ^set
 Shb7::push_includes(
-  $ENV{'ARPATH'}.'/sin/',
+  $ENV{'ARPATH'}.'/sin/glsl/',
   @Includes
 
 );
@@ -84,7 +84,7 @@ Shb7::push_includes(
 
 my $Out_Dir=($M->{out} ne $NULL)
   ? glob($M->{out})
-  : glob('./')
+  : glob('./glsl/')
   ;
 
 # ^catch
@@ -110,10 +110,12 @@ sub flist_filter(@ar) {
   for my $fname(@ar) {
 
     my $name = nxbasef($fname);
-    my $dst  = "$Out_Dir/$name.hpp_sg";
 
-    push @out,$fname=>$dst
-    if moo($dst,$fname);
+    my $dst  = "$Out_Dir/$name.hpp_sg";
+    my $src  = "$Out_Dir/src/$fname";
+
+    push @out,$src=>$dst
+    if moo($dst,$src);
 
   };
 
@@ -133,18 +135,18 @@ sub flist_filter(@ar) {
 my @Pending=flist_filter(@Files);
 while(@Pending) {
 
-  my $fname = shift @Pending;
-  my $dst   = shift @Pending;
+  my $src = shift @Pending;
+  my $dst = shift @Pending;
 
-  $WLog->substep($fname);
+  $WLog->substep($src);
 
-  my $stout = Grammar::SinGL->fparse($fname,$dst);
+  my $stout = Grammar::SinGL->fparse($src,$dst);
      $stout = Grammar::SinGL->flatten($stout);
 
   my $code  = Emit::SinGL->hpp($stout);
 
   my $v=vstr($VERSION);
-  $fname=$stout->{name} .(
+  $src=$stout->{name} .(
     " $stout->{version}"
     x (defined $stout->{version})
 
@@ -154,7 +156,7 @@ while(@Pending) {
   $code=
 
     "// SinGL $v\n"
-  . "// file assembled from $fname\n"
+  . "// file assembled from $src\n"
 
   . "$code"
 

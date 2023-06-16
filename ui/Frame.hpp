@@ -1,5 +1,5 @@
-#ifndef __5E_UI_H__
-#define __5E_UI_H__
+#ifndef __5E_UI_FRAME_H__
+#define __5E_UI_FRAME_H__
 
 // ---   *   ---   *   ---
 // deps
@@ -228,4 +228,4 @@ public:
 
 // ---   *   ---   *   ---
 
-#endif // __5E_UI_H__
+#endif // __5E_UI_FRAME_H__

@@ -29,7 +29,11 @@ package Modeler::Join;
 # may add to your namespace
 
   use Exporter 'import';
-  our @EXPORT_OK=qw(distribute);
+  our @EXPORT_OK=qw(
+    distribute
+    distribution
+
+  );
 
 # ---   *   ---   *   ---
 # info
@@ -42,7 +46,7 @@ package Modeler::Join;
 # that must connect to each
 # vert of B
 
-sub distribute($b,$a) {
+sub distribution($b,$a) {
 
   my @out  = ();
 
@@ -62,6 +66,16 @@ sub distribute($b,$a) {
   };
 
   push @out,$rem;
+  return @out;
+
+};
+
+# ---   *   ---   *   ---
+# ^distribution plus balance
+
+sub distribute($b,$a) {
+
+  my @out=distribution($b,$a);
   balance(\@out) if @out > 2;
 
   return @out;

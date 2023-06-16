@@ -14,7 +14,7 @@
 
 $:VERT;>
 
-  VERSION   v0.00.1b;
+  VERSION   v0.00.2b;
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -47,5 +47,28 @@ $:FRAG;>
     vec3(0.69f,0.62f,0.38f)
 
   };
+
+  const float ALPHA_STEP=1.0f/16.0f;
+
+// ---   *   ---   *   ---
+// ^extracts alpha value
+
+float get_color_alpha(uint idex) {
+  return float(idex >> 4) * ALPHA_STEP;
+
+};
+
+// ---   *   ---   *   ---
+// extract color from packed
+
+vec4 get_color(uint idex) {
+
+  return vec4(
+    COLORS[idex & uint(0xF)],
+    get_color_alpha(idex)
+
+  );
+
+};
 
 // ---   *   ---   *   ---

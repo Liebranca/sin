@@ -750,7 +750,7 @@ sub get_extern($self,$mode) {
 
     my $f="$path.sg";
 
-    $f=dirof($f) . q[/src/] . basef($f)
+    $f=dirof($f,abs=>0) . q[/src/] . basef($f)
     if ! -e $f;
 
     $f=ffind($f) or throw("include $path");
@@ -919,7 +919,7 @@ sub fregen($class,$path,$name=undef) {
 
   my $mod=modof($scope);
   $scope=shpath($scope);
-  $scope=~ s[${mod}/][];
+  $scope=~ s[${mod}/(?:glsl/)?][];
 
   return $ice->stout($scope,$name);
 

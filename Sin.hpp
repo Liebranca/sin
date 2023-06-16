@@ -6,7 +6,9 @@
 
   #include "bitter/kvrnel/GLM.hpp"
 
-  #include "font/UI.hpp"
+  #include "ui/Frame.hpp"
+  #include "ui/Debug_Draw.hpp"
+
   #include "shader/Frame.hpp"
   #include "mesh/Frame.hpp"
 
@@ -17,13 +19,13 @@ class SIN {
 
 public:
 
-  VERSION   "v0.01.1b";
+  VERSION   "v0.01.2b";
   AUTHOR    "IBN-3DILA";
 
   // indices into shader array
   enum {
 
-    LINE,TEXT,IMAGE,MESH,
+    DEBUG,TEXT,IMAGE,MESH,
     NUM_SHMODES
 
   };
@@ -34,7 +36,9 @@ public:
     BLACK,RED,GREEN,YELLOW,
     BLUE,PURPLE,CYAN,WHITE,
 
-    BRIGHT=8
+    BRIGHT  = 0x08,
+    OPAQUE  = 0xF0,
+    XPARENT = 0x80
 
   };
 
@@ -65,6 +69,8 @@ public:
 
 private:
 
+  typedef Debug_Draw DD;
+
   typedef std::vector <
     Meshes::Draw_Queue
 
@@ -82,6 +88,7 @@ private:
 
   Queues   m_queues;
 
+
   // for gl buffers
   enum {
 
@@ -90,12 +97,12 @@ private:
 
   };
 
-  GBuff    m_gbuff[NUM_BUFFS];
+  GBuff m_gbuff[NUM_BUFFS];
 
-  VAO      m_line_vao;
-  UI       m_ui;
+  DD    m_dd_lines;
+  DD    m_dd_points;
 
-  uint16_t m_line_cnt=0;
+  UI    m_ui;
 
   // ^makes
   void nit_buffs(void);
@@ -107,6 +114,14 @@ private:
   );
 
   uint32_t m_shaders[NUM_SHMODES];
+
+// ---   *   ---   *   ---
+// sub-steps of draw_enqueued
+
+  void draw_nodes(void);
+
+  void draw_dd(void);
+  void draw_ui(void);
 
 // ---   *   ---   *   ---
 // iface
@@ -151,36 +166,69 @@ public:
   // ^exec
   void draw_enqueued(void);
 
+  // world space coords
   void draw_line(
 
     vec3    a,
     vec3    b,
 
-    uint8_t color_idex=RED
+    uint8_t color=OPAQUE|RED,
+    float   width=1.0f
+
+  );
+
+  // ^screen space
+  void draw_line(
+
+    vec2    a,
+    vec2    b,
+
+    uint8_t color=OPAQUE|RED,
+    float   width=1.0f
+
+  );
+
+  // world space coords
+  void draw_point(
+
+    vec3    a,
+
+    uint8_t color=OPAQUE|YELLOW,
+    float   width=1.0f
+
+  );
+
+  // ^screen space
+  void draw_point(
+
+    vec2    a,
+
+    uint8_t color=OPAQUE|YELLOW,
+    float   width=1.0f
 
   );
 
   // makes ui element
   // gives idex to it
-  uint32_t draw_text(
+  uint32_t draw_ui_text(
 
     std::string ct,
 
     vec2        pos      = {0,0},
     vec3        dim      = {9,16,8},
 
-    uint16_t    color    = 0x00F7,
+    uint16_t    color    = OPAQUE|WHITE,
     bool        show_ctl = false
 
   );
 
   // ^same system, plain quad
-  uint32_t draw_rect(
+  uint32_t draw_ui_rect(
 
     vec2     pos,
     vec2     dim,
 
-    uint16_t color=0xF800
+    uint16_t color=(OPAQUE|BRIGHT|BLACK) << 8
 
   );
 

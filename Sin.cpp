@@ -14,10 +14,10 @@
 
   #include "bitter/kvrnel/Bytes.hpp"
 
-  #include "mesh/Debug_Line.hpp_sg"
-  #include "font/Raster.hpp_sg"
-  #include "mesh/JOJ_Sprite.hpp_sg"
-  #include "mesh/M3D.hpp_sg"
+  #include "glsl/ui/Debug_Draw.hpp_sg"
+  #include "glsl/ui/Raster.hpp_sg"
+  #include "glsl/mesh/JOJ_Sprite.hpp_sg"
+  #include "glsl/mesh/M3D.hpp_sg"
 
   #include "Sin.hpp"
 
@@ -168,6 +168,18 @@ void SIN::enqueue(
 
 void SIN::draw_enqueued(void) {
 
+  this->draw_nodes();
+
+  this->draw_dd();
+  this->draw_ui();
+
+};
+
+// ---   *   ---   *   ---
+// draw enqueued nodes
+
+void SIN::draw_nodes(void) {
+
   uint32_t i=0;
 
   // one queue for each batch
@@ -232,27 +244,43 @@ void SIN::draw_enqueued(void) {
 
   };
 
-  if(m_line_cnt) {
+};
 
-    m_line_vao.bind();
+// ---   *   ---   *   ---
+// draw enqueued debug points/lines
 
-    program=programs.get(m_shaders[LINE]);
+void SIN::draw_dd(void) {
+
+  bool lines  = m_dd_lines.ready();
+  bool points = m_dd_points.ready();
+
+  if(lines || points) {
+
+    program=programs.get(m_shaders[DEBUG]);
     programs.bind(program);
 
-    glDrawElements(
+    if(lines) {
+      m_dd_lines.upload();
+      m_dd_lines.draw();
+      m_dd_lines.clear();
 
-      GL_LINES,
-      m_line_cnt*2,
+    };
 
-      GL_UNSIGNED_SHORT,
-      (void*) 0
+    if(points) {
+      m_dd_points.upload();
+      m_dd_points.draw();
+      m_dd_points.clear();
 
-    );
-
-    m_line_cnt=0;
-    m_line_vao.unbind();
+    };
 
   };
+
+};
+
+// ---   *   ---   *   ---
+// draw enqueued ui elements
+
+void SIN::draw_ui(void) {
 
   if(m_ui.ready()) {
 
@@ -267,38 +295,89 @@ void SIN::draw_enqueued(void) {
 };
 
 // ---   *   ---   *   ---
-// ^selfex
+// world space coords
 
 void SIN::draw_line(
 
   vec3    a,
   vec3    b,
 
-  uint8_t color_idex
+  uint8_t color,
+  float   width
 
 ) {
 
-  uint16_t offset=m_line_cnt*2;
+  m_dd_lines.push_line(
+    a,b,width,color,
+    DD::DRAW_3D
 
-  vec4 verts[2]={
-    {a.x,a.y,a.z,float(color_idex)},
-    {b.x,b.y,b.z,float(color_idex)}
+  );
 
-  };
+};
 
-  uint16_t indices[2]={
-    uint16_t(offset+0),
-    uint16_t(offset+1)
+// ---   *   ---   *   ---
+// ^screen space
 
-  };
+void SIN::draw_line(
 
-  auto& vbo=m_line_vao.gbuff(VAO::VBO);
-  auto& ibo=m_line_vao.gbuff(VAO::IBO);
+  vec2    a,
+  vec2    b,
 
-  vbo.sub_data((void*) verts,offset,2);
-  ibo.sub_data((void*) indices,offset,2);
+  uint8_t color,
+  float   width
 
-  m_line_cnt++;
+) {
+
+  vec3 a3(a.x,a.y,0);
+  vec3 b3(b.x,b.y,0);
+
+  m_dd_lines.push_line(
+    a3,b3,width,color,
+    DD::DRAW_2D
+
+  );
+
+};
+
+// ---   *   ---   *   ---
+// world space coords
+
+void SIN::draw_point(
+
+  vec3    a,
+
+  uint8_t color,
+  float   width
+
+) {
+
+  m_dd_points.push_point(
+    a,width,color,
+    DD::DRAW_3D
+
+  );
+
+};
+
+// ---   *   ---   *   ---
+// ^screen space
+
+void SIN::draw_point(
+
+  vec2    a,
+
+  uint8_t color,
+  float   width
+
+) {
+
+  vec3 a3(a.x,a.y,0);
+
+  m_dd_points.push_point(
+    a3,width,color,
+    DD::DRAW_2D
+
+  );
 
 };
 
@@ -306,7 +385,7 @@ void SIN::draw_line(
 // makes ui element
 // gives idex to it
 
-uint32_t SIN::draw_text(
+uint32_t SIN::draw_ui_text(
 
   std::string ct,
 
@@ -328,7 +407,7 @@ uint32_t SIN::draw_text(
 // ---   *   ---   *   ---
 // ^same system, plain quad
 
-uint32_t SIN::draw_rect(
+uint32_t SIN::draw_ui_rect(
 
   vec2     pos,
   vec2     dim,
@@ -375,30 +454,6 @@ void SIN::nit_buffs(void) {
 
   m_gbuff[MATRIX_SSBO].bind_base(0);
 
-  m_line_vao.nit(
-
-    GBuff::D_ARRAY,
-    GBuff::D_ELEMENT,
-
-    sizeof(vec4),
-    LINE_VAO_SZ,
-
-    sizeof(uint16_t),
-    LINE_VAO_SZ
-
-  );
-
-  m_line_vao.vattr(
-
-    VAO::R32_4,
-
-    sizeof(vec4),
-    0
-
-  );
-
-  m_line_vao.unbind();
-
 };
 
 // ---   *   ---   *   ---
@@ -406,15 +461,17 @@ void SIN::nit_buffs(void) {
 
 SIN::SIN(void) {
 
+  glEnable(GL_PROGRAM_POINT_SIZE);
+
   this->nit_buffs();
 
-  m_shaders[LINE]=programs.nit(
-    &shader::mesh::Debug_Line
+  m_shaders[DEBUG]=programs.nit(
+    &shader::ui::Debug_Draw
 
   );
 
   m_shaders[TEXT]=programs.nit(
-    &shader::font::Raster
+    &shader::ui::Raster
 
   );
 
@@ -427,6 +484,9 @@ SIN::SIN(void) {
     &shader::mesh::M3D
 
   );
+
+  m_dd_lines.nit(0x400,GL_LINES);
+  m_dd_points.nit(0x400,GL_POINTS);
 
   m_ui.nit_vao(0x1000);
 

@@ -17,7 +17,7 @@ $:VERT;>
 // ---   *   ---   *   ---
 // info
 
-  VERSION   v1.00.2;
+  VERSION   v1.00.3;
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -102,8 +102,8 @@ void main() {
 
 $:FRAG;>
 
-  #include <font/Colors>
-  #include <font/Chars>
+  #include <ui/Colors>
+  #include <ui/Chars>
 
 // ---   *   ---   *   ---
 // outputs
@@ -156,21 +156,10 @@ void main() {
   bool r=bool(CHARS[Char_Idex][z] & uint(1<<i));
   r=r&&(Char_Idex >= Show_Ctl*0x1F);
 
-  float fg_alpha = float(Fg_Col_Idex >> 4)/16.0f;
-  float bg_alpha = float(Bg_Col_Idex >> 4)/16.0f;
-
   // palette fetch
-  vec4  fg_col   = vec4(
-    COLORS[Fg_Col_Idex&uint(0xF)],
-    fg_alpha
-
-  );
-
-  vec4  bg_col   = vec4(
-    COLORS[Bg_Col_Idex&uint(0xF)],
-    bg_alpha * corner
-
-  );
+  vec4  fg_col=get_color(Fg_Col_Idex);
+  vec4  bg_col=get_color(Bg_Col_Idex);
+  bg_col.w*=corner;
 
   // ^apply
   vec4 col=mix(

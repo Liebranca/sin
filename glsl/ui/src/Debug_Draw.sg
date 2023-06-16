@@ -1,0 +1,116 @@
+// ---   *   ---   *   ---
+// DEBUG DRAW
+// Must see the vecs
+//
+// LIBRE SOFTWARE
+// Licensed under GNU GPL3
+// be a bro and inherit
+//
+// CONTRIBUTORS
+// lyeb,
+
+// ---   *   ---   *   ---
+// info
+
+$:VERT;>
+
+  VERSION   v0.00.4b;
+  AUTHOR    "IBN-3DILA";
+
+// ---   *   ---   *   ---
+// inputs
+
+  in uvec4 Vertex;
+  flat out uint Color_ID;
+
+  layout (std140) uniform _Camera {
+    mat4 Projection;
+    mat4 View;
+
+  } Camera;
+
+// ---   *   ---   *   ---
+// ROM
+
+  const float CENT=1.0f/0x100;
+
+  const vec3  NEGATIVE={
+    CENT * 0x8000,
+    CENT * 0x8000,
+    CENT * 0x8000
+
+  };
+
+// ---   *   ---   *   ---
+// world to screen
+
+vec4 apply_transform(vec3 co,uint draw_2d) {
+
+  vec4 pos=vec4(co,1);
+
+  mat4 m[3]={
+
+    mat4(1.0f),
+
+    Camera.Projection,
+    Camera.View
+
+  };
+
+  // ^conditionally apply mats
+  // without a switch
+  return
+
+    m[1 * uint(draw_2d!=1)]
+  * m[2 * uint(draw_2d!=1)]
+
+  * pos
+  ;
+
+};
+
+// ---   *   ---   *   ---
+// crux
+
+void main(void) {
+
+  // unpack
+  vec3 co=vec3(
+
+    float(Vertex.x  & uint(0xFFFF)) * CENT,
+    float(Vertex.x >> 16) * CENT,
+
+    float(Vertex.y  & uint(0xFFFF)) * CENT
+
+  ) - NEGATIVE;
+
+  uint draw_2d=(Vertex.z >> 8) & uint(0x01);
+
+  // ^set
+  Color_ID     = Vertex.z & uint(0xFF);
+  gl_PointSize = float(Vertex.y >> 16) * CENT;
+  gl_Position  = apply_transform(co,draw_2d);
+
+};
+
+// ---   *   ---   *   ---
+// deps
+
+$:FRAG;>
+
+  #include <ui/Colors>
+
+// ---   *   ---   *   ---
+// outputs
+
+  out vec4 Frag_Color;
+
+// ---   *   ---   *   ---
+// crux
+
+void main(void) {
+  Frag_Color=get_color(Color_ID);
+
+};
+
+// ---   *   ---   *   ---
