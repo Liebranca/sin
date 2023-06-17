@@ -45,8 +45,8 @@ void Debug_Draw::nit(
     GBuff::D_ARRAY,
     GBuff::D_ELEMENT,
 
-    sizeof(Vertex),size,
-    sizeof(uint16_t),size
+    sizeof(Vertex),m_verts.size(),
+    sizeof(uint16_t),m_indices.size()
 
   );
 
@@ -106,24 +106,17 @@ void Debug_Draw::push_line(
 
 ) {
 
-  vec3 fwd = glm::normalize(a-b);
-  vec3 yax = (fabs(fwd.y) >= 0.9f)
-    ? Y_VOID
-    : Y_AXIS
-    ;
-
-  vec3 hax = glm::cross(yax,fwd);
-  vec3 up  = glm::cross(fwd,hax);
+  T3D::Facing n(glm::normalize(a-b));
 
   if(flags & DRAW_2D) {
 
     scale *= 0.001f;
-    up    *= scale;
+    n.up  *= scale;
 
-    vec3 br = b-up;
-    vec3 bl = a-up;
-    vec3 tl = a+up;
-    vec3 tr = b+up;
+    vec3 br = b-n.up;
+    vec3 bl = a-n.up;
+    vec3 tl = a+n.up;
+    vec3 tr = b+n.up;
 
     m_verts[m_top+0].set(br,scale,color,flags);
     m_verts[m_top+1].set(bl,scale,color,flags);
@@ -143,23 +136,20 @@ void Debug_Draw::push_line(
 
   } else {
 
-    scale *= 0.02f;
+    scale *= 0.01f;
 
-    hax *= scale;
-    up  *= scale;
+    n.hax *= scale;
+    n.up  *= scale;
 
-    hax *= 0.5f;
-    up  *= 0.5f;
+    vec3 abr = (a+n.hax)-n.up;
+    vec3 abl = (a-n.hax)-n.up;
+    vec3 atl = (a-n.hax)+n.up;
+    vec3 atr = (a+n.hax)+n.up;
 
-    vec3 abr = (a+hax)-up;
-    vec3 abl = (a-hax)-up;
-    vec3 atl = (a-hax)+up;
-    vec3 atr = (a+hax)+up;
-
-    vec3 bbr = (b+hax)-up;
-    vec3 bbl = (b-hax)-up;
-    vec3 btl = (b-hax)+up;
-    vec3 btr = (b+hax)+up;
+    vec3 bbr = (b+n.hax)-n.up;
+    vec3 bbl = (b-n.hax)-n.up;
+    vec3 btl = (b-n.hax)+n.up;
+    vec3 btr = (b+n.hax)+n.up;
 
     m_verts[m_top+0].set(abr,scale,color,flags);
     m_verts[m_top+1].set(abl,scale,color,flags);
@@ -311,7 +301,7 @@ vec3 Debug_Draw::Vertex::get_pos(void) {
   vec3 out={
     float(m_data.x  & 0xFFFF) * CENT,
     float(m_data.x >>     16) * CENT,
-    float(m_data.y &  0xFFFF) * CENT
+    float(m_data.y  & 0xFFFF) * CENT
 
   };
 

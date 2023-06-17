@@ -18,8 +18,8 @@ public:
   VERSION   "v0.00.1b";
   AUTHOR    "IBN-3DILA";
 
-  cxr32 CENT     = 1.0f/0x100;
-  cxr32 NEGATIVE = CENT * 0x8000;
+  cxr32 CENT     = 1.0f/0x400;
+  cxr32 NEGATIVE = CENT*0x8000;
 
   cx16  DRAW_3D  = 0x0000;
   cx16  DRAW_2D  = 0x0001;
@@ -73,6 +73,7 @@ private:
   uint32_t m_top;
 
   uint32_t m_top_i;
+  float    m_layer;
 
 // ---   *   ---   *   ---
 // guts
@@ -121,6 +122,16 @@ public:
 
   inline bool ready(void) {
     return m_top != 0;
+
+  };
+
+  inline void set_layer(float z) {
+    m_layer=-z;
+
+  };
+
+  inline float get_layer(void) {
+    return m_layer;
 
   };
 

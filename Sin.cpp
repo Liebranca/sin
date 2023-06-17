@@ -328,8 +328,8 @@ void SIN::draw_line(
 
 ) {
 
-  vec3 a3(a.x,a.y,0);
-  vec3 b3(b.x,b.y,0);
+  vec3 a3(a.x,a.y,m_dd_lines.get_layer());
+  vec3 b3(b.x,b.y,m_dd_lines.get_layer());
 
   m_dd_lines.push_line(
     a3,b3,width,color,
@@ -371,7 +371,7 @@ void SIN::draw_point(
 
 ) {
 
-  vec3 a3(a.x,a.y,0);
+  vec3 a3(a.x,a.y,m_dd_points.get_layer());
 
   m_dd_points.push_point(
     a3,width,color,

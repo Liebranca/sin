@@ -14,7 +14,7 @@
 
 $:VERT;>
 
-  VERSION   v0.00.3b;
+  VERSION   v0.00.4b;
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -101,6 +101,20 @@ void unpack_view(void) {
 
   Cam_Fwd = vec3(m[2]);
   Cam_Pos = vec3(m[3]);
+
+};
+
+// ---   *   ---   *   ---
+// 'reflective' vertex lighting
+
+float vl_smooth(vec3 n) {
+
+  float d=dot(Cam_Fwd,n);
+
+  float near = smoothstep(0.0f,1.0f,d);
+  float far  = (1-d) * 0.5f;
+
+  return clamp(near+far,0.5f,1.0f);
 
 };
 

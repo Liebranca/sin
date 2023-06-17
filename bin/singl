@@ -120,8 +120,7 @@ sub flist_filter(@ar) {
   };
 
   $WLog->mprich(
-    'AR/SinGL',
-    "assembling shaders... "
+    'AR','assembling SinGL shaders'
 
   ) if @out;
 

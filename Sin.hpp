@@ -249,6 +249,26 @@ public:
 
   };
 
+  inline float get_line_layer(void) {
+    return m_dd_lines.get_layer();
+
+  };
+
+  inline void set_line_layer(float z) {
+    m_dd_lines.set_layer(z);
+
+  };
+
+  inline float get_point_layer(void) {
+    return m_dd_points.get_layer();
+
+  };
+
+  inline void set_point_layer(float z) {
+    m_dd_points.set_layer(z);
+
+  };
+
 };
 
 // ---   *   ---   *   ---

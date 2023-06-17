@@ -23,35 +23,35 @@ void Modeler::Joint::set_profile(
 
 ) {
 
-  m_verts.clear();
+  m_verts.resize(prof);
 
   // get surface point
-  vec3  fwd = {0,0,1};
+  vec3 fwd = {0,0,-1};
 
   // axis angle -> quaternion
-  float ang = Seph::PI/prof;
-  quat  rot = {
+  quat rot=T3D::qang(
+    -Seph::PI/prof,{0,1,0}
 
-    float(cos(ang)),
-    0,
-    1 * float(sin(ang)),
-    0
-
-  };
+  );
 
   // ^rotate around self
   for(uint16_t i=0;i<prof;i++) {
 
-    m_verts.push_back(Vertex(
-      fwd * m_radius,fwd,m_base+i
+    m_verts[i]=Vertex(
 
-    ));
+      fwd * m_radius,
+      fwd,
+
+      m_base+i
+
+    );
 
     fwd=fwd*rot;
 
   };
 
   m_profile=prof;
+  this->updated=true;
 
 };
 
@@ -69,6 +69,7 @@ void Modeler::Joint::set_base(uint16_t base) {
   };
 
   m_base=base;
+  this->updated=true;
 
 };
 
@@ -77,8 +78,8 @@ void Modeler::Joint::set_base(uint16_t base) {
 // two joints
 
 void Modeler::join(
-  uint64_t idex_a,
-  uint64_t idex_b
+  uint16_t idex_a,
+  uint16_t idex_b
 
 ) {
 
@@ -98,6 +99,8 @@ void Modeler::join(
     this->wind_uneven(a,b);
 
   };
+
+  m_cache.calc_indices=true;
 
 };
 
@@ -147,6 +150,16 @@ void Modeler::push_tri(
   face.push_back(a.vof(ai+1));
   face.push_back(b.vof(bi+0));
 
+//  printf(
+//
+//    "%u -> %u : %u\n",
+//
+//    a.iof(ai+0),
+//    a.iof(ai+1),
+//    b.iof(bi+0)
+//
+//  );
+
 };
 
 // ---   *   ---   *   ---
@@ -187,10 +200,10 @@ void Modeler::wind_uneven(
   for(auto cnt : d) {
 
     this->new_face();
-    this->push_tri(a,b,bi-1,ai);
+    this->push_tri(b,a,bi-1,ai);
 
     for(uint16_t i=0;i<cnt-1;i++) {
-      this->push_tri(a,b,ai+i,bi);
+      this->push_tri(a,b,ai,bi);
       ai++;
 
     };
@@ -199,33 +212,142 @@ void Modeler::wind_uneven(
 
   };
 
-  this->push_tri(a,b,bi-1,0);
+  this->new_face();
+  this->push_tri(b,a,bi-1,0);
+
+};
+
+// ---   *   ---   *   ---
+// make tris within an elements
+// own verts
+
+void Modeler::cap(
+  uint16_t idex,
+  bool     up
+
+) {
+
+  auto& joint=m_joints[idex];
+
+  // limits
+  uint16_t prof = joint.get_profile();
+  uint16_t cnt  = prof/2;
+  uint16_t left = cnt+(prof & 1);
+
+  // offsets
+  uint16_t i    = 0;
+  uint16_t j    = prof-1;
+
+  // ^iter
+  this->new_face();
+  for(;i<cnt;i++,j--) {
+
+    this->push_tri(joint,joint,i,j);
+    left--;
+
+    if(left) {
+      this->push_tri(joint,joint,j-1,i+1);
+      left--;
+
+    };
+
+  };
+
+  // ^calc vertex normal inclination
+  float sign=(up) ? -1 : 1;
+  for(auto& vert : joint.get_verts()) {
+
+    T3D::Facing dirn=vert.n;
+
+    quat rot=T3D::qang(
+      sign*(Seph::PI/8),dirn.hax
+
+    );
+
+    vert.n=vert.n*rot;
+
+  };
+
+  // mark for update
+  m_cache.calc_indices=true;
+  m_cache.calc_deforms=true;
+
+};
+
+// ---   *   ---   *   ---
+// sum verts of all elements
+//
+// TODO: account for 'flat' duplicates
+
+uint16_t Modeler::get_icount(void) {
+
+  m_icount=(m_cache.calc_indices)
+    ? 0
+    : m_icount
+    ;
+
+  if(m_icount==0) {
+
+    for(auto& face : m_faces) {
+      m_icount+=face.size();
+
+    };
+
+  };
+
+  return m_icount;
 
 };
 
 // ---   *   ---   *   ---
 // get vertex indices for drawing
+//
+// TODO: duplicate 'flat' vertices
 
 void Modeler::calc_indices(void) {
 
-  // TODO: duplicate 'flat' vertices
+  uint16_t i=0;
+
   for(auto& face : m_faces) {
     for(auto& vert : face) {
-      m_mesh.indices.push_back(vert.get().idex);
-//      printf("%u,",vert.get().idex);
+      m_mesh.indices[i++]=vert.get().idex;
 
     };
-
-//    printf("\n");
 
   };
 
 };
 
 // ---   *   ---   *   ---
-// get packed vertices for drawing
+// sum verts of all elements
 
-void Modeler::calc_verts(void) {
+uint16_t Modeler::get_vcount(void) {
+
+  m_vcount=(this->get_updated())
+    ? 0
+    : m_vcount
+    ;
+
+  if(m_vcount==0) {
+
+    for(auto& joint : m_joints) {
+      m_vcount+=joint.get_verts().size();
+
+    };
+
+  };
+
+  return m_vcount;
+
+};
+
+// ---   *   ---   *   ---
+// cache a copy of each elements
+// verts with transforms applied
+
+void Modeler::calc_deforms(void) {
+
+  uint16_t i=0;
 
   for(auto& joint : m_joints) {
 
@@ -234,45 +356,124 @@ void Modeler::calc_verts(void) {
 
     for(auto& vert : joint.get_verts()) {
 
-      m_mesh.verts.push_back(CRK::Vertex());
-      auto& dst=m_mesh.verts.back();
+      m_deformed[i]=Vertex(
 
-      vec3 co=vec3(model * vec4(
+        vec3(model * vec4(
 
-        vert.co.x,
-        vert.co.y,
-        vert.co.z,
+          vert.co.x,
+          vert.co.y,
+          vert.co.z,
 
-        1
+          1
 
-      ));
+        )),
 
-      vec3 n=nmat * vert.n;
+        nmat * vert.n,
+        i
 
-      dst.set_xyz(co);
-      dst.set_n(n);
+      );
+
+      i++;
 
     };
-
-    printf("\n");
 
   };
 
 };
 
 // ---   *   ---   *   ---
-// ^fetch data for draw buffer
+// ^get mesh requires recalc
 
-CRK::Prim& Modeler::get_mesh(void) {
+bool Modeler::get_updated(void) {
 
-  if(m_cache.calc_mesh) {
+  // double check each element
+  for(auto& joint : m_joints) {
 
-    m_mesh.clear();
+    // feed element update back onto frame
+    m_cache.calc_indices |= joint.updated;
+    m_cache.calc_deforms |=
+      joint.get_xform().get_updated();
 
-    this->calc_verts();
+  };
+
+  return
+     m_cache.calc_indices
+  || m_cache.calc_deforms
+  ;
+
+};
+
+// ---   *   ---   *   ---
+// ^wraps over update routines
+
+void Modeler::calc_mesh(void) {
+
+  uint16_t old=m_vcount;
+
+  // check array sizes
+  if(old != this->get_vcount()) {
+    m_deformed.resize(m_vcount);
+    m_mesh.verts.resize(m_vcount);
+
+  };
+
+  old=m_icount;
+  if(old != this->get_icount()) {
+    m_mesh.indices.resize(m_icount);
+
+  };
+
+  // run necessary updates
+  this->get_updated();
+  if(m_cache.calc_indices) {
+
     this->calc_indices();
 
-    m_cache.calc_mesh=false;
+    m_cache.calc_indices = false;
+    m_cache.repack       = true;
+
+  };
+
+  if(m_cache.calc_deforms) {
+
+    this->calc_deforms();
+
+    m_cache.calc_deforms = false;
+    m_cache.repack       = true;
+
+  };
+
+};
+
+// ---   *   ---   *   ---
+// ^takes deformed mesh data and
+// packs it to crk format
+
+void Modeler::pack(void) {
+
+  uint16_t i=0;
+
+  for(auto& vert : m_deformed) {
+
+    auto& dst=m_mesh.verts[i++];
+
+    dst.set_xyz(vert.co);
+    dst.set_n(vert.n);
+
+  };
+
+};
+
+// ---   *   ---   *   ---
+// get packed version of mesh for drawing
+
+CRK::Prim& Modeler::get_packed(void) {
+
+  this->calc_mesh();
+
+  if(m_cache.repack) {
+    this->pack();
+    m_cache.repack=false;
 
   };
 

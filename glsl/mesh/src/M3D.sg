@@ -14,7 +14,7 @@
 
 $:VERT;>
 
-  VERSION   v0.00.3b;
+  VERSION   v0.00.4b;
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -22,7 +22,8 @@ $:VERT;>
 
   #include <mesh/CRK_Angular>
 
-  out vec3 Normal;
+  out vec3  Normal;
+  out float Vert_Light;
 
 // ---   *   ---   *   ---
 
@@ -40,6 +41,8 @@ void main(void) {
   fSurf_ID    = Draw_Data[1];
 
   unpack_view();
+
+  Vert_Light  = vl_smooth(Normal);
 
 };
 
@@ -73,10 +76,14 @@ void main(void) {
 
 //  Frag_Color=texture(Surface,Tex_Coords);
 
-  fDraw_ID;
+  Frag_Color=vec4(
 
-  float d=dot(Cam_Fwd,Normal);
-  Frag_Color=vec4(COLORS[fDraw_ID]*d,1);
+    COLORS[fDraw_ID]
+  * Vert_Light,
+
+    1
+
+  );
 
 };
 

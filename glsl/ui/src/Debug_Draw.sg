@@ -32,12 +32,12 @@ $:VERT;>
 // ---   *   ---   *   ---
 // ROM
 
-  const float CENT=1.0f/0x100;
+  const float CENT=1.0f/0x400;
 
   const vec3  NEGATIVE={
-    CENT * 0x8000,
-    CENT * 0x8000,
-    CENT * 0x8000
+    CENT*0x8000,
+    CENT*0x8000,
+    CENT*0x8000
 
   };
 
