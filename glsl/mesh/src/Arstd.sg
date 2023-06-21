@@ -43,7 +43,7 @@ $:VERT;>
 // ---   *   ---   *   ---
 // outputs
 
-  out vec3 Tex_Coords;
+  out vec3 Tex_Cords;
 
   out vec3 Cam_Fwd;
   out vec3 Cam_Pos;

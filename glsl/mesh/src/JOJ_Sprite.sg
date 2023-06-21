@@ -30,7 +30,7 @@ void main(void) {
   vec4 co     = extract_xyz();
 
   gl_Position = apply_transform(co);
-  Tex_Coords  = extract_tex();
+  Tex_Cords   = extract_tex();
 
 };
 
@@ -54,7 +54,7 @@ $:FRAG;>
 // ---   *   ---   *   ---
 
 void main(void) {
-  Frag_Color=texture(Surface,Tex_Coords);
+  Frag_Color=texture(Surface,Tex_Cords);
 
 };
 

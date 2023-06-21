@@ -18,12 +18,12 @@
 // ---   *   ---   *   ---
 // generate N points around origin
 
-void Modeler::Joint::set_profile(
+void Modeler::Ring::set_profile(
   uint16_t prof
 
 ) {
 
-  m_verts.resize(prof);
+  m_hax_verts.resize(prof+1);
 
   // get surface point
   vec3 fwd = {0,0,-1};
@@ -37,7 +37,7 @@ void Modeler::Joint::set_profile(
   // ^rotate around self
   for(uint16_t i=0;i<prof;i++) {
 
-    m_verts[i]=Vertex(
+    m_hax_verts[i]=Vertex(
 
       fwd * m_radius,
       fwd,
@@ -50,19 +50,25 @@ void Modeler::Joint::set_profile(
 
   };
 
-  m_profile=prof;
+  // duplicate first horizontal vertex for uv
+  m_hax_verts.back()=m_hax_verts[0];
+  m_hax_verts.back().idex=m_base+prof;
+
+  // register changes
+  m_profile = prof;
+  m_capped  = false;
+
   this->updated=true;
 
 };
 
 // ---   *   ---   *   ---
-// modify base idex for verts of joint
+// modify base idex for verts of ring
 
-void Modeler::Joint::set_base(uint16_t base) {
+void Modeler::Ring::set_base(uint16_t base) {
 
   uint16_t i=0;
-
-  for(auto& vert : m_verts) {
+  for(auto& vert : m_hax_verts) {
     vert.idex=base+i;
     i++;
 
@@ -74,8 +80,27 @@ void Modeler::Joint::set_base(uint16_t base) {
 };
 
 // ---   *   ---   *   ---
+// set rinf vertex distance from origin
+
+void Modeler::Ring::set_radius(float r) {
+
+  for(auto& vert : m_hax_verts) {
+    vert.co=vert.n*r;
+
+  };
+
+  for(auto& vert : m_cap_verts) {
+    vert.co=vert.n*r;
+
+  };
+
+  m_radius=r;
+
+};
+
+// ---   *   ---   *   ---
 // makes tris between points of
-// two joints
+// two rings
 
 void Modeler::join(
   uint16_t idex_a,
@@ -83,8 +108,10 @@ void Modeler::join(
 
 ) {
 
-  auto& a=m_joints[idex_a];
-  auto& b=m_joints[idex_b];
+  auto& a=m_rings[idex_a];
+  auto& b=m_rings[idex_b];
+
+printf("%u -> %u\n",idex_a,idex_b);
 
   uint16_t a_sz=a.get_profile();
   uint16_t b_sz=b.get_profile();
@@ -109,25 +136,59 @@ void Modeler::join(
 
 void Modeler::push_quad(
 
-  Modeler::Joint& a,
-  Modeler::Joint& b,
+  Modeler::Ring& a,
+  Modeler::Ring& b,
 
   uint16_t ai,
-  uint16_t bi
+  uint16_t bi,
+
+  bool     cap
 
 ) {
 
   auto& face=this->cur_face();
 
-  // tri 0 (0,1,2)
-  face.push_back(a.vof(ai+0));
-  face.push_back(a.vof(ai+1));
-  face.push_back(b.vof(bi+1));
+  if(cap) {
 
-  // tri 1 (0,2,3)
-  face.push_back(a.vof(ai+0));
-  face.push_back(b.vof(bi+1));
-  face.push_back(b.vof(bi+0));
+    // tri 0 (0,1,2)
+    face.push_back(a.cvof(ai+0));
+    face.push_back(a.cvof(ai+1));
+    face.push_back(b.cvof(bi+1));
+
+    // tri 1 (0,2,3)
+    face.push_back(a.cvof(ai+0));
+    face.push_back(b.cvof(bi+1));
+    face.push_back(b.cvof(bi+0));
+
+  } else {
+
+    // tri 0 (0,1,2)
+    face.push_back(a.hvof(ai+0));
+    face.push_back(a.hvof(ai+1));
+    face.push_back(b.hvof(bi+1));
+
+    // tri 1 (0,2,3)
+    face.push_back(a.hvof(ai+0));
+    face.push_back(b.hvof(bi+1));
+    face.push_back(b.hvof(bi+0));
+
+printf(
+
+  "%u: %u,%u,%u,%u,%u,%u\n",
+
+  m_faces.size(),
+
+  a.hvof(ai+0).idex,
+  a.hvof(ai+1).idex,
+  b.hvof(bi+1).idex,
+
+  a.hvof(ai+0).idex,
+  b.hvof(bi+1).idex,
+  b.hvof(bi+0).idex
+
+);
+
+  };
 
 };
 
@@ -136,29 +197,29 @@ void Modeler::push_quad(
 
 void Modeler::push_tri(
 
-  Modeler::Joint& a,
-  Modeler::Joint& b,
+  Modeler::Ring& a,
+  Modeler::Ring& b,
 
   uint16_t ai,
-  uint16_t bi
+  uint16_t bi,
+
+  bool     cap
 
 ) {
 
   auto& face=this->cur_face();
 
-  face.push_back(a.vof(ai+0));
-  face.push_back(a.vof(ai+1));
-  face.push_back(b.vof(bi+0));
+  if(cap) {
+    face.push_back(a.cvof(ai+0));
+    face.push_back(a.cvof(ai+1));
+    face.push_back(b.cvof(bi+0));
 
-//  printf(
-//
-//    "%u -> %u : %u\n",
-//
-//    a.iof(ai+0),
-//    a.iof(ai+1),
-//    b.iof(bi+0)
-//
-//  );
+  } else {
+    face.push_back(a.hvof(ai+0));
+    face.push_back(a.hvof(ai+1));
+    face.push_back(b.hvof(bi+0));
+
+  };
 
 };
 
@@ -166,14 +227,14 @@ void Modeler::push_tri(
 // evenly distributed tris
 
 void Modeler::wind_even(
-  Modeler::Joint& a,
-  Modeler::Joint& b
+  Modeler::Ring& a,
+  Modeler::Ring& b
 
 ) {
 
   for(uint16_t i=0;i<a.get_profile();i++) {
     this->new_face();
-    this->push_quad(a,b,i,i);
+    this->push_quad(a,b,i,i,false);
 
   };
 
@@ -183,8 +244,8 @@ void Modeler::wind_even(
 // ^utter chaos
 
 void Modeler::wind_uneven(
-  Modeler::Joint& a,
-  Modeler::Joint& b
+  Modeler::Ring& a,
+  Modeler::Ring& b
 
 ) {
 
@@ -200,10 +261,10 @@ void Modeler::wind_uneven(
   for(auto cnt : d) {
 
     this->new_face();
-    this->push_tri(b,a,bi-1,ai);
+    this->push_tri(b,a,bi-1,ai,false);
 
     for(uint16_t i=0;i<cnt-1;i++) {
-      this->push_tri(a,b,ai,bi);
+      this->push_tri(a,b,ai,bi,false);
       ai++;
 
     };
@@ -213,7 +274,40 @@ void Modeler::wind_uneven(
   };
 
   this->new_face();
-  this->push_tri(b,a,bi-1,0);
+  this->push_tri(b,a,bi-1,0,false);
+
+};
+
+// ---   *   ---   *   ---
+// resize and populate container
+// for split top/bottom vertices
+
+void Modeler::Ring::cap_prologue(void) {
+
+  m_cap_verts.resize(m_profile);
+
+  for(uint16_t i=0;i<m_profile;i++) {
+    m_cap_verts[i]=m_hax_verts[i];
+    m_cap_verts[i].idex+=m_profile+1;
+
+  };
+
+  m_capped=true;
+
+};
+
+// ---   *   ---   *   ---
+// ^undo
+
+bool Modeler::Ring::uncap(void) {
+
+  bool out=m_capped;
+  m_cap_verts.clear();
+
+  this->updated = true;
+  m_capped      = false;
+
+  return out;
 
 };
 
@@ -227,10 +321,11 @@ void Modeler::cap(
 
 ) {
 
-  auto& joint=m_joints[idex];
+  auto& ring=m_rings[idex];
+  ring.cap_prologue();
 
   // limits
-  uint16_t prof = joint.get_profile();
+  uint16_t prof = ring.get_profile();
   uint16_t cnt  = prof/2;
   uint16_t left = cnt+(prof & 1);
 
@@ -242,11 +337,11 @@ void Modeler::cap(
   this->new_face();
   for(;i<cnt;i++,j--) {
 
-    this->push_tri(joint,joint,i,j);
+    this->push_tri(ring,ring,i,j,true);
     left--;
 
     if(left) {
-      this->push_tri(joint,joint,j-1,i+1);
+      this->push_tri(ring,ring,j-1,i+1,true);
       left--;
 
     };
@@ -254,16 +349,19 @@ void Modeler::cap(
   };
 
   // ^calc vertex normal inclination
-  float sign=(up) ? -1 : 1;
-  for(auto& vert : joint.get_verts()) {
+  //
+  // TODO: copy normals to hax verts
+  //       if smooth shading
+
+  float sign = (up) ? -1 : 1;
+  float ang  = sign*(Seph::PI/4);
+
+  for(auto& vert : ring.get_cap_verts()) {
 
     T3D::Facing dirn=vert.n;
+    quat rot=T3D::qang(ang,dirn.hax);
 
-    quat rot=T3D::qang(
-      sign*(Seph::PI/8),dirn.hax
-
-    );
-
+    // ^apply rotation to normal
     vert.n=vert.n*rot;
 
   };
@@ -271,6 +369,107 @@ void Modeler::cap(
   // mark for update
   m_cache.calc_indices=true;
   m_cache.calc_deforms=true;
+
+};
+
+// ---   *   ---   *   ---
+// extend mesh from ring
+
+svec<uint16_t> Modeler::extrude(
+
+  uint16_t beg,
+  uint16_t cuts,
+
+  float    len,
+  bool     in
+
+) {
+
+  svec<uint16_t> out;
+  out.resize(cuts+1);
+
+  out[0]=beg;
+
+  // get guide ring
+  // clear face if present
+  auto& ring  = m_rings[beg];
+  bool  recap = ring.uncap();
+
+  // ^get settings
+  uint16_t base   = ring.get_top();
+  uint16_t prof   = ring.get_profile();
+  float    radius = ring.get_radius();
+
+  // get movement vector for extrusion
+  float sign=(in) ? 1 : -1;
+  vec3  mvec={0,sign*(len/cuts),0};
+
+  // ^make successive extrusions
+  for(uint16_t i=1;i<cuts+1;i++) {
+
+    // create new ring and push in/out
+    uint16_t cut=this->new_ring();
+    m_rings[cut].set_base(base);
+    m_rings[cut].set_radius(radius);
+    m_rings[cut].set_profile(prof);
+    m_rings[cut].get_xform().move(mvec);
+
+    // move to next
+    base   += prof+1;
+    mvec   += mvec;
+
+    out[i]  = cut;
+
+  };
+
+  // ^join rings
+  for(uint16_t i=0;i<cuts;i++) {
+    m_join_q.push_back(out[i+0]);
+    m_join_q.push_back(out[i+1]);
+
+  };
+
+  // add cap to end if beg was capped
+  if(recap) {
+    this->cap(out.back());
+
+  };
+
+  out.erase(out.begin()+0);
+  return out;
+
+};
+
+// ---   *   ---   *   ---
+// add inwards ring from other
+
+svec<uint16_t> Modeler::inset(
+
+  uint16_t beg,
+  uint16_t cuts,
+
+  float    dist
+
+) {
+
+  svec<uint16_t> out=this->extrude(
+    beg,cuts,0,true
+
+  );
+
+  float step   = dist/cuts;
+  float radius =
+    m_rings[beg].get_radius()
+  - step
+  ;
+
+  for(uint16_t i=0;i<cuts;i++) {
+    m_rings[out[i]].set_radius(radius);
+    radius-=step;
+
+  };
+
+  return out;
 
 };
 
@@ -300,6 +499,21 @@ uint16_t Modeler::get_icount(void) {
 };
 
 // ---   *   ---   *   ---
+// run join/cap ops in Q
+
+void Modeler::calc_faces(void) {
+
+  for(uint16_t i=0;i<m_join_q.size();i+=2) {
+    this->join(m_join_q[i+0],m_join_q[i+1]);
+
+  };
+
+  m_join_q.clear();
+  m_mesh.indices.resize(this->get_icount());
+
+};
+
+// ---   *   ---   *   ---
 // get vertex indices for drawing
 //
 // TODO: duplicate 'flat' vertices
@@ -307,6 +521,12 @@ uint16_t Modeler::get_icount(void) {
 void Modeler::calc_indices(void) {
 
   uint16_t i=0;
+  uint16_t j=1;
+
+  if(m_join_q.size()) {
+    this->calc_faces();
+
+  };
 
   for(auto& face : m_faces) {
     for(auto& vert : face) {
@@ -330,8 +550,9 @@ uint16_t Modeler::get_vcount(void) {
 
   if(m_vcount==0) {
 
-    for(auto& joint : m_joints) {
-      m_vcount+=joint.get_verts().size();
+    for(auto& ring : m_rings) {
+      m_vcount+=ring.get_hax_verts().size();
+      m_vcount+=ring.get_cap_verts().size();
 
     };
 
@@ -347,29 +568,33 @@ uint16_t Modeler::get_vcount(void) {
 
 void Modeler::calc_deforms(void) {
 
-  uint16_t i=0;
+  uint16_t row      = 0;
+  uint16_t num_rows = m_rings.size();
 
-  for(auto& joint : m_joints) {
+  for(auto& ring : m_rings) {
 
-    auto& model = joint.get_xform().get_model();
-    auto& nmat  = joint.get_xform().get_nmat();
+    T3D&     xform = ring.get_xform();
+    uint16_t prof  = ring.get_profile();
 
-    for(auto& vert : joint.get_verts()) {
+    uint16_t i     = 0;
 
-      m_deformed[i]=Vertex(
+    for(auto& vert : ring.get_hax_verts()) {
 
-        vec3(model * vec4(
+      m_deformed[vert.idex]=Vertex(
 
-          vert.co.x,
-          vert.co.y,
-          vert.co.z,
+        xform.point_model(vert.co),
+        xform.point_nmat(vert.n),
 
-          1
+        vert.idex
 
-        )),
+      );
 
-        nmat * vert.n,
-        i
+      m_deformed[vert.idex].uv=vec2(
+
+        float(i)/prof,
+
+        xform.position().y
+      + (float(row)/num_rows)
 
       );
 
@@ -377,7 +602,34 @@ void Modeler::calc_deforms(void) {
 
     };
 
+    row++;
+
+    for(auto& vert : ring.get_cap_verts()) {
+
+      m_deformed[vert.idex]=Vertex(
+
+        xform.point_model(vert.co),
+        xform.point_nmat(vert.n),
+
+        vert.idex
+
+      );
+
+      m_deformed[vert.idex].uv=
+        vert.uv_for_cap();
+
+    };
+
   };
+
+};
+
+// ---   *   ---   *   ---
+// generate texcords for shape
+//
+// NOTE: placeholder
+
+void Modeler::calc_uvs(void) {
 
 };
 
@@ -387,12 +639,12 @@ void Modeler::calc_deforms(void) {
 bool Modeler::get_updated(void) {
 
   // double check each element
-  for(auto& joint : m_joints) {
+  for(auto& ring : m_rings) {
 
     // feed element update back onto frame
-    m_cache.calc_indices |= joint.updated;
+    m_cache.calc_indices |= ring.updated;
     m_cache.calc_deforms |=
-      joint.get_xform().get_updated();
+      ring.get_xform().get_updated();
 
   };
 
@@ -455,9 +707,11 @@ void Modeler::pack(void) {
 
   for(auto& vert : m_deformed) {
 
-    auto& dst=m_mesh.verts[i++];
+    auto& dst=m_mesh.verts[vert.idex];
 
     dst.set_xyz(vert.co);
+    dst.set_uv(vert.uv);
+
     dst.set_n(vert.n);
 
   };

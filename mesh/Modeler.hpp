@@ -15,7 +15,7 @@ class Modeler {
 
 public:
 
-  VERSION   "v0.00.6b";
+  VERSION   "v0.00.8b";
   AUTHOR    "IBN-3DILA";
 
   enum {
@@ -43,6 +43,8 @@ public:
     vec3     co;
     vec3     n;
 
+    vec2     uv;
+
     uint16_t idex;
 
     // cstruc
@@ -65,6 +67,13 @@ public:
     // ^ctrash
     Vertex(void) {};
 
+    // calc uv coords for a cap
+    // set of triangles
+    inline vec2 uv_for_cap(void) {
+      return {this->co.x,this->co.z};
+
+    };
+
   };
 
   typedef svec<Vertex>       Verts;
@@ -75,13 +84,14 @@ public:
 // ---   *   ---   *   ---
 // ^vertex ring
 
-  struct Joint {
+  struct Ring {
 
   private:
 
     T3D      m_xform;
 
-    Verts    m_verts;
+    Verts    m_cap_verts;
+    Verts    m_hax_verts;
 
     float    m_radius      = 0.5f;
 
@@ -90,6 +100,8 @@ public:
 
     uint16_t m_inset_mask  = 0x00;
     uint16_t m_inset_depth = 0x00;
+
+    bool     m_capped      = false;
 
 // ---   *   ---   *   ---
 
@@ -107,18 +119,47 @@ public:
 
     };
 
-    inline uint16_t iof(uint16_t i) {
-      return i % m_verts.size();
+    inline uint16_t get_top(void) {
+      return (m_capped)
+        ? m_base+m_profile+1+m_profile
+        : m_base+m_profile+1
+        ;
 
     };
 
-    inline Vertex& vof(uint16_t i) {
-      return m_verts[this->iof(i)];
+    void set_radius(float r);
+    float get_radius(void) {
+      return m_radius;
 
     };
 
-    inline Verts& get_verts(void) {
-      return m_verts;
+    inline uint16_t hiof(uint16_t i) {
+      return i % m_hax_verts.size();
+
+    };
+
+    inline uint16_t ciof(uint16_t i) {
+      return i % m_cap_verts.size();
+
+    };
+
+    inline Vertex& hvof(uint16_t i) {
+      return m_hax_verts[this->hiof(i)];
+
+    };
+
+    inline Vertex& cvof(uint16_t i) {
+      return m_cap_verts[this->ciof(i)];
+
+    };
+
+    inline Verts& get_hax_verts(void) {
+      return m_hax_verts;
+
+    };
+
+    inline Verts& get_cap_verts(void) {
+      return m_cap_verts;
 
     };
 
@@ -127,11 +168,18 @@ public:
 
     };
 
+    // resize and populate container
+    // for split top/bottom vertices
+    void cap_prologue(void);
+
+    // ^undo
+    bool uncap(void);
+
     bool updated=false;
 
   };
 
-  typedef svec<Joint> Joints;
+  typedef svec<Ring> Rings;
 
 // ---   *   ---   *   ---
 // keeps track of internal state
@@ -152,7 +200,7 @@ private:
 
   CRK::Prim   m_mesh;
 
-  Joints      m_joints;
+  Rings       m_rings;
   Faces       m_faces;
 
   Verts       m_deformed;
@@ -162,13 +210,15 @@ private:
   uint16_t    m_vcount=0;
   uint16_t    m_icount=0;
 
+  svec<uint16_t> m_join_q;
+
 // ---   *   ---   *   ---
 // guts
 
   // forks from join; these are the Fs
   // that det tri indices
-  void wind_even(Joint& a,Joint& b);
-  void wind_uneven(Joint& a,Joint& b);
+  void wind_even(Ring& a,Ring& b);
+  void wind_uneven(Ring& a,Ring& b);
 
   // make new face for pushing tris
   Verts_Ref& new_face(void) {
@@ -186,27 +236,34 @@ private:
   // ^add two tris
   void push_quad(
 
-    Joint&   a,
-    Joint&   b,
+    Ring&   a,
+    Ring&   b,
 
     uint16_t ai,
-    uint16_t bi
+    uint16_t bi,
+
+    bool     cap=false
 
   );
 
   // ^single
   void push_tri(
 
-    Joint&   a,
-    Joint&   b,
+    Ring&   a,
+    Ring&   b,
 
     uint16_t ai,
-    uint16_t bi
+    uint16_t bi,
+
+    bool     cap=false
 
   );
 
   // paste-in generated code
   #include "mesh/Modeler/Aux.hpp"
+
+  // run join/cap ops in Q
+  void calc_faces(void);
 
   // fetch tri indices for drawing
   void calc_indices(void);
@@ -214,6 +271,9 @@ private:
   // cache a copy of each elements
   // verts with transforms applied
   void calc_deforms(void);
+
+  // generate texcords for shape
+  void calc_uvs(void);
 
   // ^wraps over update routines
   void calc_mesh(void);
@@ -236,10 +296,9 @@ public:
   Modeler(void) {};
 
   // create new element
-  inline uint16_t new_joint(void) {
-
-    uint16_t out=m_joints.size();
-    m_joints.push_back(Joint());
+  inline uint16_t new_ring(void) {
+    uint16_t out=m_rings.size();
+    m_rings.push_back(Ring());
 
     return out;
 
@@ -256,9 +315,36 @@ public:
   // own verts
   void cap(uint16_t idex,bool up=true);
 
+  // ^undo
+  inline void uncap(uint16_t idex) {
+    m_rings[idex].uncap();
+
+  };
+
+  // extend mesh from ring
+  svec<uint16_t> extrude(
+
+    uint16_t beg,
+    uint16_t cuts,
+
+    float    len,
+    bool     in=false
+
+  );
+
+  // add inwards ring from other
+  svec<uint16_t> inset(
+
+    uint16_t beg,
+    uint16_t cuts,
+
+    float    dist
+
+  );
+
   // get handle to element
-  inline Joint& joint(uint16_t idex) {
-    return m_joints[idex];
+  inline Ring& ring(uint16_t idex) {
+    return m_rings[idex];
 
   };
 
@@ -273,21 +359,22 @@ public:
 
   // get ref to array of deformed verts
   inline Verts& get_deformed(void) {
+    this->calc_mesh();
     return m_deformed;
 
   };
 
   // ^get range of array corresponding to
   // deformed copies of an elements verts
-  inline svec<uint16_t> get_joint_dverts(
+  inline svec<uint16_t> get_ring_dverts(
     uint16_t id
 
   ) {
 
-    auto& joint=m_joints[id];
+    auto& ring=m_rings[id];
 
-    uint16_t beg=joint.get_base();
-    uint16_t end=joint.get_verts().size();
+    uint16_t beg=ring.get_base();
+    uint16_t end=ring.get_hax_verts().size()-1;
 
     return {beg,uint16_t(beg+end)};
 

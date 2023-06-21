@@ -14,7 +14,7 @@
 
 $:VERT;>
 
-  VERSION   v0.00.4b;
+  VERSION   v0.00.5b;
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -35,7 +35,7 @@ void main(void) {
   Normal      = apply_nmat(n);
 
   gl_Position = apply_transform(co);
-  Tex_Coords  = extract_tex();
+  Tex_Cords   = extract_tex();
 
   fDraw_ID    = Draw_Data[0];
   fSurf_ID    = Draw_Data[1];
@@ -74,11 +74,13 @@ $:FRAG;>
 
 void main(void) {
 
-//  Frag_Color=texture(Surface,Tex_Coords);
+//  Frag_Color=texture(Surface,Tex_Cords);
 
   Frag_Color=vec4(
 
-    COLORS[fDraw_ID]
+//    vec3(Tex_Cords.x,abs(Tex_Cords.y),0)
+
+    COLORS[0]
   * Vert_Light,
 
     1

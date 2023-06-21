@@ -112,8 +112,8 @@ sub gen_poly_join() {
 
     rtype => "svec<uint16_t>",
     args  => [
-      "Modeler::Joint& a",
-      "Modeler::Joint& b"
+      "Modeler::Ring& a",
+      "Modeler::Ring& b"
 
     ],
 
