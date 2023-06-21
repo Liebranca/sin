@@ -98,14 +98,29 @@ public:
     uint16_t m_profile     = QUAD;
     uint16_t m_base        = 0;
 
-    uint16_t m_inset_mask  = 0x00;
-    uint16_t m_inset_depth = 0x00;
-
     bool     m_capped      = false;
 
 // ---   *   ---   *   ---
 
   public:
+
+    inline Ring& operator=(Ring& other) {
+
+      m_xform       = other.m_xform;
+
+      m_cap_verts   = other.m_cap_verts;
+      m_hax_verts   = other.m_hax_verts;
+
+      m_radius      = other.m_radius;
+
+      m_profile     = other.m_profile;
+      m_base        = other.m_base;
+
+      m_capped      = other.m_capped;
+
+      return *this;
+
+    };
 
     void set_profile(uint16_t prof);
     inline uint16_t get_profile(void) {
@@ -182,6 +197,30 @@ public:
   typedef svec<Ring> Rings;
 
 // ---   *   ---   *   ---
+// texcord unwrap helpers
+
+  struct UV_Row {
+
+    svec<uint16_t> indices;
+
+    float height=1.0f;
+
+  };
+
+  typedef svec<UV_Row> UV_Rows;
+
+  struct UV_Island {
+
+    UV_Rows rows;
+
+    vec2    displace;
+    float   scale;
+
+  };
+
+  typedef svec<UV_Island> UV_Map;
+
+// ---   *   ---   *   ---
 // keeps track of internal state
 
   struct Cache {
@@ -204,6 +243,7 @@ private:
   Faces       m_faces;
 
   Verts       m_deformed;
+  UV_Map      m_uv_map;
 
   Cache       m_cache;
 
@@ -259,6 +299,13 @@ private:
 
   );
 
+  // add row to current uv island
+  void push_uv_row(
+    Ring& ring,
+    float h=1.0f
+
+  );
+
   // paste-in generated code
   #include "mesh/Modeler/Aux.hpp"
 
@@ -287,6 +334,12 @@ private:
   uint16_t get_vcount(void);
   uint16_t get_icount(void);
 
+  // get base value of last rings
+  inline uint16_t get_top(void) {
+    return m_rings.back().get_top();
+
+  };
+
 // ---   *   ---   *   ---
 // iface
 
@@ -299,6 +352,19 @@ public:
   inline uint16_t new_ring(void) {
     uint16_t out=m_rings.size();
     m_rings.push_back(Ring());
+
+    return out;
+
+  };
+
+  // ^new from existing
+  inline uint16_t new_ring(uint16_t src) {
+
+    uint16_t base = this->get_top();
+    uint16_t out  = this->new_ring();
+
+    m_rings[out]=m_rings[src];
+    m_rings[out].set_base(base);
 
     return out;
 
@@ -345,6 +411,30 @@ public:
   // get handle to element
   inline Ring& ring(uint16_t idex) {
     return m_rings[idex];
+
+  };
+
+  // make new uv island
+  inline void uv_cut(
+
+    float dx    = 0.0f,
+    float dy    = 0.0f,
+
+    float scale = 1.0f
+
+  ) {
+
+    m_uv_map.push_back(UV_Island());
+    auto& island=m_uv_map.back();
+
+    island.displace = vec2({dx,dy});
+    island.scale    = scale;
+
+  };
+
+  // add row to current uv island
+  inline void push_uv_row(uint16_t idex) {
+    this->push_uv_row(m_rings[idex]);
 
   };
 

@@ -111,8 +111,6 @@ void Modeler::join(
   auto& a=m_rings[idex_a];
   auto& b=m_rings[idex_b];
 
-printf("%u -> %u\n",idex_a,idex_b);
-
   uint16_t a_sz=a.get_profile();
   uint16_t b_sz=b.get_profile();
 
@@ -172,22 +170,6 @@ void Modeler::push_quad(
     face.push_back(b.hvof(bi+1));
     face.push_back(b.hvof(bi+0));
 
-printf(
-
-  "%u: %u,%u,%u,%u,%u,%u\n",
-
-  m_faces.size(),
-
-  a.hvof(ai+0).idex,
-  a.hvof(ai+1).idex,
-  b.hvof(bi+1).idex,
-
-  a.hvof(ai+0).idex,
-  b.hvof(bi+1).idex,
-  b.hvof(bi+0).idex
-
-);
-
   };
 
 };
@@ -220,6 +202,31 @@ void Modeler::push_tri(
     face.push_back(b.hvof(bi+0));
 
   };
+
+};
+
+// ---   *   ---   *   ---
+// add row to current uv island
+
+void Modeler::push_uv_row(
+  Ring& ring,
+  float h
+
+) {
+
+  // get current island and add row
+  auto& island=m_uv_map.back();
+  island.rows.push_back(UV_Row());
+
+  // fill out row with vertex indices
+  auto& row=island.rows.back();
+
+  for(auto& vert : ring.get_hax_verts()) {
+    row.indices.push_back(vert.idex);
+
+  };
+
+  row.height=h;
 
 };
 
@@ -396,23 +403,28 @@ svec<uint16_t> Modeler::extrude(
   bool  recap = ring.uncap();
 
   // ^get settings
-  uint16_t base   = ring.get_top();
+  uint16_t base   = this->get_top();
   uint16_t prof   = ring.get_profile();
   float    radius = ring.get_radius();
 
   // get movement vector for extrusion
   float sign=(in) ? 1 : -1;
-  vec3  mvec={0,sign*(len/cuts),0};
+  float step=len/cuts;
+  vec3  mvec={0,sign*step,0};
 
   // ^make successive extrusions
   for(uint16_t i=1;i<cuts+1;i++) {
 
-    // create new ring and push in/out
-    uint16_t cut=this->new_ring();
-    m_rings[cut].set_base(base);
-    m_rings[cut].set_radius(radius);
-    m_rings[cut].set_profile(prof);
-    m_rings[cut].get_xform().move(mvec);
+    // create new ring
+    uint16_t cut   = this->new_ring();
+    auto&    cring = m_rings[cut];
+
+    // push in/out
+    cring.set_base(base);
+    cring.set_radius(radius);
+    cring.set_profile(prof);
+    cring.get_xform().move(mvec);
+    this->push_uv_row(cring,step);
 
     // move to next
     base   += prof+1;
@@ -452,6 +464,8 @@ svec<uint16_t> Modeler::inset(
 
 ) {
 
+  uint16_t uv_row=m_uv_map.back().rows.size();
+
   svec<uint16_t> out=this->extrude(
     beg,cuts,0,true
 
@@ -464,6 +478,9 @@ svec<uint16_t> Modeler::inset(
   ;
 
   for(uint16_t i=0;i<cuts;i++) {
+
+    m_uv_map.back().rows[uv_row++].height=step;
+
     m_rings[out[i]].set_radius(radius);
     radius-=step;
 
@@ -507,6 +524,8 @@ void Modeler::calc_faces(void) {
     this->join(m_join_q[i+0],m_join_q[i+1]);
 
   };
+
+  m_cache.calc_indices=true;
 
   m_join_q.clear();
   m_mesh.indices.resize(this->get_icount());
@@ -576,8 +595,6 @@ void Modeler::calc_deforms(void) {
     T3D&     xform = ring.get_xform();
     uint16_t prof  = ring.get_profile();
 
-    uint16_t i     = 0;
-
     for(auto& vert : ring.get_hax_verts()) {
 
       m_deformed[vert.idex]=Vertex(
@@ -589,20 +606,7 @@ void Modeler::calc_deforms(void) {
 
       );
 
-      m_deformed[vert.idex].uv=vec2(
-
-        float(i)/prof,
-
-        xform.position().y
-      + (float(row)/num_rows)
-
-      );
-
-      i++;
-
     };
-
-    row++;
 
     for(auto& vert : ring.get_cap_verts()) {
 
@@ -626,10 +630,46 @@ void Modeler::calc_deforms(void) {
 
 // ---   *   ---   *   ---
 // generate texcords for shape
-//
-// NOTE: placeholder
 
 void Modeler::calc_uvs(void) {
+
+  for(auto& island : m_uv_map) {
+
+    uint16_t num_rows = island.rows.size();
+    uint16_t row_i    = 0;
+
+    for(auto& row : island.rows) {
+
+      float y=(
+        float(row_i)
+      * row.height
+
+      )/num_rows;
+
+      uint16_t num_cols = row.indices.size();
+      uint16_t col_i    = 0;
+
+      for(auto idex : row.indices) {
+
+        float x=float(col_i)/num_cols;
+
+        m_deformed[idex].uv=
+
+          vec2({x,y})
+
+        * island.scale
+        + island.displace
+        ;
+
+        col_i++;
+
+      };
+
+      row_i++;
+
+    };
+
+  };
 
 };
 
@@ -689,6 +729,7 @@ void Modeler::calc_mesh(void) {
   if(m_cache.calc_deforms) {
 
     this->calc_deforms();
+    this->calc_uvs();
 
     m_cache.calc_deforms = false;
     m_cache.repack       = true;
