@@ -1,0 +1,112 @@
+// ---   *   ---   *   ---
+// MATBAKE
+// Crackhead levels of
+// render to texture
+//
+// LIBRE SOFTWARE
+// Licensed under GNU GPL3
+// be a bro and inherit
+//
+// CONTRIBUTORS
+// lyeb,
+
+// ---   *   ---   *   ---
+// info
+
+$:VERT;>
+
+  VERSION   v0.00.1b;
+  AUTHOR    "IBN-3DILA";
+
+// ---   *   ---   *   ---
+// deps
+
+  #include <mesh/CRK_Angular>
+
+  out vec3  Normal;
+  out vec4  Point;
+
+  out float Vert_Light;
+
+// ---   *   ---   *   ---
+
+void main(void) {
+
+  vec4 co     = extract_xyz();
+  vec3 n      = extract_n();
+
+  Normal      = apply_nmat(n);
+  Point       = co;
+
+  Tex_Cords   = extract_tex();
+  gl_Position = apply_transform(co);
+
+//  gl_Position = vec4(
+//
+//    (Tex_Cords.x-0.5)*2,
+//    (Tex_Cords.y-0.5)*2,
+//
+//    0,1
+//
+//  );
+
+  fDraw_ID    = Draw_Data[0];
+  fSurf_ID    = Draw_Data[1];
+
+  unpack_view();
+
+  Vert_Light  = vl_smooth(Normal);
+
+};
+
+// ---   *   ---   *   ---
+// deps
+
+$:FRAG;>
+
+  #include <mesh/CRK_Angular>
+
+// ---   *   ---   *   ---
+// inputs
+
+  uniform sampler2DArray Surface;
+
+// ---   *   ---   *   ---
+// outputs
+
+  out vec4 Frag_Color;
+
+// ---   *   ---   *   ---
+// uv tax evation
+
+vec4 boxmapping(void) {
+
+	vec4 x=texture(Surface,vec3(Point.zy,Tex_Cords.z));
+	vec4 y=texture(Surface,vec3(Point.xz,Tex_Cords.z));
+
+  float aby   = abs(Normal.y);
+  float tresh = smoothstep(0.0f,1.0f,aby);
+
+  float fay   = aby * tresh;
+  float fax   = normalize(
+    abs(Normal.x)
+  + abs(Normal.z)
+
+  ) * (1-tresh);
+
+	return (x*fax + y*fay) / (fax+fay);
+
+};
+
+// ---   *   ---   *   ---
+
+void main(void) {
+
+  // [insert texgen schtick]
+
+  vec4 color=boxmapping();
+  Frag_Color=vec4(color.rgb * Vert_Light,1);
+
+};
+
+// ---   *   ---   *   ---

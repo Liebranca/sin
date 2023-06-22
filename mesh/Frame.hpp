@@ -21,7 +21,7 @@ class Meshes {
 
 public:
 
-  VERSION   "v0.01.8b";
+  VERSION   "v0.01.9b";
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -177,8 +177,8 @@ public:
 
   // cstruc
   void nit(
-    uint32_t texsz=256,
-    uint32_t pidex=0
+    uint32_t pidex=0,
+    uint32_t texsz=256
 
   );
 
@@ -218,6 +218,13 @@ public:
     m_mesh[idex].draw();
 
   };
+
+  // pass image data to material
+  void set_texture(
+    uint32_t    meshid,
+    std::string fpath
+
+  );
 
   // getters
   inline uint32_t get_pidex(void) {

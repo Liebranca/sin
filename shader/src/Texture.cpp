@@ -53,7 +53,7 @@ void Texture::nit(
     GL_TEXTURE_2D_ARRAY,
 
     GL_TEXTURE_MAX_LEVEL,
-    3
+    MAX_MIP-1
 
   );
 
@@ -105,37 +105,64 @@ Texture::~Texture(void) {
 };
 
 // ---   *   ---   *   ---
-// puts data into buff
+// get pixel data from joj
 
-void Texture::upload(
+void Texture::from_joj(
 
-  JOJ&     joj,
+  Texture::Upload_Data& dst,
 
-  uint32_t start,
-  uint8_t  mode
+  JOJ&    joj,
+  uint8_t mode
 
 ) {
 
-  uint8_t joj_mode;
-  uint8_t step;
+  uint8_t     joj_mode;
 
   // unpack all maps in file
   if(mode==LAYERS) {
     joj_mode = JOJ::UNPACK_LAYERS;
-    step     = 3;
+    dst.step = 3;
 
   // ^atlas for spritesheets
   } else {
     joj_mode = JOJ::UNPACK_ATLAS;
-    step     = 1;
+    dst.step = 1;
 
   };
 
   auto pixels=joj.to_buff(0,joj_mode);
+  dst.pixels.copy(pixels);
+
+};
+
+// ---   *   ---   *   ---
+// get pixel data from joj
+
+void Texture::from_png(
+  Texture::Upload_Data& dst,
+  PNG& png
+
+) {
+
+  auto pixels=png.read_to_float();
+
+  dst.pixels.copy(pixels);
+  dst.step=1;
+
+};
+
+// ---   *   ---   *   ---
+// puts data into buff
+
+void Texture::upload(
+  Texture::Upload_Data& data,
+  uint32_t start
+
+) {
 
   Range r={
     .beg=start,
-    .end=start+step
+    .end=start+data.step
 
   };
 
@@ -147,11 +174,11 @@ void Texture::upload(
 
     r.beg,
 
-    m_img_sz,m_img_sz,MAX_DEPTH,
+    m_img_sz,m_img_sz,data.step,
 
     GL_RGBA,GL_FLOAT,
 
-    &pixels[0]
+    &data.pixels[0]
 
   );
 
@@ -167,6 +194,12 @@ void Texture::upload(
     ;
 
   m_umark.push_back(r);
+
+  // TODO: put this somewhere else
+  //       to be called when we're done
+  //       uploading stuff
+
+  glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
 
 };
 

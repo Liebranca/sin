@@ -18,6 +18,7 @@
   #include "glsl/ui/Raster.hpp_sg"
   #include "glsl/mesh/JOJ_Sprite.hpp_sg"
   #include "glsl/mesh/M3D.hpp_sg"
+  #include "glsl/mesh/Matbake.hpp_sg"
 
   #include "Sin.hpp"
 
@@ -48,8 +49,8 @@ ANS& Sprite::fetch_meta(
 // create new mesh batch
 
 uint32_t SIN::new_batch(
-  uint32_t texsz,
-  uint32_t pidex
+  uint32_t pidex,
+  uint32_t texsz
 
 ) {
 
@@ -465,6 +466,12 @@ SIN::SIN(void) {
 
   this->nit_buffs();
 
+  // TODO: nit these conditionally
+  //
+  // most apps won't make use of
+  // debug/edit stuff, so they're
+  // oft redundant
+
   m_shaders[DEBUG]=programs.nit(
     &shader::ui::Debug_Draw
 
@@ -482,6 +489,11 @@ SIN::SIN(void) {
 
   m_shaders[MESH]=programs.nit(
     &shader::mesh::M3D
+
+  );
+
+  m_shaders[MATBAKE]=programs.nit(
+    &shader::mesh::Matbake
 
   );
 

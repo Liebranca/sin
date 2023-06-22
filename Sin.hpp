@@ -19,13 +19,17 @@ class SIN {
 
 public:
 
-  VERSION   "v0.01.2b";
+  VERSION   "v0.01.3b";
   AUTHOR    "IBN-3DILA";
 
   // indices into shader array
   enum {
 
-    DEBUG,TEXT,IMAGE,MESH,
+    DEBUG,TEXT,
+    IMAGE,MESH,
+
+    MATBAKE,
+
     NUM_SHMODES
 
   };
@@ -136,8 +140,8 @@ public:
 
   // create new mesh batch
   uint32_t new_batch(
-    uint32_t texsz=256,
-    uint32_t pidex=0
+    uint32_t pidex=MESH,
+    uint32_t texsz=256
 
   );
 

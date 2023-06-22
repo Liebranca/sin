@@ -5,6 +5,8 @@
 // deps
 
   #include "bitter/kvrnel/Style.hpp"
+
+  #include "bitter/ff/PNG_Wrap.hpp"
   #include "bitter/ff/JOJ.hpp"
 
 // ---   *   ---   *   ---
@@ -14,10 +16,10 @@ class Texture {
 
 public:
 
-  VERSION   "v0.00.5b";
+  VERSION   "v0.00.6b";
   AUTHOR    "IBN-3DILA";
 
-  cx8 MAX_MIP         = 1;
+  cx8 MAX_MIP         = 4;
   cx8 MAX_DEPTH       = 64;
 
   cx8 MATERIAL_DEPTH  = 3;
@@ -41,6 +43,16 @@ private:
   typedef std::vector<Range> Ranges;
 
 // ---   *   ---   *   ---
+// texture upload data holder
+
+  struct Upload_Data {
+
+    Mem<float> pixels;
+    uint8_t    step;
+
+  };
+
+// ---   *   ---   *   ---
 // attrs
 
   uint32_t m_loc  = 0;
@@ -52,6 +64,33 @@ private:
   Ranges   m_rmark;
   Ranges   m_umark;
   Ranges   m_materials;
+
+// ---   *   ---   *   ---
+// guts
+
+  // puts data into buff
+  void upload(
+    Upload_Data& data,
+    uint32_t start
+
+  );
+
+  // ^use joj image as src
+  void from_joj(
+
+    Upload_Data& dst,
+
+    JOJ&    joj,
+    uint8_t mode
+
+  );
+
+  // ^png image
+  void from_png(
+    Upload_Data& dst,
+    PNG& png
+
+  );
 
 // ---   *   ---   *   ---
 // iface
@@ -86,15 +125,35 @@ public:
 //
 //  };
 
-  // puts data into buff
-  void upload(
+  // wraps over upload_[img_src]
+  inline void upload(
 
     JOJ&     joj,
 
     uint32_t start,
     uint8_t  mode=LAYERS
 
-  );
+  ) {
+
+    Upload_Data data;
+
+    this->from_joj(data,joj,mode);
+    this->upload(data,start);
+
+  };
+
+  inline void upload(
+    PNG&     png,
+    uint32_t start
+
+  ) {
+
+    Upload_Data data;
+
+    this->from_png(data,png);
+    this->upload(data,start);
+
+  };
 
   // marks section for reuse
   inline void remove(uint32_t idex) {
@@ -127,6 +186,12 @@ public:
     };
 
     m_materials.push_back(r);
+    m_top+=4;
+
+  };
+
+  inline uint32_t get_loc(void) {
+    return m_loc;
 
   };
 

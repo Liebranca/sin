@@ -25,8 +25,8 @@
 // ---   *   ---   *   ---
 
 void Meshes::nit(
-  uint32_t texsz,
-  uint32_t pidex
+  uint32_t pidex,
+  uint32_t texsz
 
 ) {
 
@@ -246,6 +246,20 @@ uint32_t Meshes::new_edit(uint64_t size) {
   m_anim_meta.back().enit();
 
   return out;
+
+};
+
+// ---   *   ---   *   ---
+// pass image data to material
+
+void Meshes::set_texture(
+  uint32_t    meshid,
+  std::string fpath
+
+) {
+
+  PNG src(fpath);
+  m_texture.upload(src,this->matof(meshid));
 
 };
 

@@ -51,8 +51,9 @@ void Modeler::Ring::set_profile(
   };
 
   // duplicate first horizontal vertex for uv
-  m_hax_verts.back()=m_hax_verts[0];
-  m_hax_verts.back().idex=m_base+prof;
+  m_hax_verts.back()      = m_hax_verts[0];
+  m_hax_verts.back().idex = m_base+prof;
+  m_hax_verts.back().n    = vec3({0,0,-1});
 
   // register changes
   m_profile = prof;
@@ -355,16 +356,40 @@ void Modeler::cap(
 
   };
 
-  // ^calc vertex normal inclination
-  //
   // TODO: copy normals to hax verts
   //       if smooth shading
+  float sign=(up) ? -1 : 1;
+  this->nrot(idex,8*sign,true);
 
-  float sign = (up) ? -1 : 1;
-  float ang  = sign*(Seph::PI/4);
+  // mark for update
+  m_cache.calc_indices=true;
+  m_cache.calc_deforms=true;
 
-  for(auto& vert : ring.get_cap_verts()) {
+};
 
+// ---   *   ---   *   ---
+// rotate vertex normals of ring
+
+void Modeler::nrot(
+  uint16_t idex,
+  float    ang,
+
+  bool     cap
+
+) {
+
+  auto& ring=m_rings[idex];
+  ang=Seph::PI/ang;
+
+  auto& verts=(cap)
+    ? ring.get_cap_verts()
+    : ring.get_hax_verts()
+    ;
+
+  // walk ring verts
+  for(auto& vert : verts) {
+
+    // rotate about horizontal axis
     T3D::Facing dirn=vert.n;
     quat rot=T3D::qang(ang,dirn.hax);
 
@@ -372,10 +397,6 @@ void Modeler::cap(
     vert.n=vert.n*rot;
 
   };
-
-  // mark for update
-  m_cache.calc_indices=true;
-  m_cache.calc_deforms=true;
 
 };
 
@@ -600,7 +621,13 @@ void Modeler::calc_deforms(void) {
       m_deformed[vert.idex]=Vertex(
 
         xform.point_model(vert.co),
-        xform.point_nmat(vert.n),
+
+// i dunno why this happens but
+// its 6am and i dont wanna know
+//
+//        xform.point_nmat(vert.n),
+
+        vert.n,
 
         vert.idex
 

@@ -15,7 +15,7 @@ class Modeler {
 
 public:
 
-  VERSION   "v0.00.8b";
+  VERSION   "v0.01.0b";
   AUTHOR    "IBN-3DILA";
 
   enum {
@@ -405,6 +405,15 @@ public:
     uint16_t cuts,
 
     float    dist
+
+  );
+
+  // rotate vertex normals of ring
+  void nrot(
+    uint16_t idex,
+    float    ang,
+
+    bool     cap=false
 
   );
 
