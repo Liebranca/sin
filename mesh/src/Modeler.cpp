@@ -616,18 +616,14 @@ void Modeler::calc_deforms(void) {
     T3D&     xform = ring.get_xform();
     uint16_t prof  = ring.get_profile();
 
+    xform.full_update();
+
     for(auto& vert : ring.get_hax_verts()) {
 
       m_deformed[vert.idex]=Vertex(
 
         xform.point_model(vert.co),
-
-// i dunno why this happens but
-// its 6am and i dont wanna know
-//
-//        xform.point_nmat(vert.n),
-
-        vert.n,
+        xform.point_nmat(vert.n),
 
         vert.idex
 
@@ -701,6 +697,55 @@ void Modeler::calc_uvs(void) {
 };
 
 // ---   *   ---   *   ---
+// living nightmare
+
+void Modeler::calc_tangents(void) {
+
+  // walk each tri
+  for(auto& face : m_faces) {
+  for(uint16_t i=0;i<face.size();i+=3) {
+
+    auto& a=m_deformed[face[i+0].get().idex];
+    auto& b=m_deformed[face[i+1].get().idex];
+    auto& c=m_deformed[face[i+2].get().idex];
+
+    // get delta
+    vec3 e0=b.co-a.co;
+    vec3 e1=c.co-a.co;
+    vec2 d0=b.uv-a.uv;
+    vec2 d1=c.uv-a.uv;
+
+    // no idea
+    float f=1.0f / (
+      d0.x * d1.y
+    - d1.x * d0.y
+
+    );
+
+    // probably cross
+    a.t=f*vec3({
+      d1.y * e0.x - d0.y * e1.x,
+      d1.y * e0.y - d0.y * e1.y,
+      d1.y * e0.z - d0.y * e1.z
+
+    });
+
+    a.b=f*vec3({
+      -d1.x * e0.x + d0.x * e1.x,
+      -d1.x * e0.y + d0.x * e1.y,
+      -d1.x * e0.z + d0.x * e1.z
+
+    });
+
+    // ^same for all verts of tri
+    b.t=c.t=a.t;
+    b.b=c.b=a.b;
+
+  }};
+
+};
+
+// ---   *   ---   *   ---
 // ^get mesh requires recalc
 
 bool Modeler::get_updated(void) {
@@ -757,6 +802,7 @@ void Modeler::calc_mesh(void) {
 
     this->calc_deforms();
     this->calc_uvs();
+    this->calc_tangents();
 
     m_cache.calc_deforms = false;
     m_cache.repack       = true;
@@ -780,7 +826,7 @@ void Modeler::pack(void) {
     dst.set_xyz(vert.co);
     dst.set_uv(vert.uv);
 
-    dst.set_n(vert.n);
+    dst.set_ntb(vert.n,vert.t,vert.b);
 
   };
 

@@ -15,7 +15,7 @@
 
 $:VERT;>
 
-  VERSION   v0.00.3b;
+  VERSION   v0.00.4b;
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -83,6 +83,22 @@ vec4 extract_xyz(void) {
 
 vec3 extract_n(void) {
   return crk_nseph(Vertex[1] >> 16);
+
+};
+
+mat3 extract_tbn(void) {
+
+  mat3 nmat=get_nmat();
+
+  vec3 t=nmat*crk_nseph(Vertex[2]  & uint(0xFFFF));
+  vec3 n=nmat*crk_nseph(Vertex[1] >> 16);
+
+  t=normalize(t-dot(t,n)*n);
+  vec3 b=cross(n,t);
+
+  return mat3(t,b,n);
+
+// b = nmat * crk_nseph(Vertex[2] >> 16)
 
 };
 

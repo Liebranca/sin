@@ -15,7 +15,7 @@ class Modeler {
 
 public:
 
-  VERSION   "v0.01.0b";
+  VERSION   "v0.01.1b";
   AUTHOR    "IBN-3DILA";
 
   enum {
@@ -41,7 +41,10 @@ public:
   struct Vertex {
 
     vec3     co;
+
     vec3     n;
+    vec3     t;
+    vec3     b;
 
     vec2     uv;
 
@@ -321,6 +324,9 @@ private:
 
   // generate texcords for shape
   void calc_uvs(void);
+
+  // annoying math for normal maps
+  void calc_tangents(void);
 
   // ^wraps over update routines
   void calc_mesh(void);

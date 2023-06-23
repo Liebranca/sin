@@ -15,7 +15,7 @@
 
 $:VERT;>
 
-  VERSION   v0.00.1b;
+  VERSION   v0.00.2b;
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -25,6 +25,7 @@ $:VERT;>
 
   out vec3  Normal;
   out vec4  Point;
+  out mat3  IV_TBN;
 
   out float Vert_Light;
 
@@ -35,26 +36,29 @@ void main(void) {
   vec4 co     = extract_xyz();
   vec3 n      = extract_n();
 
+  IV_TBN      = transpose(extract_tbn());
+
   Normal      = apply_nmat(n);
   Point       = co;
 
   Tex_Cords   = extract_tex();
-  gl_Position = apply_transform(co);
+//  gl_Position = apply_transform(co);
 
-//  gl_Position = vec4(
-//
-//    (Tex_Cords.x-0.5)*2,
-//    (Tex_Cords.y-0.5)*2,
-//
-//    0,1
-//
-//  );
+  gl_Position = vec4(
+
+    (Tex_Cords.x-0.5)*2,
+    (Tex_Cords.y-0.5)*2,
+
+    0,1
+
+  );
 
   fDraw_ID    = Draw_Data[0];
   fSurf_ID    = Draw_Data[1];
 
   unpack_view();
 
+  Cam_Fwd     = IV_TBN * Cam_Fwd;
   Vert_Light  = vl_smooth(Normal);
 
 };
@@ -77,12 +81,18 @@ $:FRAG;>
   out vec4 Frag_Color;
 
 // ---   *   ---   *   ---
+// ROM
+
+  const vec3 Y_AXIS=vec3(0,1,0);
+  const vec3 Y_VOID=vec3(-1,1,0);
+
+// ---   *   ---   *   ---
 // uv tax evation
 
 vec4 boxmapping(void) {
 
-	vec4 x=texture(Surface,vec3(Point.zy,Tex_Cords.z));
-	vec4 y=texture(Surface,vec3(Point.xz,Tex_Cords.z));
+  vec4 x=texture(Surface,vec3(Point.zy,Tex_Cords.z));
+  vec4 y=texture(Surface,vec3(Point.xz,Tex_Cords.z));
 
   float aby   = abs(Normal.y);
   float tresh = smoothstep(0.0f,1.0f,aby);
@@ -94,7 +104,47 @@ vec4 boxmapping(void) {
 
   ) * (1-tresh);
 
-	return (x*fax + y*fay) / (fax+fay);
+  return (x*fax + y*fay) / (fax+fay);
+
+};
+
+// ---   *   ---   *   ---
+// determine height from color (yes)
+
+vec4 heightmap(vec4 color) {
+
+  // color to grayscale
+  float luma=
+    0.257f*color.r
+  + 0.504f*color.g
+  + 0.098f*color.b
+  ;
+
+  float iv_luma=1-luma;
+
+  // find arbitrary up
+  const vec3 axes[]={Y_AXIS,Y_VOID};
+  vec3 yax=axes[uint(abs(Normal.y) >= 0.99f)];
+
+  // ^get local up
+  vec3 hax = cross(Normal,yax);
+  vec3 up  = cross(Normal,hax);
+  vec3 fwd = cross(Normal,up);
+
+  hax *= iv_luma * 0.65f;
+  up  *= iv_luma * 2.00f;
+  fwd *= iv_luma * 0.25f;
+
+  vec3 push=
+    (up+yax)
+  - (Normal-fwd)
+
+  - hax
+  ;
+
+  vec3 n=Normal-push*16.0f;
+
+  return vec4(normalize(IV_TBN * n),luma*2);
 
 };
 
@@ -104,8 +154,43 @@ void main(void) {
 
   // [insert texgen schtick]
 
-  vec4 color=boxmapping();
-  Frag_Color=vec4(color.rgb * Vert_Light,1);
+  vec4 color   = boxmapping();
+  vec4 height  = heightmap(color);
+  vec3 ambient = vec3(0,0,0.25f);
+
+  float vl=dot(Cam_Fwd,height.xyz);
+
+//  float near = smoothstep(0.0f,1.0f,d);
+//  float far  = (1-d)*0.5f;
+//
+//  float vl   = clamp(near-far*0.25f,0.0f,1.0f);
+
+  float fresnel=1-dot(Cam_Fwd,height.xyz);
+  fresnel=smoothstep(0.5f,4.0f,fresnel)*4.0f;
+  fresnel=clamp(0,1,fresnel);
+
+  vec3 diffuse=
+    color.rgb
+  * (Vert_Light*0.25f)
+
+  + ambient * fresnel
+  + ambient * height.w
+  ;
+
+  vec3 specular=
+
+    color.rgb
+  * vl * 1.25f
+
+  + vec3(0.25f,0.1f,0)
+  * height.w * vl
+  ;
+
+//  Frag_Color=vec4(diffuse+specular,1);
+
+  Frag_Color=vec4(vec3((height.xyz*0.5f)+0.5f),1);
+
+//  Frag_Color=vec4(vec3(vl),1);
 
 };
 
