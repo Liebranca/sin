@@ -46,27 +46,21 @@ vec3 crk_pseph(uint b) {
 
 // ---   *   ---   *   ---
 // ^same, unit vectors
-//
-// these used to be smaller...
-// now it's *exactly* the same
-//
-// leaving different func in case
-// we revert back
 
 vec3 crk_nseph(uint b) {
 
-  float zen  = unfrac_i8_angle(b & uint(0xFF));
-  float azi  = unfrac_i8_angle((b >> 8) & uint(0xFF));
+  float zen  = unfrac_i4_angle(b & uint(0xF));
+  float azi  = unfrac_i4_angle((b >> 4) & uint(0xF));
 
   float szen = sin(zen);
 
-  return vec3(
+  return normalize(vec3(
 
     szen * sin(azi),
     cos(zen),
     szen * cos(azi)
 
-  );
+  ));
 
 };
 
@@ -82,7 +76,7 @@ vec4 extract_xyz(void) {
 };
 
 vec3 extract_n(void) {
-  return crk_nseph(Vertex[1] >> 16);
+  return crk_nseph(Vertex[1] >> 8);
 
 };
 
@@ -90,15 +84,13 @@ mat3 extract_tbn(void) {
 
   mat3 nmat=get_nmat();
 
-  vec3 t=nmat*crk_nseph(Vertex[2]  & uint(0xFFFF));
-  vec3 n=nmat*crk_nseph(Vertex[1] >> 16);
+  vec3 n=nmat * crk_nseph(Vertex[1] >>  8);
+  vec3 t=nmat * crk_nseph(Vertex[1] >> 16);
 
   t=normalize(t-dot(t,n)*n);
   vec3 b=cross(n,t);
 
   return mat3(t,b,n);
-
-// b = nmat * crk_nseph(Vertex[2] >> 16)
 
 };
 

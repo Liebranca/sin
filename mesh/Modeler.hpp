@@ -15,7 +15,7 @@ class Modeler {
 
 public:
 
-  VERSION   "v0.01.1b";
+  VERSION   "v0.01.2b";
   AUTHOR    "IBN-3DILA";
 
   enum {
@@ -44,7 +44,6 @@ public:
 
     vec3     n;
     vec3     t;
-    vec3     b;
 
     vec2     uv;
 

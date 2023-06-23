@@ -730,16 +730,8 @@ void Modeler::calc_tangents(void) {
 
     });
 
-    a.b=f*vec3({
-      -d1.x * e0.x + d0.x * e1.x,
-      -d1.x * e0.y + d0.x * e1.y,
-      -d1.x * e0.z + d0.x * e1.z
-
-    });
-
     // ^same for all verts of tri
     b.t=c.t=a.t;
-    b.b=c.b=a.b;
 
   }};
 
@@ -826,7 +818,7 @@ void Modeler::pack(void) {
     dst.set_xyz(vert.co);
     dst.set_uv(vert.uv);
 
-    dst.set_ntb(vert.n,vert.t,vert.b);
+    dst.set_nt(vert.n,vert.t);
 
   };
 

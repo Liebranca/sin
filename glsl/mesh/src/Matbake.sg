@@ -15,7 +15,7 @@
 
 $:VERT;>
 
-  VERSION   v0.00.2b;
+  VERSION   v0.00.3b;
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -42,16 +42,16 @@ void main(void) {
   Point       = co;
 
   Tex_Cords   = extract_tex();
-//  gl_Position = apply_transform(co);
+  gl_Position = apply_transform(co);
 
-  gl_Position = vec4(
-
-    (Tex_Cords.x-0.5)*2,
-    (Tex_Cords.y-0.5)*2,
-
-    0,1
-
-  );
+//  gl_Position = vec4(
+//
+//    (Tex_Cords.x-0.5)*2,
+//    (Tex_Cords.y-0.5)*2,
+//
+//    0,1
+//
+//  );
 
   fDraw_ID    = Draw_Data[0];
   fSurf_ID    = Draw_Data[1];
@@ -131,18 +131,14 @@ vec4 heightmap(vec4 color) {
   vec3 up  = cross(Normal,hax);
   vec3 fwd = cross(Normal,up);
 
-  hax *= iv_luma * 0.65f;
+  // scale vectors by inverse height
+  hax *= iv_luma * 2.00f;
   up  *= iv_luma * 2.00f;
-  fwd *= iv_luma * 0.25f;
+  fwd *= iv_luma * 0.50f;
 
-  vec3 push=
-    (up+yax)
-  - (Normal-fwd)
-
-  - hax
-  ;
-
-  vec3 n=Normal-push*16.0f;
+  // ^solve by aversion to matmul
+  vec3 push=(up+yax)-(Normal-fwd)-hax;
+  vec3 n=Normal-push;
 
   return vec4(normalize(IV_TBN * n),luma*2);
 
@@ -158,15 +154,27 @@ void main(void) {
   vec4 height  = heightmap(color);
   vec3 ambient = vec3(0,0,0.25f);
 
-  float vl=dot(Cam_Fwd,height.xyz);
+  height.xy   *= height.w * 2.0f;
 
-//  float near = smoothstep(0.0f,1.0f,d);
-//  float far  = (1-d)*0.5f;
-//
-//  float vl   = clamp(near-far*0.25f,0.0f,1.0f);
+  float d    = dot(Cam_Fwd,height.xyz) * height.w;
+  float f    = height.w*0.5f;
 
-  float fresnel=1-dot(Cam_Fwd,height.xyz);
-  fresnel=smoothstep(0.5f,4.0f,fresnel)*4.0f;
+  float near = smoothstep(0,f,d) * 0.5f;
+  float far  = smoothstep(f,1,d) * 4.0f;
+
+  float vl   = clamp((near+far),0.0f,1.0f);
+
+  float fresnel=1-vl;
+
+  fresnel=smoothstep(
+
+    height.w * 0.80f,
+    height.w * 8.00f,
+
+    fresnel
+
+  ) * height.w;
+
   fresnel=clamp(0,1,fresnel);
 
   vec3 diffuse=
@@ -186,11 +194,11 @@ void main(void) {
   * height.w * vl
   ;
 
-//  Frag_Color=vec4(diffuse+specular,1);
+  Frag_Color=vec4(diffuse+specular,1);
 
-  Frag_Color=vec4(vec3((height.xyz*0.5f)+0.5f),1);
+//  Frag_Color=vec4(vec3((height.xyz*0.5f)+0.5f),1);
 
-//  Frag_Color=vec4(vec3(vl),1);
+//  Frag_Color=vec4(vec3(fresnel),1);
 
 };
 
