@@ -15,7 +15,7 @@
 
 $:VERT;>
 
-  VERSION   v0.00.3b;
+  VERSION   v0.00.4b;
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -28,6 +28,7 @@ $:VERT;>
   out mat3  IV_TBN;
 
   out float Vert_Light;
+  out float Vert_AO;
 
 // ---   *   ---   *   ---
 
@@ -59,7 +60,14 @@ void main(void) {
   unpack_view();
 
   Cam_Fwd     = IV_TBN * Cam_Fwd;
-  Vert_Light  = vl_smooth(Normal);
+  Vert_Light  = vl_smooth(IV_TBN * Normal);
+
+  Vert_AO     =float(
+
+    (Vertex[1] >> 24)
+  & uint(0xFF)
+
+  ) * 0.003921f;
 
 };
 
@@ -87,24 +95,53 @@ $:FRAG;>
   const vec3 Y_VOID=vec3(-1,1,0);
 
 // ---   *   ---   *   ---
+// src: yiwenl/glsl-rotation-2d
+// added (approx) deg2rad
+
+vec2 rotate(vec2 v, float a) {
+
+  a*=0.0174533f;
+
+  float s = sin(a);
+  float c = cos(a);
+
+  mat2  m = mat2(c,-s,s,c);
+
+	return m * v;
+
+};
+
+// ---   *   ---   *   ---
+// normal ipol mask
+
+vec2 nipol(void) {
+
+  float aby    = abs(Normal.y);
+  float abx    = abs(Normal.x) + abs(Normal.z);
+  float step   = 0.5f * float(aby < 0.5f);
+
+  float treshy = smoothstep(0.35f,1,aby);
+  float treshx = 1-smoothstep(0,1*step,aby);
+
+  float fay=normalize(aby)*treshy;
+  float fax=normalize(abx)*treshx;
+
+  return vec2(fax,fay);
+
+};
+
+// ---   *   ---   *   ---
 // uv tax evation
 
 vec4 boxmapping(void) {
 
+  vec2 uvy=rotate(Point.zx,45);
+
   vec4 x=texture(Surface,vec3(Point.zy,Tex_Cords.z));
-  vec4 y=texture(Surface,vec3(Point.xz,Tex_Cords.z));
+  vec4 y=texture(Surface,vec3(uvy,Tex_Cords.z));
+  vec2 f=nipol();
 
-  float aby   = abs(Normal.y);
-  float tresh = smoothstep(0.0f,1.0f,aby);
-
-  float fay   = aby * tresh;
-  float fax   = normalize(
-    abs(Normal.x)
-  + abs(Normal.z)
-
-  ) * (1-tresh);
-
-  return (x*fax + y*fay) / (fax+fay);
+  return (x*f.x + y*f.y) / (f.x+f.y);
 
 };
 
@@ -138,9 +175,96 @@ vec4 heightmap(vec4 color) {
 
   // ^solve by aversion to matmul
   vec3 push=(up+yax)-(Normal-fwd)-hax;
-  vec3 n=Normal-push;
+  vec3 n=normalize(IV_TBN * (Normal-push));
 
-  return vec4(normalize(IV_TBN * n),luma*2);
+  n.xy*=luma;
+
+  return vec4(n,luma);
+
+};
+
+// ---   *   ---   *   ---
+// ^roughness from height
+
+float roughness(vec4 height) {
+
+  float fac=clamp(
+    (1-abs(height.x))
+  * (1-abs(height.y)),
+
+    0,1
+
+  );
+
+  return fac*height.z*(1-height.w);
+
+};
+
+// ---   *   ---   *   ---
+// approximate AO from heightmap
+// by averaging dot-eye across
+// a multitude of normals
+
+float AO(vec4 height) {
+
+  float d=0.0f;
+  const float zenith[]={
+    -2.0f,-0.25f,2.0f
+
+  };
+
+  for(int y=0;y<3;y++) {
+
+  for(int x=0;x<5;x++) {
+  for(int z=0;z<5;z++) {
+
+    vec3 n=normalize(
+
+      IV_TBN * vec3(
+        (x-2)*0.5f,
+        zenith[y],
+
+        (z-2)*0.5f
+
+      )
+
+    );
+
+    d+=max(0,dot(
+      n,height.xyz
+
+    ) * height.w * 2.0f);
+
+  }}};
+
+  return clamp((d/75)*2.0f,0,1);
+
+};
+
+// ---   *   ---   *   ---
+// shading trick: do not raytrace
+
+float tight_AO(vec4 height) {
+
+  float ao=smoothstep(
+
+    0,
+    0.25f,
+
+    Vert_AO
+
+  );
+
+  ao=clamp(ao*smoothstep(
+
+    0,
+    0.65f,
+
+    AO(height)
+
+  ),0.00f,1.25f);
+
+  return ao;
 
 };
 
@@ -150,55 +274,89 @@ void main(void) {
 
   // [insert texgen schtick]
 
-  vec4 color   = boxmapping();
-  vec4 height  = heightmap(color);
-  vec3 ambient = vec3(0,0,0.25f);
+  vec4  color   = boxmapping();
+  vec4  height  = heightmap(color);
+  float ao      = tight_AO(height);
+  float rough   = roughness(height);
+  float soft    = 1-rough;
 
-  height.xy   *= height.w * 2.0f;
+  // vec-to-eye
+  vec3  vto    = Cam_Pos-vec3(Point);
+  vec3  iv_vto = vec3(Point)-Cam_Pos;
 
-  float d    = dot(Cam_Fwd,height.xyz) * height.w;
-  float f    = height.w*0.5f;
+  // ^to tangent space
+  vto    = IV_TBN * normalize(vto);
+  iv_vto = IV_TBN * normalize(iv_vto);
 
-  float near = smoothstep(0,f,d) * 0.5f;
-  float far  = smoothstep(f,1,d) * 4.0f;
+  // controls dot eye
+  vec3 refl=reflect(Cam_Fwd,height.xyz);
+
+  // ^derive
+  float d=clamp(
+    dot(iv_vto,refl)
+  * 2.0f * height.w,
+
+    0,1
+
+  );
+
+  float iv_d=clamp(pow(
+    dot(vto,refl)
+  * 2.0f * height.w,
+
+    2
+
+  ),0,1);
+
+  // ^expand
+  float fresnel=smoothstep(
+
+    0.0f,
+    1.0f,
+
+    clamp(iv_d-d,0,1)
+
+  ) * 2.0f;
+
+  float near = smoothstep(0,height.w,d) * 0.5f;
+  float far  = smoothstep(height.w,1,d) * 4.0f;
 
   float vl   = clamp((near+far),0.0f,1.0f);
 
-  float fresnel=1-vl;
+  // get colors
+  vec3 ambient=
+    vec3(0,0,0.25f) * 0.25f
+  + vec3(0,0,0.25f) * fresnel
 
-  fresnel=smoothstep(
-
-    height.w * 0.80f,
-    height.w * 8.00f,
-
-    fresnel
-
-  ) * height.w;
-
-  fresnel=clamp(0,1,fresnel);
-
-  vec3 diffuse=
-    color.rgb
-  * (Vert_Light*0.25f)
-
-  + ambient * fresnel
-  + ambient * height.w
   ;
+
+  vec3 diffuse=(
+    color.rgb*Vert_Light
+  + ambient
+
+  ) * ao;
 
   vec3 specular=
-
-    color.rgb
-  * vl * 1.25f
-
-  + vec3(0.25f,0.1f,0)
-  * height.w * vl
+    color.rgb*vl*(max(0.35f,ao*2.0f))
+  * soft*2.0f
   ;
 
-  Frag_Color=vec4(diffuse+specular,1);
+  Frag_Color=vec4(
 
-//  Frag_Color=vec4(vec3((height.xyz*0.5f)+0.5f),1);
+    ambient
 
-//  Frag_Color=vec4(vec3(fresnel),1);
+  + diffuse
+  + specular,
+
+    1
+
+  );
+
+//  Frag_Color=vec4(vec3((height.z*0.5f)+0.5f),1);
+
+//  Frag_Color=vec4(vec3((Point*0.5f)+0.5f),1);
+
+//  Frag_Color=vec4(vec3(ambient),1);
 
 };
 

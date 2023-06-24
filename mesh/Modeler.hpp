@@ -15,7 +15,7 @@ class Modeler {
 
 public:
 
-  VERSION   "v0.01.2b";
+  VERSION   "v0.01.3b";
   AUTHOR    "IBN-3DILA";
 
   enum {
@@ -47,6 +47,7 @@ public:
 
     vec2     uv;
 
+    float    ao=0.5f;
     uint16_t idex;
 
     // cstruc
@@ -72,7 +73,23 @@ public:
     // calc uv coords for a cap
     // set of triangles
     inline vec2 uv_for_cap(void) {
-      return {this->co.x,this->co.z};
+      return glm::normalize(vec2(
+        {this->co.x,this->co.z}
+
+      ));
+
+    };
+
+    // clamp occlusion value and
+    // map it to 0..255 range
+    inline uint8_t clamp_ao(void) {
+
+      ao=(ao > 1.0f)
+        ? 1.0f
+        : ao * (ao > 0.0f)
+        ;
+
+      return uint8_t(ao*255);
 
     };
 
@@ -91,9 +108,7 @@ public:
   private:
 
     T3D      m_xform;
-
-    Verts    m_cap_verts;
-    Verts    m_hax_verts;
+    Verts    m_verts;
 
     float    m_radius      = 0.5f;
 
@@ -108,17 +123,16 @@ public:
 
     inline Ring& operator=(Ring& other) {
 
-      m_xform       = other.m_xform;
+      m_xform   = other.m_xform;
 
-      m_cap_verts   = other.m_cap_verts;
-      m_hax_verts   = other.m_hax_verts;
+      m_verts   = other.m_verts;
 
-      m_radius      = other.m_radius;
+      m_radius  = other.m_radius;
 
-      m_profile     = other.m_profile;
-      m_base        = other.m_base;
+      m_profile = other.m_profile;
+      m_base    = other.m_base;
 
-      m_capped      = other.m_capped;
+      m_capped  = other.m_capped;
 
       return *this;
 
@@ -138,7 +152,7 @@ public:
 
     inline uint16_t get_top(void) {
       return (m_capped)
-        ? m_base+m_profile+1+m_profile
+        ? m_base+m_profile
         : m_base+m_profile+1
         ;
 
@@ -150,33 +164,18 @@ public:
 
     };
 
-    inline uint16_t hiof(uint16_t i) {
-      return i % m_hax_verts.size();
+    inline uint16_t iof(uint16_t i) {
+      return i % m_verts.size();
 
     };
 
-    inline uint16_t ciof(uint16_t i) {
-      return i % m_cap_verts.size();
+    inline Vertex& vof(uint16_t i) {
+      return m_verts[this->iof(i)];
 
     };
 
-    inline Vertex& hvof(uint16_t i) {
-      return m_hax_verts[this->hiof(i)];
-
-    };
-
-    inline Vertex& cvof(uint16_t i) {
-      return m_cap_verts[this->ciof(i)];
-
-    };
-
-    inline Verts& get_hax_verts(void) {
-      return m_hax_verts;
-
-    };
-
-    inline Verts& get_cap_verts(void) {
-      return m_cap_verts;
+    inline Verts& get_verts(void) {
+      return m_verts;
 
     };
 
@@ -185,14 +184,30 @@ public:
 
     };
 
-    // resize and populate container
-    // for split top/bottom vertices
-    void cap_prologue(void);
+    inline void set_xform(T3D xform) {
+      m_xform=xform;
+
+    };
+
+    // remove additional vertex
+    // cap uvs do not need it
+    void cap_prologue(
+
+      float dx    = 0.0f,
+      float dy    = 0.0f,
+
+      float scale = 1.0f
+
+    );
 
     // ^undo
     bool uncap(void);
 
     bool updated=false;
+
+    // darkens or brightens verts
+    // affects AO calc in shader
+    void occlude(float fac);
 
   };
 
@@ -282,9 +297,7 @@ private:
     Ring&   b,
 
     uint16_t ai,
-    uint16_t bi,
-
-    bool     cap=false
+    uint16_t bi
 
   );
 
@@ -295,9 +308,7 @@ private:
     Ring&   b,
 
     uint16_t ai,
-    uint16_t bi,
-
-    bool     cap=false
+    uint16_t bi
 
   );
 
@@ -382,9 +393,20 @@ public:
 
   );
 
-  // make tris within an elements
-  // own verts
-  void cap(uint16_t idex,bool up=true);
+  // ^create new ring that forms
+  // a face within itself
+  uint16_t cap(
+
+    uint16_t idex,
+
+    bool     up    = true,
+
+    float    dx    = 0.0f,
+    float    dy    = 0.0f,
+
+    float    scale = 1.0f
+
+  );
 
   // ^undo
   inline void uncap(uint16_t idex) {
@@ -416,9 +438,7 @@ public:
   // rotate vertex normals of ring
   void nrot(
     uint16_t idex,
-    float    ang,
-
-    bool     cap=false
+    float    f
 
   );
 
@@ -478,7 +498,7 @@ public:
     auto& ring=m_rings[id];
 
     uint16_t beg=ring.get_base();
-    uint16_t end=ring.get_hax_verts().size()-1;
+    uint16_t end=ring.get_verts().size()-1;
 
     return {beg,uint16_t(beg+end)};
 
