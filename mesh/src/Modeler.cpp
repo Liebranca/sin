@@ -348,6 +348,9 @@ uint16_t Modeler::cap(
   this->nrot(n_idex,8*sign);
   this->nrot(idex,8*sign);
 
+  m_rings[idex].occlude(0.5f);
+  m_rings[n_idex].occlude(0.5f);
+
   // mark for update
   m_cache.calc_indices=true;
   m_cache.calc_deforms=true;
@@ -693,12 +696,12 @@ void Modeler::calc_tangents(void) {
     );
 
     // probably cross
-    a.t=f*vec3({
+    a.t=glm::normalize(f*vec3({
       d1.y * e0.x - d0.y * e1.x,
       d1.y * e0.y - d0.y * e1.y,
       d1.y * e0.z - d0.y * e1.z
 
-    });
+    }));
 
     // ^same for all verts of tri
     b.t=c.t=a.t;
@@ -790,6 +793,8 @@ void Modeler::pack(void) {
 
     dst.set_nt(vert.n,vert.t);
     dst.data[7]=vert.clamp_ao();
+
+    auto n=dst.get_n();
 
   };
 

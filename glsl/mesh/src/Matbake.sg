@@ -15,7 +15,7 @@
 
 $:VERT;>
 
-  VERSION   v0.00.4b;
+  VERSION   v0.00.5b;
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -24,8 +24,8 @@ $:VERT;>
   #include <mesh/CRK_Angular>
 
   out vec3  Normal;
+  out vec3  Tangent;
   out vec4  Point;
-  out mat3  IV_TBN;
 
   out float Vert_Light;
   out float Vert_AO;
@@ -35,11 +35,10 @@ $:VERT;>
 void main(void) {
 
   vec4 co     = extract_xyz();
-  vec3 n      = extract_n();
 
-  IV_TBN      = transpose(extract_tbn());
+  Normal      = extract_n();
+  Tangent     = extract_t();
 
-  Normal      = apply_nmat(n);
   Point       = co;
 
   Tex_Cords   = extract_tex();
@@ -58,6 +57,11 @@ void main(void) {
   fSurf_ID    = Draw_Data[1];
 
   unpack_view();
+
+  mat3 IV_TBN = transpose(
+    calc_tbn(Normal,Tangent)
+
+  );
 
   Cam_Fwd     = IV_TBN * Cam_Fwd;
   Vert_Light  = vl_smooth(IV_TBN * Normal);
@@ -93,6 +97,59 @@ $:FRAG;>
 
   const vec3 Y_AXIS=vec3(0,1,0);
   const vec3 Y_VOID=vec3(-1,1,0);
+
+// ---   *   ---   *   ---
+// GBL
+
+  mat3 IV_TBN;
+
+// ---   *   ---   *   ---
+// ^calcs
+
+void calc_iv_tbn(void) {
+
+  vec3 n=normalize(Normal);
+  vec3 t=normalize(Tangent);
+
+  t=normalize(t-dot(t,n)*n);
+
+  vec3 b=cross(n,t);
+  IV_TBN=transpose(mat3(t,b,n));
+
+};
+
+// ---   *   ---   *   ---
+// multiply if sum < 0.5
+// else add
+
+vec3 overlay(vec3 dst,vec3 src,float fac) {
+
+  float sum      = (src.r+src.g+src.b)/3.0f;
+
+  float tresh    = smoothstep(0.15f,1.0f,sum*2.0f);
+  float iv_tresh = 1-tresh;
+
+  float mask     = smoothstep(0,0.5f,tresh);
+  float iv_mask  = 1-mask;
+
+  // shadow
+  vec3 a=dst*src;
+
+  // light
+  vec3 b=dst*src*1.25f;
+
+  return mix(
+
+    dst,
+
+    a * iv_tresh * iv_mask
+  + b * tresh    * mask,
+
+    fac
+
+  );
+
+};
 
 // ---   *   ---   *   ---
 // src: yiwenl/glsl-rotation-2d
@@ -164,22 +221,27 @@ vec4 heightmap(vec4 color) {
   vec3 yax=axes[uint(abs(Normal.y) >= 0.99f)];
 
   // ^get local up
-  vec3 hax = cross(Normal,yax);
-  vec3 up  = cross(Normal,hax);
-  vec3 fwd = cross(Normal,up);
+  vec3 n   = normalize(Normal);
+  vec3 fwd = n;
+  vec3 hax = cross(n,yax);
+  vec3 up  = cross(n,hax);
 
   // scale vectors by inverse height
-  hax *= iv_luma * 2.00f;
-  up  *= iv_luma * 2.00f;
-  fwd *= iv_luma * 0.50f;
+  hax *= luma;
+  up  *= iv_luma;
+  fwd *= luma;
 
   // ^solve by aversion to matmul
-  vec3 push=(up+yax)-(Normal-fwd)-hax;
-  vec3 n=normalize(IV_TBN * (Normal-push));
+  vec3 push=
+    (fwd-n)
+  - (up-n)
+  - (hax-n)
+  ;
 
-  n.xy*=luma;
+  vec3 bump=normalize(IV_TBN * push);
+  bump.xy*=luma;
 
-  return vec4(n,luma);
+  return vec4(bump,luma);
 
 };
 
@@ -209,7 +271,7 @@ float AO(vec4 height) {
 
   float d=0.0f;
   const float zenith[]={
-    -2.0f,-0.25f,2.0f
+    -2.0f,-0.25f,0.5f
 
   };
 
@@ -242,11 +304,21 @@ float AO(vec4 height) {
 };
 
 // ---   *   ---   *   ---
+// get fine edges from ao value
+
+float tight_edge(float fac,float limit) {
+  float edge=abs((fac-0.5)*2.0f);
+  return smoothstep(limit,1.0f,edge);
+
+};
+
+// ---   *   ---   *   ---
 // shading trick: do not raytrace
+// gives approximate ao+curvature
 
-float tight_AO(vec4 height) {
+vec2 tight_AOC(vec4 height) {
 
-  float ao=smoothstep(
+  float a=smoothstep(
 
     0,
     0.25f,
@@ -255,16 +327,35 @@ float tight_AO(vec4 height) {
 
   );
 
-  ao=clamp(ao*smoothstep(
+  float b=smoothstep(
 
     0,
     0.65f,
 
     AO(height)
 
-  ),0.00f,1.25f);
+  );
 
-  return ao;
+  float ao=clamp(a*b,0,1);
+
+  float curv=smoothstep(
+
+    0.1f,0.35f,
+
+    b*tight_edge(b,0.125f)*4.0f
+  + tight_edge(Vert_AO,0.8f)*0.1f
+
+  );
+
+  // filter out brighter/darker spots
+  // in the ao mask from curvature
+  curv *= smoothstep(0,0.25f,ao);
+  curv *= 1-smoothstep(0.0f,0.5f,ao);
+
+  // ^brighten to compensate over-filtering
+  curv += curv;
+
+  return vec2(ao,curv);
 
 };
 
@@ -274,9 +365,11 @@ void main(void) {
 
   // [insert texgen schtick]
 
+  calc_iv_tbn();
+
   vec4  color   = boxmapping();
   vec4  height  = heightmap(color);
-  float ao      = tight_AO(height);
+  vec2  aoc     = tight_AOC(height);
   float rough   = roughness(height);
   float soft    = 1-rough;
 
@@ -294,7 +387,7 @@ void main(void) {
   // ^derive
   float d=clamp(
     dot(iv_vto,refl)
-  * 2.0f * height.w,
+  * height.w,
 
     0,1
 
@@ -302,42 +395,56 @@ void main(void) {
 
   float iv_d=clamp(pow(
     dot(vto,refl)
-  * 2.0f * height.w,
+  * height.w,
 
     2
 
   ),0,1);
 
-  // ^expand
-  float fresnel=smoothstep(
+  float frag_light=dot(Cam_Fwd,height.xyz);
+  frag_light=smoothstep(0,0.5f,frag_light);
 
-    0.0f,
-    1.0f,
+// ---   *   ---   *   ---
 
-    clamp(iv_d-d,0,1)
-
-  ) * 2.0f;
-
-  float near = smoothstep(0,height.w,d) * 0.5f;
+  float near = smoothstep(0,height.w,d) * 2.0f;
   float far  = smoothstep(height.w,1,d) * 4.0f;
 
   float vl   = clamp((near+far),0.0f,1.0f);
 
   // get colors
-  vec3 ambient=
-    vec3(0,0,0.25f) * 0.25f
-  + vec3(0,0,0.25f) * fresnel
+  vec3 ambient=(
+    vec3(0,0,0.5f) * 0.8f * (1-frag_light)
+  + vec3(0,0,0.5f) * 0.2f
 
-  ;
+  ) * aoc.x;
+
+  vec3 color_ao=mix(
+    color.rgb,
+    color.rgb*aoc.x,
+
+    0.95f
+
+  )*(1+aoc.y*2.0f);
 
   vec3 diffuse=(
-    color.rgb*Vert_Light
+
+    color_ao
+  * frag_light
+
   + ambient
 
-  ) * ao;
+  );
+
+  color_ao=mix(
+    color.rgb,
+    color.rgb*aoc.x,
+
+    0.85f
+
+  )*(1+aoc.y*2.25f);
 
   vec3 specular=
-    color.rgb*vl*(max(0.35f,ao*2.0f))
+    color_ao*vl
   * soft*2.0f
   ;
 
@@ -352,11 +459,13 @@ void main(void) {
 
   );
 
-//  Frag_Color=vec4(vec3((height.z*0.5f)+0.5f),1);
+//  Frag_Color=vec4(
+//    vec3((height.xyz*0.5f)+0.5f),
+//    1
+//
+//  );
 
-//  Frag_Color=vec4(vec3((Point*0.5f)+0.5f),1);
-
-//  Frag_Color=vec4(vec3(ambient),1);
+//  Frag_Color=vec4(vec3(),1);
 
 };
 

@@ -15,7 +15,7 @@ class Modeler {
 
 public:
 
-  VERSION   "v0.01.3b";
+  VERSION   "v0.01.4b";
   AUTHOR    "IBN-3DILA";
 
   enum {
