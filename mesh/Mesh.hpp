@@ -18,7 +18,7 @@ class Mesh {
 
 public:
 
-  VERSION   "v0.00.6b";
+  VERSION   "v0.00.7b";
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---
@@ -43,11 +43,24 @@ private:
 
 public:
 
-  // compiler trash
-  Mesh(void) {};
-
-  // nit
+  // cstruc
   Mesh(
+
+    uint16_t vcount,
+    uint16_t icount,
+
+    uint16_t mode,
+
+    uint16_t voffset,
+    uint16_t ioffset
+
+  ) {
+
+    this->nit(vcount,icount,mode,voffset,ioffset);
+
+  };
+
+  void nit(
 
     uint16_t vcount,
     uint16_t icount,
@@ -70,6 +83,9 @@ public:
     m_byte_offset = m_ioffset * sizeof(uint16_t);
 
   };
+
+  // ctrash
+  Mesh(void) {};
 
   inline void draw(void) {
     glDrawElementsBaseVertex(
@@ -97,7 +113,7 @@ public:
 
   return
      vcount <= m_vcap
-  && vcount <= m_icap
+  && icount <= m_icap
   ;
 
   };

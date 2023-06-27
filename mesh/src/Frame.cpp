@@ -147,7 +147,7 @@ bool Meshes::repl_mesh(
   uint16_t ioffset = me.get_ioffset();
 
   // fill out struct
-  m_mesh[idex]=Mesh(
+  m_mesh[idex].nit(
 
     vcount,
     icount,
@@ -278,7 +278,7 @@ void Meshes::repl(
 
     fprintf(
       stderr,
-      "meshid %08X too small for repl",
+      "meshid %08X too small for repl\n",
 
       beg
 

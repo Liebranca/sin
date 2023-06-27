@@ -91,6 +91,7 @@ void Modeler::Ring::set_radius(float r) {
   };
 
   m_radius=r;
+  this->updated=true;
 
 };
 
@@ -721,7 +722,9 @@ bool Modeler::get_updated(void) {
     // feed element update back onto frame
     m_cache.calc_indices |= ring.updated;
     m_cache.calc_deforms |=
-      ring.get_xform().get_updated();
+      ring.get_xform().get_updated()
+    | ring.updated
+    ;
 
   };
 
@@ -793,8 +796,6 @@ void Modeler::pack(void) {
 
     dst.set_nt(vert.n,vert.t);
     dst.data[7]=vert.clamp_ao();
-
-    auto n=dst.get_n();
 
   };
 

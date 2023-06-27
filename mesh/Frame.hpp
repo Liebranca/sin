@@ -21,7 +21,7 @@ class Meshes {
 
 public:
 
-  VERSION   "v0.01.9b";
+  VERSION   "v0.02.0b";
   AUTHOR    "IBN-3DILA";
 
 // ---   *   ---   *   ---

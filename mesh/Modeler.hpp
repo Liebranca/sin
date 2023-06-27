@@ -15,7 +15,7 @@ class Modeler {
 
 public:
 
-  VERSION   "v0.01.4b";
+  VERSION   "v0.01.5b";
   AUTHOR    "IBN-3DILA";
 
   enum {
@@ -159,7 +159,7 @@ public:
     };
 
     void set_radius(float r);
-    float get_radius(void) {
+    float& get_radius(void) {
       return m_radius;
 
     };
@@ -448,6 +448,12 @@ public:
 
   };
 
+  // ^get size of element array
+  inline uint16_t ring_cnt(void) {
+    return m_rings.size();
+
+  };
+
   // make new uv island
   inline void uv_cut(
 
@@ -498,7 +504,7 @@ public:
     auto& ring=m_rings[id];
 
     uint16_t beg=ring.get_base();
-    uint16_t end=ring.get_verts().size()-1;
+    uint16_t end=ring.get_profile();
 
     return {beg,uint16_t(beg+end)};
 
