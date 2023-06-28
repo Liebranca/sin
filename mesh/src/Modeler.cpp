@@ -85,8 +85,12 @@ void Modeler::Ring::set_base(uint16_t base) {
 
 void Modeler::Ring::set_radius(float r) {
 
+  r=(r > 4.0f) ? 4.0f : r;
+  r=(r < 0.01f) ? 0.01f : r;
+
   for(auto& vert : m_verts) {
-    vert.co=vert.n*r;
+    vec3 n=glm::normalize(vert.co);
+    vert.co=n*r;
 
   };
 
@@ -109,6 +113,177 @@ void Modeler::Ring::occlude(float fac) {
 };
 
 // ---   *   ---   *   ---
+// register vertex merge
+
+void Modeler::Ring::glue(
+
+  uint16_t id,
+
+  uint16_t base,
+  uint16_t cnt
+
+) {
+
+  m_glued.push_back(Glue());
+  auto& dst=m_glued.back();
+
+  dst.ring=id;
+  dst.indices.resize(cnt);
+
+  // mark all vertices as merged
+  for(uint16_t i=base,j=0;i<base+cnt;i++) {
+    dst.indices[j++]=i;
+
+  };
+
+};
+
+// ---   *   ---   *   ---
+// ^undo
+
+void Modeler::Ring::unglue(uint16_t id) {
+
+  svec<uint16_t> found;
+
+  // get rings matching id
+  uint16_t i=0;
+  for(auto& glue : m_glued) {
+
+    if(glue.ring != id) {
+      found.push_back(i);
+
+    };
+
+    i++;
+
+  };
+
+  // ^pop from array
+  for(auto j : found) {
+    m_glued.erase(m_glued.begin()+j);
+
+  };
+
+};
+
+// ---   *   ---   *   ---
+// mark rings as merged
+
+void Modeler::glue(
+  uint16_t idex_a,
+  uint16_t idex_b
+
+) {
+
+  auto& a=m_rings[idex_a];
+  auto& b=m_rings[idex_b];
+
+  a.glue(idex_b,0,b.get_verts().size());
+  b.glue(idex_a,0,a.get_verts().size());
+
+};
+
+// ---   *   ---   *   ---
+// ^propagate updates to rings
+// merged with A
+
+void Modeler::sync_glued(uint16_t id) {
+
+  auto& a     = m_rings[id];
+
+  auto& verts = a.get_verts();
+  auto& glued = a.get_glued();
+
+  for(auto& glue : glued) {
+
+    auto& b=m_rings[glue.ring];
+    b.set_radius(a.get_radius());
+
+    for(auto i : glue.indices) {
+
+      auto& dst=b.vof(i);
+      auto& src=a.vof(i);
+
+      dst.n  = src.n;
+      dst.ao = src.ao;
+
+    };
+
+  };
+
+};
+
+// ---   *   ---   *   ---
+// find if two faces share verts
+
+void Modeler::get_face_nebor(
+  uint16_t idex_a,
+  uint16_t idex_b
+
+) {
+
+  svec<uint16_t> shared_a;
+  svec<uint16_t> shared_b;
+
+  auto& a   = m_faces[idex_a];
+  auto& b   = m_faces[idex_b];
+
+  uint16_t i=0;
+  for(auto& vert_a : a.verts) {
+
+    uint16_t j=0;
+    for(auto& vert_b : b.verts) {
+
+      if(
+
+         vert_a.get().idex
+      == vert_b.get().idex
+
+      ) {
+
+        shared_a.push_back(i);
+        shared_b.push_back(j);
+
+      };
+
+      j++;
+
+    };
+
+    i++;
+
+  };
+
+  if(shared_a.size()) {
+
+    a.nebors.push_back(
+      Face_Nebor(idex_b,shared_a)
+
+    );
+
+    b.nebors.push_back(
+      Face_Nebor(idex_a,shared_b)
+
+    );
+
+  };
+
+};
+
+// ---   *   ---   *   ---
+// calc which faces share vertices
+
+void Modeler::calc_nebor_faces(void) {
+
+  for(uint16_t i=0;i < m_faces.size();i++) {
+  for(uint16_t j=i+1;j < m_faces.size();j++) {
+    this->get_face_nebor(i,j);
+
+  }};
+
+};
+
+// ---   *   ---   *   ---
 // makes tris between points of
 // two rings
 
@@ -124,6 +299,8 @@ void Modeler::join(
   uint16_t a_sz=a.get_profile();
   uint16_t b_sz=b.get_profile();
 
+  uint16_t face_beg=m_faces.size();
+
   if(a_sz == b_sz) {
     this->wind_even(a,b);
 
@@ -132,6 +309,19 @@ void Modeler::join(
 
   } else {
     this->wind_uneven(a,b);
+
+  };
+
+  for(
+
+    uint16_t i=face_beg;
+
+    i < m_faces.size();
+    i++
+
+  ) {
+
+    this->set_face_rings(i,{idex_a,idex_b});
 
   };
 
@@ -155,14 +345,14 @@ void Modeler::push_quad(
   auto& face=this->cur_face();
 
   // tri 0 (0,1,2)
-  face.push_back(a.vof(ai+0));
-  face.push_back(a.vof(ai+1));
-  face.push_back(b.vof(bi+1));
+  face.verts.push_back(a.vof(ai+0));
+  face.verts.push_back(a.vof(ai+1));
+  face.verts.push_back(b.vof(bi+1));
 
   // tri 1 (0,2,3)
-  face.push_back(a.vof(ai+0));
-  face.push_back(b.vof(bi+1));
-  face.push_back(b.vof(bi+0));
+  face.verts.push_back(a.vof(ai+0));
+  face.verts.push_back(b.vof(bi+1));
+  face.verts.push_back(b.vof(bi+0));
 
 };
 
@@ -181,9 +371,9 @@ void Modeler::push_tri(
 
   auto& face=this->cur_face();
 
-  face.push_back(a.vof(ai+0));
-  face.push_back(a.vof(ai+1));
-  face.push_back(b.vof(bi+0));
+  face.verts.push_back(a.vof(ai+0));
+  face.verts.push_back(a.vof(ai+1));
+  face.verts.push_back(b.vof(bi+0));
 
 };
 
@@ -331,7 +521,7 @@ uint16_t Modeler::cap(
   uint16_t j    = prof-1;
 
   // ^iter
-  this->new_face();
+  auto& face=this->new_face();
   for(;i<cnt;i++,j--) {
 
     this->push_tri(ring,ring,i,j);
@@ -345,12 +535,16 @@ uint16_t Modeler::cap(
 
   };
 
+  face.rings={n_idex};
+
+  // adjust visuals
   float sign=(up) ? 1 : -1;
   this->nrot(n_idex,8*sign);
-  this->nrot(idex,8*sign);
+  ring.occlude(0.5f);
 
-  m_rings[idex].occlude(0.5f);
-  m_rings[n_idex].occlude(0.5f);
+  // ^merge to parent and sync
+  this->glue(n_idex,idex);
+  this->sync_glued(n_idex);
 
   // mark for update
   m_cache.calc_indices=true;
@@ -514,7 +708,7 @@ uint16_t Modeler::get_icount(void) {
   if(m_icount==0) {
 
     for(auto& face : m_faces) {
-      m_icount+=face.size();
+      m_icount+=face.verts.size();
 
     };
 
@@ -557,7 +751,7 @@ void Modeler::calc_indices(void) {
   };
 
   for(auto& face : m_faces) {
-    for(auto& vert : face) {
+    for(auto& vert : face.verts) {
       m_mesh.indices[i++]=vert.get().idex;
 
     };
@@ -677,37 +871,42 @@ void Modeler::calc_tangents(void) {
 
   // walk each tri
   for(auto& face : m_faces) {
-  for(uint16_t i=0;i<face.size();i+=3) {
 
-    auto& a=m_deformed[face[i+0].get().idex];
-    auto& b=m_deformed[face[i+1].get().idex];
-    auto& c=m_deformed[face[i+2].get().idex];
+    auto& verts=face.verts;
 
-    // get delta
-    vec3 e0=b.co-a.co;
-    vec3 e1=c.co-a.co;
-    vec2 d0=b.uv-a.uv;
-    vec2 d1=c.uv-a.uv;
+    for(uint16_t i=0;i<verts.size();i+=3) {
 
-    // no idea
-    float f=1.0f / (
-      d0.x * d1.y
-    - d1.x * d0.y
+      auto& a=m_deformed[verts[i+0].get().idex];
+      auto& b=m_deformed[verts[i+1].get().idex];
+      auto& c=m_deformed[verts[i+2].get().idex];
 
-    );
+      // get delta
+      vec3 e0=b.co-a.co;
+      vec3 e1=c.co-a.co;
+      vec2 d0=b.uv-a.uv;
+      vec2 d1=c.uv-a.uv;
 
-    // probably cross
-    a.t=glm::normalize(f*vec3({
-      d1.y * e0.x - d0.y * e1.x,
-      d1.y * e0.y - d0.y * e1.y,
-      d1.y * e0.z - d0.y * e1.z
+      // no idea
+      float f=1.0f / (
+        d0.x * d1.y
+      - d1.x * d0.y
 
-    }));
+      );
 
-    // ^same for all verts of tri
-    b.t=c.t=a.t;
+      // probably cross
+      a.t=glm::normalize(f*vec3({
+        d1.y * e0.x - d0.y * e1.x,
+        d1.y * e0.y - d0.y * e1.y,
+        d1.y * e0.z - d0.y * e1.z
 
-  }};
+      }));
+
+      // ^same for all verts of tri
+      b.t=c.t=a.t;
+
+    };
+
+  };
 
 };
 

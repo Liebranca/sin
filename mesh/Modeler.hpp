@@ -15,7 +15,7 @@ class Modeler {
 
 public:
 
-  VERSION   "v0.01.5b";
+  VERSION   "v0.01.6b";
   AUTHOR    "IBN-3DILA";
 
   enum {
@@ -98,7 +98,16 @@ public:
   typedef svec<Vertex>       Verts;
   typedef svec<sref<Vertex>> Verts_Ref;
 
-  typedef svec<Verts_Ref>    Faces;
+// ---   *   ---   *   ---
+// ^joined vertices
+
+  struct Glue {
+    uint16_t       ring;
+    svec<uint16_t> indices;
+
+  };
+
+  typedef svec<Glue> Glues;
 
 // ---   *   ---   *   ---
 // ^vertex ring
@@ -116,6 +125,8 @@ public:
     uint16_t m_base        = 0;
 
     bool     m_capped      = false;
+
+    Glues    m_glued;
 
 // ---   *   ---   *   ---
 
@@ -209,9 +220,68 @@ public:
     // affects AO calc in shader
     void occlude(float fac);
 
+    // register vertex merge
+    void glue(
+
+      uint16_t id,
+
+      uint16_t base,
+      uint16_t cnt
+
+    );
+
+    // ^undo
+    void unglue(uint16_t id);
+
+    // ^fetch array
+    inline Glues& get_glued(void) {
+      return m_glued;
+
+    };
+
   };
 
   typedef svec<Ring> Rings;
+
+// ---   *   ---   *   ---
+// ^verts shared by two polygons
+
+  struct Face_Nebor {
+
+    uint16_t       idex;
+    svec<uint16_t> shared;
+
+    Face_Nebor(
+      uint16_t _idex,
+      svec<uint16_t> _shared
+
+    ):
+
+      idex(_idex),
+      shared(_shared)
+
+    {};
+
+  };
+
+  typedef svec<Face_Nebor> Face_Nebors;
+
+// ---   *   ---   *   ---
+// ^set of vertices for a polygon
+
+  struct Face {
+
+    Verts_Ref verts;
+
+    svec<uint16_t> rings;
+    Face_Nebors    nebors;
+
+    vec3 normal;
+    vec3 origin;
+
+  };
+
+  typedef svec<Face> Faces;
 
 // ---   *   ---   *   ---
 // texcord unwrap helpers
@@ -278,19 +348,41 @@ private:
   void wind_uneven(Ring& a,Ring& b);
 
   // make new face for pushing tris
-  Verts_Ref& new_face(void) {
-    m_faces.push_back(Verts_Ref());
+  Face& new_face(void) {
+    m_faces.push_back(Face());
     return m_faces.back();
 
   };
 
   // ^get last created
-  inline Verts_Ref& cur_face(void) {
+  inline Face& cur_face(void) {
     return m_faces.back();
 
   };
 
-  // ^add two tris
+  // register which rings contribute
+  // verts to a given face
+  inline void set_face_rings(
+    uint16_t idex,
+    svec<uint16_t> rings
+
+  ) {
+
+    m_faces[idex].rings=rings;
+
+  };
+
+  // find if two faces share verts
+  void get_face_nebor(
+    uint16_t idex_a,
+    uint16_t idex_b
+
+  );
+
+  // ^find all faces that share vertices
+  void calc_nebor_faces(void);
+
+  // add two tris
   void push_quad(
 
     Ring&   a,
@@ -385,6 +477,13 @@ public:
     return out;
 
   };
+
+  // mark rings as merged
+  void glue(uint16_t idex_a,uint16_t idex_b);
+
+  // ^propagate updates to rings
+  // merged with A
+  void sync_glued(uint16_t id);
 
   // make tris between two elements
   void join(
