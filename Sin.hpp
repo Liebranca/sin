@@ -218,7 +218,7 @@ public:
 
     std::string ct,
 
-    vec2        pos      = {0,0},
+    vec3        pos      = {0,0,0},
     vec3        dim      = {9,16,8},
 
     uint16_t    color    = OPAQUE|WHITE,
@@ -229,7 +229,7 @@ public:
   // ^same system, plain quad
   uint32_t draw_ui_rect(
 
-    vec2     pos,
+    vec3     pos,
     vec2     dim,
 
     uint16_t color=(OPAQUE|BRIGHT|BLACK) << 8

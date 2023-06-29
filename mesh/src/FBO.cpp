@@ -76,7 +76,7 @@ void FBO::nit_texture(void) {
 FBO::~FBO(void) {
 
   if(m_loc) {
-    glDeleteFramebuffers(&m_loc);
+    glDeleteFramebuffers(1,&m_loc);
 
   };
 
@@ -90,8 +90,7 @@ bool FBO::validate(void) {
   bool out=
      glCheckFramebufferStatus(GL_FRAMEBUFFER)
   == GL_FRAMEBUFFER_COMPLETE
-
-  );
+  ;
 
   return out;
 

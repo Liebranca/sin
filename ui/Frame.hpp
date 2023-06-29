@@ -16,7 +16,7 @@ class UI {
 
 public:
 
-  VERSION   "v0.00.6b";
+  VERSION   "v0.00.7b";
   AUTHOR    "IBN-3DILA";
 
   cxr32 CENT_X = 8.0f / 1366.0f;
@@ -72,7 +72,7 @@ public:
 
     std::string m_ct;
 
-    vec2     m_pos   = {-1,1};
+    vec3     m_pos   = {-1,1,0};
     vec2     m_dim   = {9,16};
     vec2     m_rdim  = {0,0};
 
@@ -89,7 +89,7 @@ public:
   public:
 
     Vertex base_vert(
-      vec2&   pos,
+      vec3&   pos,
       uint8_t c
 
     );
@@ -100,7 +100,7 @@ public:
 
       std::string ct,
 
-      vec2 pos,
+      vec3 pos,
       vec3 dim,
 
       uint16_t color,
@@ -171,7 +171,7 @@ public:
 
     std::string ct,
 
-    vec2 pos,
+    vec3 pos,
     vec3 dim,
 
     uint16_t color,
@@ -182,7 +182,7 @@ public:
   // ^plain quad of size X, no chars
   uint32_t push_quad(
 
-    vec2&    pos,
+    vec3&    pos,
     vec2&    dim,
 
     uint16_t color

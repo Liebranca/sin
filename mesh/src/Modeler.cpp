@@ -228,12 +228,16 @@ void Modeler::get_face_nebor(
   auto& a   = m_faces[idex_a];
   auto& b   = m_faces[idex_b];
 
+  // for each vert of A,
+  // compare against each vert of B
   uint16_t i=0;
   for(auto& vert_a : a.verts) {
 
     uint16_t j=0;
     for(auto& vert_b : b.verts) {
 
+      // ^same idex means same vertex
+      // shared vertex means neighbor face
       if(
 
          vert_a.get().idex
@@ -254,6 +258,8 @@ void Modeler::get_face_nebor(
 
   };
 
+  // ^if any shared verts found,
+  // register A<->B as neighbors
   if(shared_a.size()) {
 
     a.nebors.push_back(
@@ -275,6 +281,13 @@ void Modeler::get_face_nebor(
 
 void Modeler::calc_nebor_faces(void) {
 
+  // clear previous calc
+  for(auto& face : m_faces) {
+    face.nebors.clear();
+
+  };
+
+  // ^compare each face to each other
   for(uint16_t i=0;i < m_faces.size();i++) {
   for(uint16_t j=i+1;j < m_faces.size();j++) {
     this->get_face_nebor(i,j);
@@ -583,6 +596,22 @@ void Modeler::nrot(
 };
 
 // ---   *   ---   *   ---
+// ^flip em
+
+void Modeler::nflip(
+  uint16_t idex
+
+) {
+
+  auto& ring = m_rings[idex];
+  for(auto& vert : ring.get_verts()) {
+    vert.n=-vert.n;
+
+  };
+
+};
+
+// ---   *   ---   *   ---
 // extend mesh from ring
 
 svec<uint16_t> Modeler::extrude(
@@ -639,9 +668,14 @@ svec<uint16_t> Modeler::extrude(
   };
 
   // ^join rings
+  svec<uint16_t> order=(in)
+    ? svec<uint16_t>({1,0})
+    : svec<uint16_t>({0,1})
+    ;
+
   for(uint16_t i=0;i<cuts;i++) {
-    m_join_q.push_back(out[i+0]);
-    m_join_q.push_back(out[i+1]);
+    m_join_q.push_back(out[i+order[0]]);
+    m_join_q.push_back(out[i+order[1]]);
 
   };
 
@@ -668,7 +702,7 @@ svec<uint16_t> Modeler::inset(
   uint16_t uv_row=m_uv_map.back().rows.size();
 
   svec<uint16_t> out=this->extrude(
-    beg,cuts,0,true
+    beg,cuts,0,false
 
   );
 
@@ -958,6 +992,7 @@ void Modeler::calc_mesh(void) {
   this->get_updated();
   if(m_cache.calc_indices) {
 
+    this->calc_nebor_faces();
     this->calc_indices();
 
     m_cache.calc_indices = false;

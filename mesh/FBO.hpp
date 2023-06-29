@@ -45,7 +45,7 @@ private:
 public:
 
   // cstruc
-  void nit(uvec2 size);
+  void nit(uint64_t size);
 
   // ^dstruc
   ~FBO(void);

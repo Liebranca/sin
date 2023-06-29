@@ -15,7 +15,7 @@ class Modeler {
 
 public:
 
-  VERSION   "v0.01.6b";
+  VERSION   "v0.01.7b";
   AUTHOR    "IBN-3DILA";
 
   enum {
@@ -538,6 +538,12 @@ public:
   void nrot(
     uint16_t idex,
     float    f
+
+  );
+
+  // ^flip em
+  void nflip(
+    uint16_t idex
 
   );
 

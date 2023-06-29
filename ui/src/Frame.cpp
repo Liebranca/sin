@@ -22,7 +22,7 @@ void UI::Elem::nit(
 
   std::string ct,
 
-  vec2 pos,
+  vec3 pos,
   vec3 dim,
 
   uint16_t color,
@@ -69,14 +69,15 @@ void UI::Elem::calc_plane(void) {
 // generate point from elem
 
 UI::Vertex UI::Elem::base_vert(
-  vec2&   pos,
+  vec3&   pos,
   uint8_t c
 
 ) {
 
   Vertex vert(c);
 
-  vert.set_pos(pos);
+  vert.set_pos(vec2(pos));
+  vert.set_layer(uint8_t(pos.z));
   vert.set_scale(m_scale);
   vert.set_color(m_color);
   vert.set_show_ctl(m_show_ctl);
@@ -91,7 +92,7 @@ UI::Vertex UI::Elem::base_vert(
 
 void UI::Elem::emit(UI& dst) {
 
-  vec2  pos    = m_pos;
+  vec3  pos    = m_pos;
   vec2& cursor = dst.get_cursor();
 
   float max_x  = 0.0f;
@@ -188,7 +189,7 @@ uint32_t UI::push_text(
 
   std::string ct,
 
-  vec2 pos,
+  vec3 pos,
   vec3 dim,
 
   uint16_t color,
@@ -220,7 +221,7 @@ uint32_t UI::push_text(
 
 uint32_t UI::push_quad(
 
-  vec2&    pos,
+  vec3&    pos,
   vec2&    dim,
 
   uint16_t color
@@ -258,10 +259,10 @@ uint32_t UI::push_quad(
   auto& tl=m_verts[base+2];
   auto& tr=m_verts[base+3];
 
-  br.set_layer(1);
-  bl.set_layer(1);
-  tl.set_layer(1);
-  tr.set_layer(1);
+  br.set_layer(uint8_t(pos.z+1));
+  bl.set_layer(uint8_t(pos.z+1));
+  tl.set_layer(uint8_t(pos.z+1));
+  tr.set_layer(uint8_t(pos.z+1));
 
   // ^adjust to panel size
   br.set_pos({

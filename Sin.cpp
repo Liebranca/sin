@@ -288,8 +288,11 @@ void SIN::draw_ui(void) {
     program=programs.get(m_shaders[TEXT]);
     programs.bind(program);
 
+    glCullFace(GL_FRONT);
     m_ui.upload();
     m_ui.draw();
+
+    glCullFace(GL_BACK);
 
   };
 
@@ -390,7 +393,7 @@ uint32_t SIN::draw_ui_text(
 
   std::string ct,
 
-  vec2        pos,
+  vec3        pos,
   vec3        dim,
 
   uint16_t    color,
@@ -410,7 +413,7 @@ uint32_t SIN::draw_ui_text(
 
 uint32_t SIN::draw_ui_rect(
 
-  vec2     pos,
+  vec3     pos,
   vec2     dim,
 
   uint16_t color
